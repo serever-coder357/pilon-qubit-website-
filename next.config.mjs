@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    reactCompiler: true
-  }
+  // Removed reactCompiler as it's not recognized in Next.js 14.2.5
 };
 export default nextConfig;

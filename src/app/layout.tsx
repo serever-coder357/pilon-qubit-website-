@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: 'PILON Qubit Ventures',
   description: 'Quantum-grade strategy and product acceleration for AI and frontier tech.',
   metadataBase: new URL('https://pilonqubitventures.com'),
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/pilonqubit.jpg',
+    apple: '/apple-touch-icon.png',
+  },
   openGraph: {
     title: 'PILON Qubit Ventures',
     description: 'Quantum-grade strategy and product acceleration for AI and frontier tech.',

@@ -1,0 +1,16 @@
+{
+  "name": "PILON Qubit Ventures",
+  "short_name": "PILON Qubit",
+  "description": "Where Frontier Technology Meets Operator Grit",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#00d9ff",
+  "icons": [
+    {
+      "src": "/pilonqubit.jpg",
+      "sizes": "784x1168",
+      "type": "image/jpeg"
+    }
+  ]
+}
