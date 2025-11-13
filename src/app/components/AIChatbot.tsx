@@ -53,6 +53,14 @@ export default function AIChatbot() {
     setInput('');
     setIsLoading(true);
 
+    // Add placeholder for streaming response
+    const assistantMessage: Message = {
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, assistantMessage]);
+
     try {
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -65,27 +73,49 @@ export default function AIChatbot() {
         }),
       });
 
-      const data = await response.json();
-
-      if (data.message) {
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: data.message,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        throw new Error('No response from server');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No reader available');
+      }
+
+      let accumulatedContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedContent += chunk;
+
+        // Update the last message with accumulated content
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1] = {
+            ...newMessages[newMessages.length - 1],
+            content: accumulatedContent,
+          };
+          return newMessages;
+        });
+      }
+
+      setIsLoading(false);
     } catch (error) {
       console.error('Chat error:', error);
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: "I'm sorry, I'm having trouble connecting right now. Please try emailing us at hello@pilonqubitventures.com or use the contact form.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = {
+          role: 'assistant',
+          content: "I'm sorry, I'm having trouble connecting right now. Please try emailing us at hello@pilonqubitventures.com or use the contact form.",
+          timestamp: new Date(),
+        };
+        return newMessages;
+      });
       setIsLoading(false);
     }
   };

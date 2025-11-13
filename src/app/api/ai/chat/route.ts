@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
@@ -146,47 +145,66 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { ok: false, error: 'Invalid messages format' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Invalid messages format' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     // Check if OpenAI API key is configured
     if (!openai) {
-      return NextResponse.json({
-        ok: true,
-        message: "I'm currently in demo mode. For a real conversation, please use the contact form or email us at hello@pilonqubitventures.com. I'd be happy to help you with:\n\n• AI & Product Acceleration\n• Security & Reliability\n• GTM & Analytics\n\nWhat would you like to know more about?",
-      });
+      return new Response(
+        JSON.stringify({
+          message: "I'm currently in demo mode. For a real conversation, please use the contact form or email us at hello@pilonqubitventures.com. I'd be happy to help you with:\n\n• AI & Product Acceleration\n• Security & Reliability\n• GTM & Analytics\n\nWhat would you like to know more about?",
+        }),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    const completion = await openai.chat.completions.create({
+    // Create streaming response
+    const stream = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         ...messages,
       ],
-      temperature: 0.8, // Higher temperature for more natural, varied responses
+      temperature: 0.8,
       max_tokens: 300,
+      stream: true,
     });
 
-    const assistantMessage = completion.choices[0]?.message?.content;
+    // Create a readable stream
+    const encoder = new TextEncoder();
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              controller.enqueue(encoder.encode(content));
+            }
+          }
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
 
-    if (!assistantMessage) {
-      throw new Error('No response from AI');
-    }
-
-    return NextResponse.json({
-      ok: true,
-      message: assistantMessage,
+    return new Response(readableStream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+      },
     });
   } catch (error: any) {
     console.error('AI Chat Error:', error);
     
-    // Return a helpful fallback message
-    return NextResponse.json({
-      ok: true,
-      message: "I'm having trouble processing that right now. Please feel free to:\n\n• Use our contact form below\n• Email us at hello@pilonqubitventures.com\n• Book a consultation directly\n\nOur team typically responds within one business day. How else can I help you today?",
-    });
+    return new Response(
+      JSON.stringify({
+        message: "I'm having trouble processing that right now. Please feel free to:\n\n• Use our contact form below\n• Email us at hello@pilonqubitventures.com\n• Book a consultation directly\n\nOur team typically responds within one business day. How else can I help you today?",
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
   }
 }
