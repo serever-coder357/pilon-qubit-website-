@@ -4,7 +4,7 @@ export default function StructuredData() {
     "@type": "Organization",
     "name": "PILON Qubit Ventures",
     "url": "https://pilonqubitventures.com",
-    "logo": "https://pilonqubitventures.com/pilonqubit.jpg",
+    "logo": "https://pilonqubitventures.com/pilonqubit.webp",
     "description": "Expert AI and frontier tech consulting for product acceleration, security, and go-to-market strategy",
     "sameAs": [],
     "contactPoint": {

@@ -73,7 +73,7 @@ export default function Home(){
         <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center" aria-label="Primary navigation">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden border border-cyan-900/50">
-              <Image src="/pilonqubit.jpg" fill alt="PILON Qubit Ventures - AI and Frontier Technology Consulting" sizes="40px" priority />
+              <Image src="/pilonqubit.webp" fill alt="PILON Qubit Ventures - AI and Frontier Technology Consulting" sizes="40px" priority />
             </div>
             <h1 className="text-base sm:text-xl md:text-2xl font-bold text-cyan-400 tracking-tight">PILON Qubit</h1>
           </div>
@@ -109,11 +109,11 @@ export default function Home(){
                   muted
                   playsInline
                   className="w-full h-full object-cover"
-                  poster="/ai-consulting-hero.jpg"
+                  poster="/ai-consulting-hero.webp"
                 >
                   <source src="/pqv-new.mp4" type="video/mp4" />
                   <Image
-                    src="/ai-consulting-hero.jpg"
+                    src="/ai-consulting-hero.webp"
                     alt="PILON Qubit Ventures AI Consulting Services"
                     fill
                     priority

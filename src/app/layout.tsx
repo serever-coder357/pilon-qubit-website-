@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
   icons: {
-    icon: '/pilonqubit.jpg',
+    icon: '/pilonqubit.webp',
     apple: '/apple-touch-icon.png',
   },
   openGraph: {
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     url: 'https://pilonqubitventures.com',
     siteName: 'PILON Qubit Ventures',
     images: [{
-      url: '/ai-consulting-hero.jpg',
+      url: '/ai-consulting-hero.webp',
       width: 1200,
       height: 630,
       alt: 'PILON Qubit Ventures - AI and Frontier Technology Consulting',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PILON Qubit Ventures | AI & Frontier Tech Consulting',
     description: 'Transform your AI vision into production-ready solutions.',
-    images: ['/ai-consulting-hero.jpg'],
+    images: ['/ai-consulting-hero.webp'],
   },
   robots: {
     index: true,
