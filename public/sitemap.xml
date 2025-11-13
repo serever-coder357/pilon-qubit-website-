@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://pilonqubitventures.com/</loc>
+    <lastmod>2025-11-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://pilonqubitventures.com/pilonqubit.jpg</image:loc>
+      <image:title>PILON Qubit Ventures Logo</image:title>
+      <image:caption>AI and Frontier Technology Consulting</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://pilonqubitventures.com/ai-consulting-hero.jpg</image:loc>
+      <image:title>AI Consulting Services</image:title>
+      <image:caption>Professional AI consulting and strategy</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://pilonqubitventures.com/about-team.jpg</image:loc>
+      <image:title>PILON Qubit Team</image:title>
+      <image:caption>Expert consulting team collaboration</image:caption>
+    </image:image>
+  </url>
+</urlset>

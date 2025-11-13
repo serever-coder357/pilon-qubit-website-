@@ -340,7 +340,9 @@ export default function SmartContactForm() {
           </button>
           <a
             className="px-4 py-2 rounded border border-cyan-500 hover:bg-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            href="mailto:hello@pilonqubitventures.com"
+            href="mailto:hello@pilonqubitventures.com?subject=Inquiry from PILON Qubit Website&body=Hi PILON Qubit team,%0D%0A%0D%0AI'm interested in learning more about your services.%0D%0A%0D%0A"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             Email us directly
           </a>

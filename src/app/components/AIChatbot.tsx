@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -14,21 +14,24 @@ export default function AIChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm your AI assistant. How can I help you today?",
+      content: "Hi! I'm your AI assistant at Pilon Qubit Ventures. How can I help you today?",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Auto-scroll to bottom when new messages arrive
+  useLayoutEffect(() => {
+    if (messagesContainerRef.current) {
+      requestAnimationFrame(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      });
+    }
+  }, [messages, isLoading]);
 
   const suggestedQuestions = [
     "What services do you offer?",
@@ -55,16 +58,16 @@ export default function AIChatbot() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
+          messages: [...messages, userMessage].map(m => ({
             role: m.role,
-            content: m.content,
-          })),
+            content: m.content
+          }))
         }),
       });
 
       const data = await response.json();
 
-      if (data.ok && data.message) {
+      if (data.message) {
         const assistantMessage: Message = {
           role: 'assistant',
           content: data.message,
@@ -72,9 +75,10 @@ export default function AIChatbot() {
         };
         setMessages((prev) => [...prev, assistantMessage]);
       } else {
-        throw new Error(data.error || 'Failed to get response');
+        throw new Error('No response from server');
       }
     } catch (error) {
+      console.error('Chat error:', error);
       const errorMessage: Message = {
         role: 'assistant',
         content: "I'm sorry, I'm having trouble connecting right now. Please try emailing us at hello@pilonqubitventures.com or use the contact form.",
@@ -90,14 +94,25 @@ export default function AIChatbot() {
     setInput(question);
   };
 
+  const clearConversation = () => {
+    setMessages([
+      {
+        role: 'assistant',
+        content: "Hi! I'm your AI assistant at Pilon Qubit Ventures. How can I help you today?",
+        timestamp: new Date(),
+      },
+    ]);
+    setInput('');
+  };
+
   return (
     <>
       {/* Chat Button */}
       <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 transition-transform"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:shadow-cyan-500/50 transition-shadow"
         aria-label="Open AI Chat Assistant"
       >
         {isOpen ? (
@@ -125,10 +140,16 @@ export default function AIChatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 z-50 w-96 h-[600px] bg-[#0E1030] border border-cyan-900/50 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-24 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 bg-[#0E1030] border border-cyan-900/50 rounded-2xl shadow-2xl"
+            style={{
+              height: '500px',
+              maxHeight: 'calc(100vh - 120px)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 flex items-center justify-between" style={{flexShrink: 0}}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,19 +161,40 @@ export default function AIChatbot() {
                   <div className="text-cyan-100 text-xs">Powered by GPT-4</div>
                 </div>
               </div>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white transition-colors"
-                aria-label="Close chat"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearConversation}
+                  className="text-white/80 hover:text-white transition-colors"
+                  aria-label="Clear conversation"
+                  title="Clear conversation"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-white/80 hover:text-white transition-colors"
+                  aria-label="Close chat"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div 
+              ref={messagesContainerRef} 
+              className="p-4 space-y-4" 
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                minHeight: 0
+              }}
+            >
               {messages.map((message, index) => (
                 <motion.div
                   key={index}
@@ -201,12 +243,11 @@ export default function AIChatbot() {
                   </div>
                 </motion.div>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Suggested Questions */}
             {messages.length === 1 && (
-              <div className="px-4 pb-2">
+              <div className="px-4 pb-2" style={{flexShrink: 0}}>
                 <div className="text-xs text-cyan-300 mb-2">Suggested questions:</div>
                 <div className="flex flex-wrap gap-2">
                   {suggestedQuestions.map((question, index) => (
@@ -223,7 +264,7 @@ export default function AIChatbot() {
             )}
 
             {/* Input */}
-            <div className="p-4 border-t border-cyan-900/50">
+            <div className="p-4 border-t border-cyan-900/50" style={{flexShrink: 0}}>
               <div className="flex gap-2">
                 <input
                   type="text"

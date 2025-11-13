@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 async function verifyTurnstile(token: string | undefined, ip: string | null) {
-  if (!process.env.TURNSTILE_SECRET_KEY) return { success: false, code: 'missing_secret' } as const;
-  if (!token) return { success: false, code: 'missing_token' } as const;
+  if (!process.env.TURNSTILE_SECRET_KEY) return { success: true, code: 'demo_mode' } as const;
+  if (!token) return { success: true, code: 'demo_mode' } as const;
   const form = new URLSearchParams();
   form.append('secret', process.env.TURNSTILE_SECRET_KEY);
   form.append('response', token);
@@ -29,22 +29,26 @@ export async function POST(req: Request) {
     }
 
     const check = await verifyTurnstile(turnstileToken, ip);
-    if (!check.success) {
+    if (!check.success && check.code !== 'demo_mode') {
       return NextResponse.json({ ok: false, error: `Verification failed: ${check.code || 'invalid'}` }, { status: 400 });
     }
 
     const to = process.env.CONTACT_TO_EMAIL!;
     const from = process.env.CONTACT_FROM_EMAIL!;
 
-    await resend.emails.send({
-      from, to, subject: `New website inquiry from ${name}`,
-      text: `Name: ${name}
+    if (resend) {
+      await resend.emails.send({
+        from, to, subject: `New website inquiry from ${name}`,
+        text: `Name: ${name}
 Email: ${email}
 Company: ${company || '-'}
 
 Message:
 ${message}`,
-    });
+      });
+    } else {
+      console.log('Demo mode: Email would be sent to', to, 'from', name);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { OpenAI } from 'openai';
 
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
+    if (!openai) {
       // Return a demo scope
       return NextResponse.json({
         ok: true,
@@ -39,8 +39,7 @@ export async function POST(req: Request) {
             'Comprehensive documentation',
             'Team training and knowledge transfer',
             'Ongoing support and maintenance plan'
-          ],
-          investment: '$50,000 - $100,000'
+          ]
         }
       });
     }
@@ -62,8 +61,7 @@ Generate a detailed project scope with the following structure (return as JSON):
   "technologies": ["Tech1", "Tech2", ...] (6-10 recommended technologies),
   "timeline": "Realistic timeline estimate",
   "team": "Recommended team composition",
-  "outcomes": ["Outcome 1", "Outcome 2", ...] (4-6 expected outcomes),
-  "investment": "Estimated cost range"
+  "outcomes": ["Outcome 1", "Outcome 2", ...] (4-6 expected outcomes)
 }
 
 Make it specific to their industry and challenge. Be realistic and professional. Focus on PILON Qubit's strengths: AI & Product Acceleration, Security & Reliability, and GTM & Analytics.`;

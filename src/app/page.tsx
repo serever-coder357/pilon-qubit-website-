@@ -5,6 +5,8 @@ import AIChatbot from './components/AIChatbot';
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
 import PersonalizationSelector from './components/PersonalizationSelector';
+import AboutCards from './components/AboutCards';
+import ServiceCards from './components/ServiceCards';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
 import { initAnalytics, page } from '@/lib/analytics';
@@ -68,26 +70,27 @@ export default function Home(){
       )}
 
       <header className="fixed top-0 w-full bg-opacity-80 bg-[#0A0A2A] z-10 backdrop-blur-sm border-b border-cyan-900">
-        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center" aria-label="Primary">
-          <div className="flex items-center space-x-3">
-            <div className="relative w-10 h-10 rounded-md overflow-hidden border border-cyan-900/50">
-              <Image src="/pilonqubit.jpg" fill alt="PILON Qubit Ventures mark" sizes="40px" />
+        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center" aria-label="Primary navigation">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden border border-cyan-900/50">
+              <Image src="/pilonqubit.jpg" fill alt="PILON Qubit Ventures - AI and Frontier Technology Consulting" sizes="40px" priority />
             </div>
-            <h1 className="text-2xl font-bold text-cyan-400 tracking-tight">PILON Qubit Ventures</h1>
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-cyan-400 tracking-tight">PILON Qubit</h1>
           </div>
-          <ul className="flex space-x-6 text-sm md:text-base">
-            <li><a href="#services">Services</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
+          <ul className="flex space-x-3 sm:space-x-4 md:space-x-6 text-xs sm:text-sm md:text-base" role="menubar">
+            <li role="none"><a href="#services" role="menuitem" aria-label="View our services" className="hover:text-cyan-400 transition-colors">Services</a></li>
+            <li role="none"><a href="/case-studies" role="menuitem" aria-label="View case studies" className="hover:text-cyan-400 transition-colors">Cases</a></li>
+            <li role="none"><a href="#about" role="menuitem" aria-label="Learn about us" className="hover:text-cyan-400 transition-colors">About</a></li>
+            <li role="none"><a href="#contact" role="menuitem" aria-label="Contact us" className="hover:text-cyan-400 transition-colors">Contact</a></li>
           </ul>
         </nav>
       </header>
 
       <main id="main" className="pt-24">
-        <section className="relative overflow-hidden">
+        <section className="relative overflow-hidden" aria-labelledby="hero-heading">
           <div className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
+              <h2 id="hero-heading" className="text-4xl md:text-5xl font-extrabold leading-tight">
                 {personalizedContent.heroTitle.split(' ').map((word, i, arr) => 
                   i === arr.length - 1 ? <span key={i} className="text-cyan-400">{word}</span> : word + ' '
                 )}
@@ -99,15 +102,25 @@ export default function Home(){
               </div>
             </div>
             <div className="relative">
-              <div className="relative w-full aspect-[3/4] md:aspect-[4/5] rounded-2xl overflow-hidden border border-cyan-400/20 shadow-xl">
-                <Image
-                  src="/pilonqubit.jpg"
-                  alt="PILON Qubit Ventures — brand poster"
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  className="object-cover"
-                />
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-cyan-400/20 shadow-xl">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  poster="/ai-consulting-hero.jpg"
+                >
+                  <source src="/pqv-new.mp4" type="video/mp4" />
+                  <Image
+                    src="/ai-consulting-hero.jpg"
+                    alt="PILON Qubit Ventures AI Consulting Services"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 600px"
+                    className="object-cover"
+                  />
+                </video>
               </div>
               {!prefersReducedMotion && (
                 <motion.div
@@ -122,27 +135,40 @@ export default function Home(){
           </div>
         </section>
 
-        <section id="services" className="py-20 border-t border-cyan-900/40 bg-white/5">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-3xl font-bold mb-4 text-center">From Vision to Velocity</h3>
-            <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">End-to-end capabilities to accelerate your journey from idea to impact. Our solutions are designed for speed, scale, and strategic advantage.</p>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="p-6 rounded-2xl border border-cyan-900/40 bg-[#0E1030]/60 backdrop-blur hover:border-cyan-500/40 transition-all">
-                <div className="font-semibold mb-3 text-lg text-cyan-400">Frontier AI & Product Acceleration</div>
-                <div className="text-cyan-100/80 mb-4">Build and deploy cutting-edge AI solutions that give you a competitive edge. From LLM integrations and agentic workflows to scalable infrastructure, we deliver production-ready systems that perform.</div>
-                <div className="text-sm text-cyan-100/60">10x faster development • 50% cost reduction</div>
-              </div>
-              <div className="p-6 rounded-2xl border border-cyan-900/40 bg-[#0E1030]/60 backdrop-blur hover:border-cyan-500/40 transition-all">
-                <div className="font-semibold mb-3 text-lg text-cyan-400">Strategic Security & Reliability</div>
-                <div className="text-cyan-100/80 mb-4">Embed security and resilience into your products from day one. Our approach combines threat modeling, privacy-by-design principles, and robust QA automation to protect your assets and build user trust.</div>
-                <div className="text-sm text-cyan-100/60">99.99% uptime • Zero-trust security</div>
-              </div>
-              <div className="p-6 rounded-2xl border border-cyan-900/40 bg-[#0E1030]/60 backdrop-blur hover:border-cyan-500/40 transition-all">
-                <div className="font-semibold mb-3 text-lg text-cyan-400">Growth & GTM Intelligence</div>
-                <div className="text-cyan-100/80 mb-4">Find product-market fit and scale your user base with data-driven precision. From instrumentation and funnel analysis to A/B testing and conversion optimization, we build the engine for sustainable growth.</div>
-                <div className="text-sm text-cyan-100/60">40% more users • 30% better retention</div>
-              </div>
+        {/* Video Section */}
+        <section className="py-8 bg-gradient-to-b from-[#0A0A2A] to-[#1A1A4A]">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                See <span className="text-cyan-400">PILON Qubit</span> in Action
+              </h2>
+              <p className="text-cyan-100/80 text-sm md:text-base max-w-2xl mx-auto">
+                Discover how we transform frontier technology into production-ready solutions
+              </p>
             </div>
+            <div className="relative rounded-xl overflow-hidden border border-cyan-900/50 shadow-2xl bg-black aspect-video">
+              <video 
+                className="w-full h-full object-cover"
+                width="1920"
+                height="1080"
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+              >
+                <source src="/pilonqubitvideo.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        </section>
+
+        <section id="services" className="py-20 border-t border-cyan-900/40 bg-white/5" aria-labelledby="services-heading">
+          <div className="max-w-7xl mx-auto px-6">
+            <h3 id="services-heading" className="text-3xl font-bold mb-4 text-center">From Vision to Velocity</h3>
+            <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">End-to-end capabilities to accelerate your journey from idea to impact. Our solutions are designed for speed, scale, and strategic advantage.</p>
+            <ServiceCards />
           </div>
         </section>
 
@@ -156,15 +182,11 @@ export default function Home(){
           </div>
         </section>
 
-        <section id="about" className="py-20 border-t border-cyan-900/40">
+        <section id="about" className="py-20 border-t border-cyan-900/40" aria-labelledby="about-heading">
           <div className="max-w-5xl mx-auto px-6">
-            <h3 className="text-3xl font-bold mb-6 text-center">Your Unfair Advantage in Frontier Tech</h3>
+            <h3 id="about-heading" className="text-3xl font-bold mb-6 text-center">Your Unfair Advantage in Frontier Tech</h3>
             <p className="text-cyan-100/80 mb-10 max-w-3xl mx-auto text-center">Born from the intersection of venture capital and hands-on engineering, PILON Qubit brings a unique perspective to frontier technology. Our team has scaled products at leading startups and built critical systems at major tech companies. We understand both the strategic vision needed to raise capital and the technical execution required to ship products that users love. This dual expertise means we don&apos;t just advise—we build alongside you, ensuring every recommendation is grounded in real-world experience and designed for sustainable growth.</p>
-            <div className="grid md:grid-cols-4 gap-6">
-              {[{k:'Venture Insight',v:'Build for funding'},{k:'Operator Grit',v:'Ship with speed'},{k:'Technical Excellence',v:'Scale to millions'},{k:'Speed & Agility',v:'Weeks not months'}].map(i=> (
-                <div key={i.k} className="p-6 rounded-2xl border border-cyan-900/40 bg-white/5 hover:border-cyan-500/40 transition-all"><div className="text-cyan-400 text-sm mb-2">{i.k}</div><div className="text-lg font-semibold">{i.v}</div></div>
-              ))}
-            </div>
+            <AboutCards />
           </div>
         </section>
 

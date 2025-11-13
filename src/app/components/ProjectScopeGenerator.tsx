@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -16,7 +16,6 @@ interface ProjectScope {
   timeline: string;
   team: string;
   outcomes: string[];
-  investment: string;
 }
 
 const INITIAL_QUESTIONS = [
@@ -55,6 +54,14 @@ export default function ProjectScopeGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [projectScope, setProjectScope] = useState<ProjectScope | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleStart = () => {
     setIsOpen(true);
@@ -109,7 +116,7 @@ export default function ProjectScopeGenerator() {
         setProjectScope(data.scope);
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: "Great! I've generated your project scope. You can review it below and download it as a PDF."
+          content: "Excellent! I've created a comprehensive project scope based on your needs. This is just a starting point - we'll work together to refine it and adjust everything to fit your specific budget and timeline. Download the PDF below or click 'Discuss with Team' to continue the conversation!"
         }]);
       } else {
         throw new Error('Failed to generate scope');
@@ -175,14 +182,15 @@ export default function ProjectScopeGenerator() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="my-12 max-w-4xl mx-auto"
-    >
-      <div className="bg-gradient-to-br from-[#0a0a2a] to-[#1a1a4a] rounded-2xl border border-cyan-900/50 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-4xl"
+      >
+        <div className="bg-gradient-to-br from-[#0a0a2a] to-[#1a1a4a] rounded-2xl border border-cyan-900/50 shadow-2xl overflow-hidden flex flex-col" style={{maxHeight: '85vh'}}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-6">
+        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4" style={{flexShrink: 0}}>
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-2xl font-bold text-white">AI Project Scope Generator</h3>
@@ -219,7 +227,7 @@ export default function ProjectScopeGenerator() {
         </div>
 
         {/* Messages */}
-        <div className="p-6 max-h-96 overflow-y-auto space-y-4">
+        <div ref={messagesContainerRef} className="p-4 space-y-4" style={{flex: 1, overflowY: 'auto', minHeight: 0}}>
           <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
@@ -260,6 +268,7 @@ export default function ProjectScopeGenerator() {
               </div>
             </motion.div>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Project Scope Display */}
@@ -267,7 +276,8 @@ export default function ProjectScopeGenerator() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-6 bg-[#0a0a2a] border-t border-cyan-900/50"
+            className="p-6 bg-[#0a0a2a] border-t border-cyan-900/50 overflow-y-auto"
+            style={{flex: 1, minHeight: 0}}
           >
             <h4 className="text-xl font-bold text-cyan-400 mb-4">📋 Your Project Scope</h4>
             
@@ -302,7 +312,7 @@ export default function ProjectScopeGenerator() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h5 className="font-semibold text-cyan-300 mb-2">Timeline</h5>
                   <p>{projectScope.timeline}</p>
@@ -310,10 +320,6 @@ export default function ProjectScopeGenerator() {
                 <div>
                   <h5 className="font-semibold text-cyan-300 mb-2">Team</h5>
                   <p>{projectScope.team}</p>
-                </div>
-                <div>
-                  <h5 className="font-semibold text-cyan-300 mb-2">Investment</h5>
-                  <p>{projectScope.investment}</p>
                 </div>
               </div>
 
@@ -336,11 +342,14 @@ export default function ProjectScopeGenerator() {
               </button>
               <button
                 onClick={() => {
-                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                  setIsOpen(false);
+                  setTimeout(() => {
+                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 300);
                 }}
                 className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
               >
-                💬 Discuss with Team
+                💬 Let&apos;s Chat!
               </button>
               <button
                 onClick={handleReset}
@@ -354,7 +363,7 @@ export default function ProjectScopeGenerator() {
 
         {/* Input Area */}
         {!projectScope && !isGenerating && (
-          <div className="p-6 bg-[#0a0a2a] border-t border-cyan-900/50">
+          <div className="p-4 bg-[#0a0a2a] border-t border-cyan-900/50" style={{flexShrink: 0}}>
             <div className="flex gap-3">
               <input
                 type="text"
@@ -367,14 +376,15 @@ export default function ProjectScopeGenerator() {
               <button
                 onClick={handleSubmitAnswer}
                 disabled={!input.trim()}
-                className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-semibold hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-4 py-3 bg-cyan-600 text-white rounded-lg font-semibold hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
               >
-                Send
+                ➤
               </button>
             </div>
           </div>
         )}
-      </div>
-    </motion.div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
