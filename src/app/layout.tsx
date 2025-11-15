@@ -67,6 +67,8 @@ export const metadata: Metadata = {
 };
 
 import StructuredData from './structured-data';
+import GHLVoiceWidget from './components/GHLVoiceWidget';
+import GHLChatWidget from './components/GHLChatWidget';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -76,6 +78,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={inter.className}>
         {children}
+        <GHLVoiceWidget />
+        <GHLChatWidget />
       </body>
     </html>
   );
