@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ServicesPage() {
-  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | null>(null);
+  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | 'webdev' | null>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
@@ -62,7 +62,7 @@ export default function ServicesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
             >
               {/* Marketing Automation Card */}
               <motion.div
@@ -159,6 +159,54 @@ export default function ServicesPage() {
                   View Services →
                 </button>
               </motion.div>
+
+              {/* Web Development Card */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('webdev')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">💻</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors">
+                  Web Development
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Custom websites and web applications built with cutting-edge technology. Fast, responsive, and AI-powered.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Custom Websites</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Web Applications</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Landing Pages</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>AI Integration</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Performance Optimized</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Mobile Responsive</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <div className="text-purple-400 font-bold text-xl mb-2">Custom Quotes</div>
+                  <div className="text-cyan-100/60 text-sm">Tailored pricing for your project</div>
+                </div>
+                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-400 hover:to-pink-500 transition-all">
+                  View Details →
+                </button>
+              </motion.div>
             </motion.div>
           ) : (
             <motion.div
@@ -179,8 +227,10 @@ export default function ServicesPage() {
 
               {selectedService === 'marketing' ? (
                 <MarketingAutomationDetails />
-              ) : (
+              ) : selectedService === 'consulting' ? (
                 <FrontierAIConsultingDetails />
+              ) : (
+                <WebDevelopmentDetails />
               )}
             </motion.div>
           )}
@@ -462,4 +512,192 @@ function FrontierAIConsultingDetails() {
     </div>
   );
 }
+function WebDevelopmentDetails() {
+  const services = [
+    {
+      title: "Custom Websites",
+      description: "Bespoke websites tailored to your brand and business goals",
+      features: [
+        "Modern, responsive design",
+        "SEO optimized",
+        "Lightning-fast performance",
+        "Content management system",
+        "Analytics integration",
+        "Mobile-first approach"
+      ]
+    },
+    {
+      title: "Web Applications",
+      description: "Powerful web apps built with cutting-edge frameworks",
+      features: [
+        "React, Next.js, Node.js",
+        "Real-time functionality",
+        "Database integration",
+        "User authentication",
+        "API development",
+        "Cloud deployment"
+      ]
+    },
+    {
+      title: "Landing Pages",
+      description: "High-converting pages designed to capture leads",
+      features: [
+        "Conversion-optimized design",
+        "A/B testing ready",
+        "Fast load times (<2s)",
+        "Lead capture forms",
+        "Analytics tracking",
+        "Mobile responsive"
+      ]
+    },
+    {
+      title: "AI-Powered Features",
+      description: "Integrate AI capabilities into your website",
+      features: [
+        "AI chatbots",
+        "Content generation",
+        "Personalization",
+        "Smart recommendations",
+        "Voice interfaces",
+        "Image recognition"
+      ]
+    },
+    {
+      title: "Performance & Security",
+      description: "Enterprise-grade performance and security",
+      features: [
+        "95+ Lighthouse scores",
+        "SSL/HTTPS encryption",
+        "DDoS protection",
+        "Regular backups",
+        "Uptime monitoring",
+        "Security audits"
+      ]
+    },
+    {
+      title: "Ongoing Support",
+      description: "Continuous maintenance and updates",
+      features: [
+        "Bug fixes & updates",
+        "Performance optimization",
+        "Content updates",
+        "Feature additions",
+        "Technical support",
+        "Monthly reports"
+      ]
+    }
+  ];
+
+  return (
+    <div>
+      <h2 className="text-4xl font-bold text-white mb-4">Web Development</h2>
+      <p className="text-cyan-100/70 text-lg mb-12 max-w-3xl">
+        Custom websites and web applications built with cutting-edge technology. Every project is tailored to your specific needs with modern frameworks, AI integration, and performance optimization.
+      </p>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {services.map((service) => (
+          <div
+            key={service.title}
+            className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/30 rounded-xl p-6 hover:border-purple-400 transition-all"
+          >
+            <h4 className="text-xl font-bold text-white mb-2">{service.title}</h4>
+            <p className="text-cyan-100/70 mb-4 text-sm">{service.description}</p>
+            <ul className="space-y-2">
+              {service.features.map((feature, idx) => (
+                <li key={idx} className="flex items-center gap-2 text-cyan-100/80 text-sm">
+                  <span className="text-purple-400">✓</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {/* Technology Stack */}
+      <div className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/30 rounded-xl p-8 mb-12">
+        <h3 className="text-2xl font-bold text-white mb-6">Technology Stack</h3>
+        <div className="grid md:grid-cols-4 gap-6">
+          <div>
+            <h4 className="text-purple-400 font-semibold mb-3">Frontend</h4>
+            <ul className="space-y-2 text-cyan-100/70 text-sm">
+              <li>• React 19</li>
+              <li>• Next.js 15</li>
+              <li>• TypeScript</li>
+              <li>• Tailwind CSS</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-purple-400 font-semibold mb-3">Backend</h4>
+            <ul className="space-y-2 text-cyan-100/70 text-sm">
+              <li>• Node.js</li>
+              <li>• Express</li>
+              <li>• tRPC</li>
+              <li>• PostgreSQL</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-purple-400 font-semibold mb-3">AI Integration</h4>
+            <ul className="space-y-2 text-cyan-100/70 text-sm">
+              <li>• OpenAI GPT</li>
+              <li>• Claude AI</li>
+              <li>• Custom models</li>
+              <li>• Vector databases</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-purple-400 font-semibold mb-3">Deployment</h4>
+            <ul className="space-y-2 text-cyan-100/70 text-sm">
+              <li>• Vercel</li>
+              <li>• AWS</li>
+              <li>• CI/CD pipelines</li>
+              <li>• Auto-scaling</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/50 rounded-2xl p-8 mb-12">
+        <h3 className="text-2xl font-bold text-white mb-4 text-center">Custom Pricing</h3>
+        <p className="text-cyan-100/70 text-center mb-6">
+          Every project is unique. We provide tailored quotes based on your specific requirements, timeline, and features.
+        </p>
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="text-3xl mb-2">💰</div>
+            <h4 className="text-purple-400 font-semibold mb-2">Transparent Pricing</h4>
+            <p className="text-cyan-100/70 text-sm">No hidden fees, clear breakdown of costs</p>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl mb-2">⏱️</div>
+            <h4 className="text-purple-400 font-semibold mb-2">Flexible Timeline</h4>
+            <p className="text-cyan-100/70 text-sm">Rush projects available, standard 2-8 weeks</p>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl mb-2">🔄</div>
+            <h4 className="text-purple-400 font-semibold mb-2">Iterative Process</h4>
+            <p className="text-cyan-100/70 text-sm">Regular updates, unlimited revisions</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact CTA */}
+      <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/50 rounded-2xl p-8 text-center">
+        <h3 className="text-2xl font-bold text-white mb-4">Ready to Build Your Website?</h3>
+        <p className="text-cyan-100/70 mb-6">
+          Let&apos;s discuss your project and create a custom quote. Free consultation, no obligations.
+        </p>
+        <Link
+          href="/#contact"
+          className="inline-block px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-400 hover:to-pink-500 transition-all"
+        >
+          Get a Quote
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // Force deployment Sat Nov 15 14:56:19 EST 2025
