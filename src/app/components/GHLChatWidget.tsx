@@ -140,7 +140,7 @@ export default function GHLChatWidget() {
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 left-6 z-50 w-96 h-[600px] bg-gradient-to-br from-[#0A0A2A] to-[#1A1A4A] border border-blue-500/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed bottom-24 left-6 z-[9999] w-96 h-[600px] max-h-[calc(100vh-120px)] bg-gradient-to-br from-[#0A0A2A] to-[#1A1A4A] border border-blue-500/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

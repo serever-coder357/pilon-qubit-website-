@@ -43,6 +43,9 @@ export default function ServicesPage() {
             <video
               className="w-full"
               controls
+              loop
+              autoPlay
+              muted
               poster="/ai-consulting-hero.webp"
             >
               <source src="/pqv-new.mp4" type="video/mp4" />
@@ -102,7 +105,7 @@ export default function ServicesPage() {
                 </ul>
                 <div className="text-center">
                   <div className="text-cyan-400 font-bold text-xl mb-2">Starting at $299/mo</div>
-                  <div className="text-cyan-100/60 text-sm">Month-to-month • No contracts • Setup included</div>
+                  <div className="text-cyan-100/60 text-sm">Month-to-month • No contracts • Setup determined case by case</div>
                 </div>
                 <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all">
                   View Pricing & Features →
@@ -261,7 +264,7 @@ function MarketingAutomationDetails() {
     <div>
       <h2 className="text-4xl font-bold text-white mb-4">AI Marketing Automation</h2>
       <p className="text-cyan-100/70 text-lg mb-12 max-w-3xl">
-        Save $3K/mo on marketing staff with our complete AI-powered automation platform. 24/7 operation, no contracts, setup included.
+        Save $3K/mo on marketing staff with our complete AI-powered automation platform. 24/7 operation, no contracts, setup determined case by case.
       </p>
 
       {/* Pricing Tiers */}
@@ -320,6 +323,20 @@ function MarketingAutomationDetails() {
           <h4 className="text-xl font-bold text-white mb-2">No Contracts</h4>
           <p className="text-cyan-100/70">Month-to-month pricing, cancel anytime</p>
         </div>
+      </div>
+
+      {/* Contact Us Section */}
+      <div className="mt-12 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/50 rounded-2xl p-8 text-center">
+        <h3 className="text-2xl font-bold text-white mb-4">Prefer to Talk to a Human?</h3>
+        <p className="text-cyan-100/70 mb-6">
+          We understand that choosing the right solution is important. Our team is here to answer your questions and help you find the perfect fit for your business.
+        </p>
+        <Link
+          href="/#contact"
+          className="inline-block px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all"
+        >
+          Contact Us
+        </Link>
       </div>
     </div>
   );
