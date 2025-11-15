@@ -433,7 +433,7 @@ function FrontierAIConsultingDetails() {
       <div className="mt-12 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/50 rounded-2xl p-8 text-center">
         <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Business with AI?</h3>
         <p className="text-cyan-100/70 mb-6">
-          Let's discuss how our services can help you achieve your goals. Book a free consultation today.
+          Let&apos;s discuss how our services can help you achieve your goals. Book a free consultation today.
         </p>
         <Link
           href="/#contact"
