@@ -445,3 +445,4 @@ function FrontierAIConsultingDetails() {
     </div>
   );
 }
+// Force deployment Sat Nov 15 14:56:19 EST 2025
