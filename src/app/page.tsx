@@ -1,204 +1,465 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import AIChatbot from './components/AIChatbot';
-import SmartContactForm from './components/SmartContactForm';
-import ProjectScopeGenerator from './components/ProjectScopeGenerator';
-import PersonalizationSelector from './components/PersonalizationSelector';
-import AboutCards from './components/AboutCards';
-import ServiceCards from './components/ServiceCards';
-import Image from 'next/image';
-import { motion, useReducedMotion } from 'framer-motion';
-import { initAnalytics, page } from '@/lib/analytics';
-import { setConsentState } from '@/lib/consent';
-import { detectVisitorType, getPersonalizedContent, trackPersonalization, type VisitorType } from '@/lib/personalization';
+import { useState } from 'react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
-function Button(props: any){ return <button {...props} className={(props.className||'') + ' px-4 py-2 rounded bg-cyan-500 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400'} /> }
-function Input(props: any){ return <input {...props} className={(props.className||'') + ' px-3 py-2 rounded text-black'}/>} 
-function Textarea(props: any){ return <textarea {...props} className={(props.className||'') + ' px-3 py-2 rounded text-black'}/>} 
-
-export default function Home(){
-  const [consented, setConsented] = useState<boolean>(()=> typeof window!=='undefined' && localStorage.getItem('pqv-consent')==='accept');
-  const [visitorType, setVisitorTypeState] = useState<VisitorType>('unknown');
-  const [personalizedContent, setPersonalizedContent] = useState(getPersonalizedContent('unknown'));
-  const prefersReducedMotion = useReducedMotion();
-
-  useEffect(()=>{ if(consented){ initAnalytics(); page(); } },[consented]);
-
-  useEffect(() => {
-    // Detect visitor type and load personalized content
-    const detected = detectVisitorType();
-    setVisitorTypeState(detected);
-    setPersonalizedContent(getPersonalizedContent(detected));
-    trackPersonalization(detected, 'page_view');
-  }, []);
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>){
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const payload = {
-      name: String(fd.get('name')||''),
-      email: String(fd.get('email')||''),
-      company: String(fd.get('company')||''),
-      message: String(fd.get('message')||''),
-      turnstileToken: undefined,
-    };
-    const res = await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if(!res.ok || !data.ok){ alert(data.error || 'Something went wrong.'); return; }
-    (window as any).analytics?.track?.('contact_submitted_success');
-    (e.currentTarget as HTMLFormElement).reset();
-    alert("Thanks! We'll be in touch shortly.");
-  }
+export default function ServicesPage() {
+  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | null>(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0A0A2A] to-[#1A1A4A] text-white">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-cyan-700 px-3 py-2 rounded">Skip to content</a>
-
-      {(!consented) && (
-        <div className="fixed inset-x-0 bottom-0 z-50">
-          <div className="mx-auto max-w-5xl m-4 rounded-2xl border border-cyan-900/50 bg-[#0a0a2a]/95 p-4 shadow-xl">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <p className="text-sm text-cyan-100/80">We use cookies/tech for analytics and advertising. By accepting, you allow measurement and conversion APIs.</p>
-              <div className="flex gap-2">
-                <Button onClick={()=>{ localStorage.setItem('pqv-consent','decline'); }}>Decline</Button>
-                <Button onClick={()=>{ localStorage.setItem('pqv-consent','accept'); setConsented(true); setConsentState('accept'); initAnalytics(); page(); }}>Accept</Button>
-              </div>
+    <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
+      {/* Header */}
+      <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xl">PQ</span>
             </div>
-          </div>
+            <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
+          </Link>
+          <nav className="flex gap-8">
+            <Link href="/services" className="text-cyan-400 font-semibold">Services</Link>
+            <Link href="/#about" className="text-white/80 hover:text-white transition-colors">About</Link>
+            <Link href="/#contact" className="text-white/80 hover:text-white transition-colors">Contact</Link>
+          </nav>
         </div>
-      )}
-
-      <header className="fixed top-0 w-full bg-opacity-80 bg-[#0A0A2A] z-10 backdrop-blur-sm border-b border-cyan-900">
-        <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center" aria-label="Primary navigation">
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden border border-cyan-900/50">
-              <Image src="/pilonqubit.webp" fill alt="PILON Qubit Ventures - AI and Frontier Technology Consulting" sizes="40px" priority />
-            </div>
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-cyan-400 tracking-tight">PILON Qubit</h1>
-          </div>
-          <ul className="flex space-x-3 sm:space-x-4 md:space-x-6 text-xs sm:text-sm md:text-base" role="menubar">
-            <li role="none"><a href="#services" role="menuitem" aria-label="View our services" className="hover:text-cyan-400 transition-colors">Services</a></li>
-            <li role="none"><a href="/case-studies" role="menuitem" aria-label="View case studies" className="hover:text-cyan-400 transition-colors">Cases</a></li>
-            <li role="none"><a href="#about" role="menuitem" aria-label="Learn about us" className="hover:text-cyan-400 transition-colors">About</a></li>
-            <li role="none"><a href="#contact" role="menuitem" aria-label="Contact us" className="hover:text-cyan-400 transition-colors">Contact</a></li>
-          </ul>
-        </nav>
       </header>
 
-      <main id="main" className="pt-24">
-        <section className="relative overflow-hidden" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 id="hero-heading" className="text-4xl md:text-5xl font-extrabold leading-tight">
-                {personalizedContent.heroTitle.split(' ').map((word, i, arr) => 
-                  i === arr.length - 1 ? <span key={i} className="text-cyan-400">{word}</span> : word + ' '
-                )}
-              </h2>
-              <p className="mt-4 text-cyan-100/80 max-w-prose">{personalizedContent.heroSubtitle}</p>
-              <div className="mt-8 flex gap-3">
-                <Button onClick={()=>document.getElementById('contact')?.scrollIntoView({behavior:'smooth'})}>{personalizedContent.ctaPrimary}</Button>
-                <Button onClick={()=>document.getElementById('about')?.scrollIntoView({behavior:'smooth'})}>{personalizedContent.ctaSecondary}</Button>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-cyan-400/20 shadow-xl">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                  poster="/ai-consulting-hero.webp"
-                >
-                  <source src="/pqv-new.mp4" type="video/mp4" />
-                  <Image
-                    src="/ai-consulting-hero.webp"
-                    alt="PILON Qubit Ventures AI Consulting Services"
-                    fill
-                    priority
-                    sizes="(max-width: 768px) 100vw, 600px"
-                    className="object-cover"
-                  />
-                </video>
-              </div>
-              {!prefersReducedMotion && (
-                <motion.div
-                  aria-hidden
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.25 }}
-                  transition={{ duration: 1.2, delay: 0.3 }}
-                  className="absolute -inset-6 -z-10 rounded-3xl bg-cyan-500 blur-3xl"
-                />
-              )}
-            </div>
-          </div>
-        </section>
-
+      <div className="container mx-auto px-6 py-16">
         {/* Video Section */}
-        <section className="py-8 bg-gradient-to-b from-[#0A0A2A] to-[#1A1A4A]">
-          <div className="max-w-4xl mx-auto px-6">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                See <span className="text-cyan-400">PILON Qubit</span> in Action
-              </h2>
-              <p className="text-cyan-100/80 text-sm md:text-base max-w-2xl mx-auto">
-                Discover how we transform frontier technology into production-ready solutions
-              </p>
-            </div>
-            <div className="relative rounded-xl overflow-hidden border border-cyan-900/50 shadow-2xl bg-black aspect-video">
-              <video 
-                className="w-full h-full object-cover"
-                width="1920"
-                height="1080"
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16 text-center"
+        >
+          <h2 className="text-4xl font-bold text-white mb-4">
+            See <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PILON Qubit</span> in Action
+          </h2>
+          <p className="text-cyan-100/70 text-lg mb-8">
+            Discover how we transform frontier technology into production-ready solutions
+          </p>
+          <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-cyan-500/30">
+            <video
+              className="w-full"
+              controls
+              loop
+              autoPlay
+              muted
+              poster="/ai-consulting-hero.webp"
+            >
+              <source src="/pqv-new.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </motion.div>
+
+        {/* Two-Column Service Selection */}
+        <AnimatePresence mode="wait">
+          {!selectedService ? (
+            <motion.div
+              key="selection"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+            >
+              {/* Marketing Automation Card */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('marketing')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/50 rounded-2xl p-8 cursor-pointer hover:border-cyan-400 transition-all group"
               >
-                <source src="/pilonqubitvideo.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-        </section>
+                <div className="text-5xl mb-4">🤖</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors">
+                  AI Marketing Automation
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-cyan-400">✓</span>
+                    <span>AI Voice Assistant (24/7 phone)</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-cyan-400">✓</span>
+                    <span>Conversation AI (chat + SMS)</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-cyan-400">✓</span>
+                    <span>Review Management</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-cyan-400">✓</span>
+                    <span>Content Generation</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-cyan-400">✓</span>
+                    <span>Funnel Builder</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-cyan-400">✓</span>
+                    <span>Workflow Automation</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <div className="text-cyan-400 font-bold text-xl mb-2">Starting at $299/mo</div>
+                  <div className="text-cyan-100/60 text-sm">Month-to-month • No contracts • Setup determined case by case</div>
+                </div>
+                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all">
+                  View Pricing & Features →
+                </button>
+              </motion.div>
 
-        <section id="services" className="py-20 border-t border-cyan-900/40 bg-white/5" aria-labelledby="services-heading">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 id="services-heading" className="text-3xl font-bold mb-4 text-center">From Vision to Velocity</h3>
-            <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">End-to-end capabilities to accelerate your journey from idea to impact. Our solutions are designed for speed, scale, and strategic advantage.</p>
-            <ServiceCards />
-          </div>
-        </section>
+              {/* Frontier AI Consulting Card */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('consulting')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/50 rounded-2xl p-8 cursor-pointer hover:border-blue-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">🚀</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
+                  Frontier AI Consulting
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>AI Strategy & Assessment</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>Implementation & Development</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>Security & Governance</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>Growth & Analytics</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>10x faster development</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>50% cost reduction</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <div className="text-blue-400 font-bold text-xl mb-2">Custom Pricing</div>
+                  <div className="text-cyan-100/60 text-sm">Contact us for a tailored quote</div>
+                </div>
+                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all">
+                  View Services →
+                </button>
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <button
+                onClick={() => setSelectedService(null)}
+                className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Services
+              </button>
 
-        <section id="scope-generator" className="py-20 border-t border-cyan-900/40">
-          <div className="max-w-7xl mx-auto px-6">
-            <h3 className="text-3xl font-bold mb-6 text-center">Define Your Project</h3>
-            <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">
-              Not sure where to start? Our AI-powered project scope generator will help you define your requirements and get a comprehensive project brief in minutes.
-            </p>
-            <ProjectScopeGenerator />
-          </div>
-        </section>
-
-        <section id="about" className="py-20 border-t border-cyan-900/40" aria-labelledby="about-heading">
-          <div className="max-w-5xl mx-auto px-6">
-            <h3 id="about-heading" className="text-3xl font-bold mb-6 text-center">Your Unfair Advantage in Frontier Tech</h3>
-            <p className="text-cyan-100/80 mb-10 max-w-3xl mx-auto text-center">Born from the intersection of venture capital and hands-on engineering, PILON Qubit brings a unique perspective to frontier technology. Our team has scaled products at leading startups and built critical systems at major tech companies. We understand both the strategic vision needed to raise capital and the technical execution required to ship products that users love. This dual expertise means we don&apos;t just advise—we build alongside you, ensuring every recommendation is grounded in real-world experience and designed for sustainable growth.</p>
-            <AboutCards />
-          </div>
-        </section>
-
-        <section id="contact" className="py-20 border-t border-cyan-900/40 bg-white/5">
-          <SmartContactForm />
-        </section>
-      </main>
-
-      <footer className="border-t border-cyan-900/40 py-8 text-center text-cyan-100/60">© {new Date().getFullYear()} PILON Qubit Ventures — All rights reserved.</footer>
-      
-      <AIChatbot />
-      <PersonalizationSelector />
+              {selectedService === 'marketing' ? (
+                <MarketingAutomationDetails />
+              ) : (
+                <FrontierAIConsultingDetails />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
+
+function MarketingAutomationDetails() {
+  const tiers = [
+    {
+      name: 'Starter',
+      price: '$299',
+      description: 'Perfect for small businesses getting started with AI automation',
+      features: [
+        'Website chatbot (AI-powered)',
+        'Email marketing automation',
+        'Basic CRM & contact management',
+        'Landing page builder',
+        'Form builder',
+        'Email support',
+        '1 user included'
+      ],
+      cta: 'Get Started',
+      highlight: false
+    },
+    {
+      name: 'Growth',
+      price: '$599',
+      description: 'For growing businesses ready to scale with AI',
+      features: [
+        'Everything in Starter, plus:',
+        'AI phone assistant (24/7)',
+        'SMS marketing automation',
+        'Advanced funnel builder',
+        'Appointment scheduling',
+        'Reputation management',
+        'Priority support',
+        '3 users included'
+      ],
+      cta: 'Start Growing',
+      highlight: true
+    },
+    {
+      name: 'Pro',
+      price: '$999',
+      description: 'Full AI suite for established businesses',
+      features: [
+        'Everything in Growth, plus:',
+        'Full AI suite (voice, chat, SMS)',
+        'Advanced integrations',
+        'Custom workflows',
+        'Dedicated account manager',
+        '24/7 phone support',
+        '10 users included'
+      ],
+      cta: 'Go Pro',
+      highlight: false
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      description: 'Tailored solutions for large organizations',
+      features: [
+        'Everything in Pro, plus:',
+        'Custom AI model training',
+        'API access',
+        'Unlimited users',
+        'SLA guarantee',
+        'Dedicated infrastructure',
+        'Custom integrations',
+        'Strategic consulting'
+      ],
+      cta: 'Contact Sales',
+      highlight: false
+    }
+  ];
+
+  return (
+    <div>
+      <h2 className="text-4xl font-bold text-white mb-4">AI Marketing Automation</h2>
+      <p className="text-cyan-100/70 text-lg mb-12 max-w-3xl">
+        Save $3K/mo on marketing staff with our complete AI-powered automation platform. 24/7 operation, no contracts, setup determined case by case.
+      </p>
+
+      {/* Pricing Tiers */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        {tiers.map((tier) => (
+          <motion.div
+            key={tier.name}
+            whileHover={{ scale: 1.02 }}
+            className={`bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border rounded-2xl p-6 ${
+              tier.highlight ? 'border-cyan-400 ring-2 ring-cyan-400/50' : 'border-cyan-500/30'
+            }`}
+          >
+            {tier.highlight && (
+              <div className="text-cyan-400 text-sm font-semibold mb-2">MOST POPULAR</div>
+            )}
+            <h3 className="text-2xl font-bold text-white mb-2">{tier.name}</h3>
+            <div className="text-3xl font-bold text-cyan-400 mb-2">{tier.price}</div>
+            {tier.price !== 'Custom' && <div className="text-cyan-100/60 text-sm mb-4">per month</div>}
+            <p className="text-cyan-100/70 text-sm mb-6">{tier.description}</p>
+            <ul className="space-y-3 mb-6">
+              {tier.features.map((feature, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-cyan-100/80 text-sm">
+                  <span className="text-cyan-400 mt-0.5">✓</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/#contact"
+              className={`block w-full text-center px-4 py-3 rounded-lg font-semibold transition-all ${
+                tier.highlight
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              {tier.cta}
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Value Props */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/30 rounded-xl p-6">
+          <div className="text-3xl mb-3">💰</div>
+          <h4 className="text-xl font-bold text-white mb-2">Save $3K/mo</h4>
+          <p className="text-cyan-100/70">Replace expensive marketing staff with AI automation</p>
+        </div>
+        <div className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/30 rounded-xl p-6">
+          <div className="text-3xl mb-3">🤖</div>
+          <h4 className="text-xl font-bold text-white mb-2">24/7 Operation</h4>
+          <p className="text-cyan-100/70">AI never sleeps - capture leads around the clock</p>
+        </div>
+        <div className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/30 rounded-xl p-6">
+          <div className="text-3xl mb-3">🚀</div>
+          <h4 className="text-xl font-bold text-white mb-2">No Contracts</h4>
+          <p className="text-cyan-100/70">Month-to-month pricing, cancel anytime</p>
+        </div>
+      </div>
+
+      {/* Contact Us Section */}
+      <div className="mt-12 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/50 rounded-2xl p-8 text-center">
+        <h3 className="text-2xl font-bold text-white mb-4">Prefer to Talk to a Human?</h3>
+        <p className="text-cyan-100/70 mb-6">
+          We understand that choosing the right solution is important. Our team is here to answer your questions and help you find the perfect fit for your business.
+        </p>
+        <Link
+          href="/#contact"
+          className="inline-block px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all"
+        >
+          Contact Us
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function FrontierAIConsultingDetails() {
+  const services = [
+    {
+      category: "AI Strategy & Assessment",
+      icon: "🎯",
+      items: [
+        {
+          title: "AI Readiness Assessment",
+          description: "Comprehensive evaluation of your organization's AI maturity",
+          features: ["25-question assessment", "Real-time scoring", "Personalized recommendations"]
+        },
+        {
+          title: "AI Strategy Development",
+          description: "Create a comprehensive AI strategy aligned with business goals",
+          features: ["Strategic alignment", "Technology selection", "Resource planning"]
+        }
+      ]
+    },
+    {
+      category: "Implementation & Development",
+      icon: "🚀",
+      items: [
+        {
+          title: "Frontier AI & Product Acceleration",
+          description: "Build and deploy cutting-edge AI solutions",
+          features: ["10x faster development", "50% cost reduction", "Production-ready code"]
+        },
+        {
+          title: "Agentic AI Systems",
+          description: "Design and deploy autonomous AI agents",
+          features: ["Multi-agent orchestration", "Custom development", "Tool integration"]
+        }
+      ]
+    },
+    {
+      category: "Security & Governance",
+      icon: "🛡️",
+      items: [
+        {
+          title: "Strategic Security & Reliability",
+          description: "Embed security and resilience from day one",
+          features: ["99.99% uptime", "Zero-trust security", "Compliance frameworks"]
+        },
+        {
+          title: "AI Governance Framework",
+          description: "Build customized AI governance policies",
+          features: ["Policy templates", "Risk assessment", "Compliance checklists"]
+        }
+      ]
+    },
+    {
+      category: "Growth & Analytics",
+      icon: "📈",
+      items: [
+        {
+          title: "Growth & GTM Intelligence",
+          description: "Find product-market fit and scale user base",
+          features: ["40% more users", "30% better retention", "Conversion optimization"]
+        },
+        {
+          title: "AI Benchmarking Service",
+          description: "Compare capabilities against industry peers",
+          features: ["Industry benchmarks", "Gap analysis", "Trend tracking"]
+        }
+      ]
+    }
+  ];
+
+  return (
+    <div>
+      <h2 className="text-4xl font-bold text-white mb-4">Frontier AI Consulting</h2>
+      <p className="text-cyan-100/70 text-lg mb-12 max-w-3xl">
+        From strategy to deployment, we deliver end-to-end AI solutions that drive real business impact. 10x faster development, 50% cost reduction.
+      </p>
+
+      <div className="space-y-8">
+        {services.map((service) => (
+          <div key={service.category}>
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+              <span className="text-3xl">{service.icon}</span>
+              {service.category}
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              {service.items.map((item) => (
+                <div
+                  key={item.title}
+                  className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/30 rounded-xl p-6 hover:border-blue-400 transition-all"
+                >
+                  <h4 className="text-xl font-bold text-white mb-2">{item.title}</h4>
+                  <p className="text-cyan-100/70 mb-4">{item.description}</p>
+                  <ul className="space-y-2">
+                    {item.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-cyan-100/80 text-sm">
+                        <span className="text-blue-400">✓</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-12 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/50 rounded-2xl p-8 text-center">
+        <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Business with AI?</h3>
+        <p className="text-cyan-100/70 mb-6">
+          Let&apos;s discuss how our services can help you achieve your goals. Book a free consultation today.
+        </p>
+        <Link
+          href="/#contact"
+          className="inline-block px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all"
+        >
+          Contact Us
+        </Link>
+      </div>
+    </div>
+  );
+}
+// Force deployment Sat Nov 15 14:56:19 EST 2025
