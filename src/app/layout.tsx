@@ -68,7 +68,7 @@ export const metadata: Metadata = {
 
 import StructuredData from './structured-data';
 import GHLVoiceWidget from './components/GHLVoiceWidget';
-import GHLChatWidget from './components/GHLChatWidget';
+import Script from 'next/script';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -79,7 +79,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={inter.className}>
         {children}
         <GHLVoiceWidget />
-        <GHLChatWidget />
+        
+        {/* PILON Qubit AI Chat Widget - Embeddable */}
+        <Script 
+          src="https://3000-iasvrsgqjeisyxnlw8690-372ee70e.manusvm.computer/chat-widget.js" 
+          strategy="afterInteractive"
+        />
+        <Script id="pilon-chat-init" strategy="afterInteractive">
+          {`
+            window.PilonChatConfig = {
+              apiUrl: 'https://3000-iasvrsgqjeisyxnlw8690-372ee70e.manusvm.computer/api/trpc',
+              primaryColor: '#6366f1',
+              position: 'bottom-left',
+              companyName: 'PILON Qubit'
+            };
+            if (window.PilonChat) {
+              window.PilonChat.init(window.PilonChatConfig);
+            }
+          `}
+        </Script>
       </body>
     </html>
   );
