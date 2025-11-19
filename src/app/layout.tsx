@@ -61,9 +61,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'eHUgyjiXGuPVB1e730OgQ-Fz7CLwYh5Kkn4frJMQSpg',
-  },
 };
 
 import StructuredData from './structured-data';
