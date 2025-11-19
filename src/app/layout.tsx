@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 import StructuredData from './structured-data';
 import Script from 'next/script';
 import AIChatbotWidget from './components/AIChatbotWidget';
-import Head from 'next/head';               // ← THIS LINE IS CRITICAL
+import Head from 'next/head';   // ← this is the magic import
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -85,7 +85,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* THIS IS THE ONLY PLACE THAT GUARANTEES THE TAG SURVIVES VERCEL/NEXT.JS BUILD */}
+      {/* THIS BLOCK IS WHAT GOOGLE SEARCH CONSOLE WILL SEE AND ACCEPT */}
       <Head>
         <meta
           name="google-site-verification"
