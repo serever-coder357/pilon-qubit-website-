@@ -72,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="eHUgyjiXGuPVB1e730OgQ-Fz7CLwYh5Kkn4frJMQSpg" />
+        <meta name="google-site-verification" content="d437e54140a6321c" />
         <StructuredData />
         
         {/* Google Tag Manager */}
