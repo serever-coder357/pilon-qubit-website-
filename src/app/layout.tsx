@@ -107,25 +107,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {children}
         <GHLVoiceWidget />
-        
-        {/* PILON Qubit AI Chat Widget - Embeddable */}
-        <Script 
-          src="https://3000-iasvrsgqjeisyxnlw8690-372ee70e.manusvm.computer/chat-widget.js" 
-          strategy="afterInteractive"
-        />
-        <Script id="pilon-chat-init" strategy="afterInteractive">
-          {`
-            window.PilonChatConfig = {
-              apiUrl: 'https://3000-iasvrsgqjeisyxnlw8690-372ee70e.manusvm.computer/api/trpc',
-              primaryColor: '#6366f1',
-              position: 'bottom-left',
-              companyName: 'PILON Qubit'
-            };
-            if (window.PilonChat) {
-              window.PilonChat.init(window.PilonChatConfig);
-            }
-          `}
-        </Script>
       </body>
     </html>
   );
