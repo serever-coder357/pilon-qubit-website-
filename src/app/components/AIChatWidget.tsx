@@ -9,6 +9,7 @@ export default function AIChatWidget() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +25,11 @@ export default function AIChatWidget() {
         body: JSON.stringify({ name, contact, message }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         setSubmitted(true);
+        setError('');
         setTimeout(() => {
           setIsOpen(false);
           setSubmitted(false);
@@ -33,10 +37,12 @@ export default function AIChatWidget() {
           setContact('');
           setMessage('');
         }, 3000);
+      } else {
+        setError(data.error || 'Failed to send. Please try again or email us.');
       }
     } catch (error) {
       console.error('Submit error:', error);
-      alert('Failed to send. Please email us at hello@pilonqubitventures.com');
+      setError('Network error. Please email us at hello@pilonqubitventures.com');
     } finally {
       setIsSubmitting(false);
     }
@@ -136,6 +142,12 @@ export default function AIChatWidget() {
                     placeholder="How can we help?"
                   />
                 </div>
+
+                {error && (
+                  <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm">
+                    {error}
+                  </div>
+                )}
 
                 <button
                   type="submit"
