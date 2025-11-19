@@ -5,10 +5,10 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 const OWNER_PHONE = '+12108385034';
 
-async function sendSMS(to: string, message: string) {
+async function sendSMS(to: string, message: string): Promise<{ success: boolean; error?: string }> {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
     console.error('Twilio credentials not configured');
-    return false;
+    return { success: false, error: 'Twilio credentials not configured' };
   }
 
   try {
@@ -30,10 +30,16 @@ async function sendSMS(to: string, message: string) {
       }
     );
 
-    return response.ok;
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Twilio API error:', errorData);
+      return { success: false, error: errorData.message || 'Twilio API error' };
+    }
+
+    return { success: true };
   } catch (error) {
     console.error('Failed to send SMS:', error);
-    return false;
+    return { success: false, error: 'Network error' };
   }
 }
 
@@ -48,12 +54,12 @@ export async function POST(request: NextRequest) {
     // Send SMS notification
     const smsMessage = `🎯 New Lead from Website!\n\nName: ${name}\nContact: ${contact}\nMessage: ${message || 'No message'}\n\nFrom: pilonqubitventures.com`;
     
-    const success = await sendSMS(OWNER_PHONE, smsMessage);
+    const result = await sendSMS(OWNER_PHONE, smsMessage);
     
-    if (success) {
+    if (result.success) {
       return NextResponse.json({ success: true });
     } else {
-      return NextResponse.json({ error: 'Failed to send notification' }, { status: 500 });
+      return NextResponse.json({ error: result.error || 'Failed to send notification' }, { status: 500 });
     }
     
   } catch (error) {
