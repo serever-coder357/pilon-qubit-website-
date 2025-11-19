@@ -61,6 +61,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  other: {
+    'google-site-verification': 'e-HUgyjiGUVB1730GQFZCWLyH5k4rJMQspg',
+  },
 };
 
 import StructuredData from './structured-data';
@@ -71,7 +74,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="google-site-verification" content="e-HUgyjiGUVB1730GQFZCWLyH5k4rJMQspg" />
         <StructuredData />
         
         {/* Google Tag Manager */}
