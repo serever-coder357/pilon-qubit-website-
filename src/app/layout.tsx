@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'verification_token',
+    google: 'eHUgyjiXGuPVB1e730OgQ-Fz7CLwYh5Kkn4frJMQSpg',
   },
 };
 
@@ -75,6 +75,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <StructuredData />
+        
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-41LM56V1T8"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-41LM56V1T8');
+          `}
+        </Script>
       </head>
       <body className={inter.className}>
         {children}
