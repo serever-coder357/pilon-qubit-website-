@@ -64,7 +64,6 @@ export const metadata: Metadata = {
 };
 
 import StructuredData from './structured-data';
-import GHLVoiceWidget from './components/GHLVoiceWidget';
 import Script from 'next/script';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -106,7 +105,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* End Google Tag Manager (noscript) */}
         
         {children}
-        <GHLVoiceWidget />
       </body>
     </html>
   );
