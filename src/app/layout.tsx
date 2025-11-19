@@ -74,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="google-site-verification" content="eHUgyjiXGuPVB1e730OgQ-Fz7CLwYh5Kkn4frJMQSpg" />
         <StructuredData />
         
         {/* Google Analytics */}
