@@ -68,7 +68,7 @@ export default function AIChatWidget() {
               </div>
               <div>
                 <h3 className="text-white font-semibold">Get in Touch</h3>
-                <p className="text-cyan-100 text-xs">We'll respond ASAP</p>
+                <p className="text-cyan-100 text-xs">We&apos;ll respond ASAP</p>
               </div>
             </div>
             <button
@@ -92,7 +92,7 @@ export default function AIChatWidget() {
                   </svg>
                 </div>
                 <h3 className="text-white font-semibold text-lg mb-2">Message Sent!</h3>
-                <p className="text-cyan-100/70">We'll get back to you soon.</p>
+                <p className="text-cyan-100/70">We&apos;ll get back to you soon.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
