@@ -65,6 +65,7 @@ export const metadata: Metadata = {
 
 import StructuredData from './structured-data';
 import Script from 'next/script';
+import AIChatWidget from './components/AIChatWidget';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -105,6 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* End Google Tag Manager (noscript) */}
         
         {children}
+        <AIChatWidget />
       </body>
     </html>
   );
