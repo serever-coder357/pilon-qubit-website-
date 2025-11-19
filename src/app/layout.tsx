@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import StructuredData from './structured-data';
 import Script from 'next/script';
 import AIChatbotWidget from './components/AIChatbotWidget';
+import Head from 'next/head';               // ← THIS LINE IS CRITICAL
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
@@ -84,13 +85,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* GOOGLE SEARCH CONSOLE VERIFICATION – THIS LINE IS THE ONE THAT WORKS */}
+      {/* THIS IS THE ONLY PLACE THAT GUARANTEES THE TAG SURVIVES VERCEL/NEXT.JS BUILD */}
+      <Head>
         <meta
           name="google-site-verification"
           content="e-HUgyjiGUVB1730GQFZCWLyH5k4rJMQspg"
         />
+      </Head>
 
+      <head>
         <StructuredData />
 
         {/* Google Tag Manager */}
@@ -118,7 +121,6 @@ export default function RootLayout({
       </head>
 
       <body className={inter.className}>
-        {/* Google Tag Manager noscript */}
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-PJB9M2T5"
