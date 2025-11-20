@@ -29,7 +29,7 @@ export default function RootLayout({
             </Link>
 
             {/* Navigation */}
-            <nav className="flex items-center gap-8">
+            <nav className="flex items-center gap-8 relative">
               <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
                 Services
               </Link>
@@ -37,12 +37,12 @@ export default function RootLayout({
                 About
               </Link>
 
-              {/* NATIVE DROPDOWN – CLICK TO EXPAND/COLLAPSE */}
-              <details className="group">
-                <summary className="text-white/80 hover:text-white transition-colors font-medium cursor-pointer list-none">
+              {/* CSS-ONLY DROPDOWN – HOVER/CLICK TO EXPAND */}
+              <div className="relative group">
+                <button className="text-white/80 hover:text-white transition-colors font-medium">
                   Contact
-                </summary>
-                <div className="mt-2 absolute right-0 w-80 bg-[#1A1A4A] border border-cyan-500/50 rounded-xl shadow-2xl p-6 z-50 opacity-0 group-open:opacity-100 transition-opacity duration-200 invisible group-open:visible">
+                </button>
+                <div className="absolute right-0 mt-3 w-80 bg-[#1A1A4A] border border-cyan-500/50 rounded-xl shadow-2xl p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-0 group-hover:scale-100 origin-top-right">
                   <h3 className="text-xl font-bold text-cyan-400 mb-4">Get in Touch</h3>
                   <div className="space-y-4 text-sm">
                     <a href="tel:+12104600912" className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 block py-1">
@@ -61,7 +61,7 @@ export default function RootLayout({
                     </div>
                   </div>
                 </div>
-              </details>
+              </div>
             </nav>
           </div>
         </header>
