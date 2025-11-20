@@ -1,5 +1,3 @@
-'use client';
-
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -34,7 +32,7 @@ export default function RootLayout({
               <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
             </Link>
 
-            {/* Navigation */}
+            {/* Navigation + Contact Dropdown */}
             <nav className="flex items-center gap-8">
               <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
                 Services
@@ -63,19 +61,13 @@ export default function RootLayout({
                     >
                       <h3 className="text-xl font-bold text-cyan-400 mb-4">Get in Touch</h3>
                       <div className="space-y-4 text-sm">
-                        <a
-                          href="tel:+12104600912"
-                          className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 transition-colors"
-                        >
-                          <span>Phone</span> 210-460-0912
+                        <a href="tel:+12104600912" className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100">
+                          Phone 210-460-0912
                         </a>
-                        <a
-                          href="mailto:hello@pilonqubitventures.com"
-                          className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 transition-colors"
-                        >
-                          <span>Email</span> hello@pilonqubitventures.com
+                        <a href="mailto:hello@pilonqubitventures.com" className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100">
+                          Email hello@pilonqubitventures.com
                         </a>
-                        <div className="text-cyan-200 pt-2 border-t border-cyan-500/30">
+                        <div className="text-cyan-200 pt-3 border-t border-cyan-500/30">
                           <p className="font-semibold">Visit Us</p>
                           <p className="text-cyan-300">
                             401 E Sonterra Blvd<br />
