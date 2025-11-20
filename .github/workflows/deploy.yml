@@ -3,7 +3,7 @@ name: Deploy Next.js to GitHub Pages
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Manual trigger button
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -34,7 +34,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out  # Next.js static export outputs to 'out/' folder
+          path: out  # Next.js exports to 'out/'—this was the issue!
 
   deploy:
     environment:
