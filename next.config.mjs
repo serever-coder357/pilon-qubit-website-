@@ -1,29 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  compress: true,
-  poweredByHeader: false,
-  async headers() {
-    return [
-      {
-        source: '/:all*(svg|jpg|png|webp|mp4)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-    ];
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true,
   },
+  // Keep any existing config you already have below if needed
 };
+
 export default nextConfig;
