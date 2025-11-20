@@ -3,9 +3,8 @@ const nextConfig = {
   output: 'export',
   trailingSlash: true,
   images: {
-    unoptimized: true,
-  },
-  // Keep any existing config you already have below if needed
+    unoptimized: true
+  }
 };
 
 export default nextConfig;
