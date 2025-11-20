@@ -34,7 +34,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: out  # Next.js exports to 'out/'—this was the issue!
+          path: out  # FIXED: Next.js static export goes to 'out/' folder
 
   deploy:
     environment:
