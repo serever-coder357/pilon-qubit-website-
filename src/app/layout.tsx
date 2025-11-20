@@ -1,40 +1,104 @@
+'use client';
+
 import type { Metadata } from 'next';
-import './globals.css';
 import { Inter } from 'next/font/google';
-import StructuredData from './structured-data';
-import Script from 'next/script';
-import AIChatbotWidget from './components/AIChatbotWidget';
-import Head from 'next/head';
+import './globals.css';
+import Link from 'next/link';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' });
-
-export const viewport = { width: 'device-width', initialScale: 1, maximumScale: 5 };
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: { default: 'PILON Qubit Ventures | AI & Frontier Tech Consulting', template: '%s | PILON Qubit Ventures' },
-  description: 'Transform your AI vision into production-ready solutions. Expert consulting in AI/ML, product acceleration, security, and go-to-market strategy.',
-  metadataBase: new URL('https://pilonqubitventures.com'),
-  openGraph: { title: 'PILON Qubit Ventures | AI & Frontier Tech Consulting', url: 'https://pilonqubitventures.com', siteName: 'PILON Qubit Ventures', locale: 'en_US', type: 'website' },
+  title: 'PILON Qubit Ventures – AI & Frontier Tech Consulting',
+  description: 'AI & frontier tech consulting in San Antonio, TX',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [contactOpen, setContactOpen] = useState(false);
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <Head>
-        <meta name="google-site-verification" content="e-HUgyjiGUVB1730GQFZCWLyH5k4rJMQspg" />
-      </Head>
+    <html lang="en">
+      <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen`}>
+        <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">PQ</span>
+              </div>
+              <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
+            </Link>
 
-      <head>
-        <StructuredData />
-        <Script id="gtm" strategy="afterInteractive">
-          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-PJB9M2T5');`}
-        </Script>
-      </head>
+            {/* Navigation */}
+            <nav className="flex items-center gap-8">
+              <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
+                Services
+              </Link>
+              <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
+                About
+              </Link>
 
-      <body className={inter.className}>
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PJB9M2T5" height="0" width="0" style={{display:'none',visibility:'hidden'}}></iframe></noscript>
-        {children}
-        <AIChatbotWidget />
+              {/* CONTACT DROPDOWN */}
+              <div className="relative">
+                <button
+                  onClick={() => setContactOpen(!contactOpen)}
+                  className="text-white/80 hover:text-white transition-colors font-medium"
+                >
+                  Contact
+                </button>
+
+                <AnimatePresence>
+                  {contactOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-3 w-80 bg-[#1A1A4A] border border-cyan-500/50 rounded-xl shadow-2xl p-6 z-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <h3 className="text-xl font-bold text-cyan-400 mb-4">Get in Touch</h3>
+                      <div className="space-y-4 text-sm">
+                        <a
+                          href="tel:+12104600912"
+                          className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 transition-colors"
+                        >
+                          <span>Phone</span> 210-460-0912
+                        </a>
+                        <a
+                          href="mailto:hello@pilonqubitventures.com"
+                          className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 transition-colors"
+                        >
+                          <span>Email</span> hello@pilonqubitventures.com
+                        </a>
+                        <div className="text-cyan-200 pt-2 border-t border-cyan-500/30">
+                          <p className="font-semibold">Visit Us</p>
+                          <p className="text-cyan-300">
+                            401 E Sonterra Blvd<br />
+                            Ste 375<br />
+                            San Antonio, TX 78258
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setContactOpen(false)}
+                        className="absolute top-3 right-3 text-cyan-400 hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </nav>
+          </div>
+        </header>
+
+        <main>{children}</main>
       </body>
     </html>
   );
