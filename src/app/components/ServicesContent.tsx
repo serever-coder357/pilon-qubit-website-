@@ -1,17 +1,27 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import WebDevelopmentDetails from '../WebDevelopmentDetails';
 
 export default function ServicesContent() {
+  const pathname = usePathname();
+
   const scrollToSection = useCallback((id: string) => {
     const section = document.getElementById(id);
     if (section) {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash === '#services' || pathname === '/services') {
+      scrollToSection('services');
+    }
+  }, [pathname, scrollToSection]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
