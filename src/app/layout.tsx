@@ -1,66 +1,55 @@
-'use client';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Link from 'next/link';
+import ContactDropdown from './ContactDropdown';
+import ChatbotButton from './ChatbotButton';
 
-import { useState, useEffect, useRef } from 'react';
+const inter = Inter({ subsets: ['latin'] });
 
-export default function ChatbotButton() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { text: "Hey! I'm the PILON Qubit AI assistant 👋\n\nWe help companies build and scale real AI solutions — from marketing automation to frontier-grade models.\n\nWhat are you working on right now?", sender: 'bot' }
-  ]);
-  const [input, setInput] = useState('');
-  const [userName, setUserName] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+export const metadata: Metadata = {
+  title: 'PILON Qubit Ventures – AI & Frontier Tech Consulting',
+  description: 'AI & frontier tech consulting in San Antonio, TX',
+};
 
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  useEffect(() => scrollToBottom(), [messages, input]);
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-
-    const userMsg = input.trim();
-    setMessages(prev => [...prev, { text: userMsg, sender: 'user' }]);
-    setInput('');
-
-    setTimeout(() => {
-      let reply = '';
-
-      if (!userName) {
-        const name = userMsg.split(' ')[0] || 'there';
-        setUserName(name);
-        reply = `Nice to meet you, ${name}! Which area are you most interested in — AI-powered marketing automation, custom AI development, or modern web applications?`;
-      } else if (messages.length <= 3) {
-        reply = `Got it, ${userName}! To get you the perfect next step, what’s the best email or phone number to reach you?`;
-      } else {
-        reply = `Perfect, ${userName}! Someone from our team will reach out within the hour. Anything else I can help with today?`;
-      }
-
-      setMessages(prev => [...prev, { text: reply, sender: 'bot' }]);
-    }, 800);
-  };
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="fixed bottom-8 right-8 z-50">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full shadow-2xl flex items-center justify-center text-white text-4xl hover:scale-110 transition-all animate-pulse"
-      >
-        AI
-      </button>
+    <html lang="en">
+      <head>
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+      </head>
+      <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen`}>
+        {/* HEADER */}
+        <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
+          <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">PQ</span>
+              </div>
+              <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
+            </Link>
 
-      {open && (
-        <div className="absolute bottom-24 right-0 w-96 h-96 bg-white rounded-2xl shadow-2xl flex flex-col">
-          <div className="bg-gradient-to-r from-cyan-500 to-blue-600 p-5 text-white flex justify-between items-center">
-            <div>
-              <div className="font-bold text-xl">PILON Qubit AI Assistant</div>
-              <div className="text-xs opacity-90">Usually replies instantly</div>
-            </div>
-            <button onClick={() => setOpen(false)} className="text-white hover:opacity-70 text-2xl">×</button>
+            <nav className="flex items-center gap-8">
+              <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
+                Services
+              </Link>
+              <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
+                About
+              </Link>
+              <ContactDropdown />
+            </nav>
           </div>
+        </header>
 
-          <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-gray-50">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs px-5 py-3 rounded-2xl ${msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                  {msg.text.split('\n').map((line, j) => <p key={j}>{line}</p>)}
-                </div>
-              </div
+        <main>{children}</main>
+
+        {/* CHATBOT — client component, safe here */}
+        <ChatbotButton />
+      </body>
+    </html>
+  );
+}
