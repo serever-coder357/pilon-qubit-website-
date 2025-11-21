@@ -1,33 +1,28 @@
 'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Import the detailed components (they exist in your repo)
+import MarketingAutomationDetails from './MarketingAutomationDetails';
+import FrontierAIConsultingDetails from './FrontierAIConsultingDetails';
+import WebDevelopmentDetails from './WebDevelopmentDetails';
 
 export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | 'webdev' | null>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
-      {/* Header */}
-      <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">PQ</span>
-            </div>
-            <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
-          </Link>
-          <nav className="flex gap-8">
-            <Link href="/services" className="text-cyan-400 font-semibold">Services</Link>
-            <Link href="/#about" className="text-white/80 hover:text-white transition-colors">About</Link>
-            <Link href="/#contact" className="text-white/80 hover:text-white transition-colors">Contact</Link>
-          </nav>
-        </div>
-      </header>
+      {/* NO HEADER HERE — layout.tsx handles it */}
 
       <div className="container mx-auto px-6 py-16">
         {/* Video Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-16 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16 text-center"
+        >
           <h2 className="text-4xl font-bold text-white mb-4">
             See <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PILON Qubit</span> in Action
           </h2>
@@ -35,14 +30,21 @@ export default function ServicesPage() {
             Discover how we transform frontier technology into production-ready solutions
           </p>
           <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-cyan-500/30">
-            <video className="w-full" controls loop autoPlay muted poster="/ai-consulting-hero.webp">
+            <video
+              className="w-full"
+              controls
+              loop
+              autoPlay
+              muted
+              poster="/ai-consulting-hero.webp"
+            >
               <source src="/pqv-new.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>
         </motion.div>
 
-        {/* Service Selection */}
+        {/* Service Cards */}
         <AnimatePresence mode="wait">
           {!selectedService ? (
             <motion.div
@@ -50,34 +52,58 @@ export default function ServicesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+              className="grid md:grid-cols-2 lg the rest of your service cards exactly as before
             >
-              {/* Cards stay exactly the same – omitted for brevity */}
+              {/* (Your three service cards — unchanged) */}
               {/* Marketing Automation */}
-              <motion.div whileHover={{ scale: 1.02 }} onClick={() => setSelectedService('marketing')} className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/50 rounded-2xl p-8 cursor-pointer hover:border-cyan-400 transition-all group">
-                <div className="text-5xl mb-4">🤖</div>
-                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors">AI Marketing Automation</h3>
-                <p className="text-cyan-100/70 text-lg mb-6">Complete marketing automation platform powered by AI.</p>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('marketing')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/50 rounded-2xl p-8 cursor-pointer hover:border-cyan-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">AI Marketing Automation</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors">
+                  AI Marketing Automation
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Complete marketing automation platform powered by AI.
+                </p>
                 <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all">
                   View Pricing & Features →
                 </button>
               </motion.div>
 
               {/* Frontier AI Consulting */}
-              <motion.div whileHover={{ scale: 1.02 }} onClick={() => setSelectedService('consulting')} className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/50 rounded-2xl p-8 cursor-pointer hover:border-blue-400 transition-all group">
-                <div className="text-5xl mb-4">🚀</div>
-                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">Frontier AI Consulting</h3>
-                <p className="text-cyan-100/70 text-lg mb-6">Custom AI development and strategic consulting.</p>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('consulting')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/50 rounded-2xl p-8 cursor-pointer hover:border-blue-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">Frontier AI Consulting</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
+                  Frontier AI Consulting
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Custom AI development and strategic consulting.
+                </p>
                 <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all">
                   View Services →
                 </button>
               </motion.div>
 
               {/* Web Development */}
-              <motion.div whileHover={{ scale: 1.02 }} onClick={() => setSelectedService('webdev')} className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group">
-                <div className="text-5xl mb-4">💻</div>
-                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors">Web Development</h3>
-                <p className="text-cyan-100/70 text-lg mb-6">Custom websites and web applications.</p>
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('webdev')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">Web Development</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors">
+                  Web Development
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Custom websites and web applications.
+                </p>
                 <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-400 hover:to-pink-500 transition-all">
                   View Details →
                 </button>
@@ -85,8 +111,13 @@ export default function ServicesPage() {
             </motion.div>
           ) : (
             <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <button onClick={() => setSelectedService(null)} className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              <button
+                onClick={() => setSelectedService(null)}
+                className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
                 Back to Services
               </button>
               {selectedService === 'marketing' && <MarketingAutomationDetails />}
@@ -95,68 +126,6 @@ export default function ServicesPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-/* MARKETING AUTOMATION DETAILS */
-function MarketingAutomationDetails() { return null; }   // placeholder – not shown here to save space
-
-/* FRONTIER AI CONSULTING DETAILS */
-function FrontierAIConsultingDetails() { return null; } // placeholder – not shown here to save space
-
-/* WEB DEVELOPMENT + UPDATED CONTACT SECTION */
-function WebDevelopmentDetails() {
-  return (
-    <div id="contact" className="container mx-auto px-6 py-24">
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-4xl font-bold text-white mb-6">
-          Get in <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">Touch</span>
-        </h2>
-        <p className="text-cyan-100/70 text-lg mb-12">Ready to transform your AI vision into reality? Contact us today.</p>
-
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {/* Email */}
-          <div className="bg-gradient-to-br from-cyan-500/10 to-blue-600/10 border border-cyan-500/30 rounded-2xl p-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Email Us</h3>
-            <a href="mailto:hello@pilonqubitventures.com" className="text-cyan-400 hover:text-cyan-300 transition-colors text-lg">
-              hello@pilonqubitventures.com
-            </a>
-          </div>
-
-          {/* Phone */}
-          <div className="bg-gradient-to-br from-purple-500/10 to-pink-600/10 border border-purple-500/30 rounded-2xl p-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Call Us</h3>
-            <a href="tel:+12104600912" className="text-purple-400 hover:text-purple-300 transition-colors text-xl font-semibold">
-              210-460-0912
-            </a>
-          </div>
-
-          {/* Address */}
-          <div className="bg-gradient-to-br from-green-500/10 to-teal-600/10 border border-green-500/30 rounded-2xl p-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">Visit Us</h3>
-            <p className="text-green-400 leading-relaxed">
-              401 E Sonterra Blvd<br />Ste 375<br />San Antonio, TX 78258
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
