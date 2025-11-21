@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Link from 'next/link';
 import ContactDropdown from './ContactDropdown';
@@ -7,10 +7,11 @@ import ChatbotButton from './ChatbotButton';
 export const metadata: Metadata = {
   title: 'PILON Qubit Ventures – AI & Frontier Tech Consulting',
   description: 'AI & frontier tech consulting in San Antonio, TX',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -35,7 +36,7 @@ export default function RootLayout({
             </Link>
 
             <nav className="flex items-center gap-8">
-              <Link href="/#services" className="text-cyan-400 font-semibold hover:text-cyan-300">
+              <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
                 Services
               </Link>
               <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
