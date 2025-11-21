@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Link from 'next/link';
-import ContactDropdown from './ContactDropdown';
-import Chatbot from './Chatbot';   // ← this brings back your AI chat
+import ContactDropdown from './ContactDropdown';  // Client component for dropdown
+import ChatbotButton from './ChatbotButton';      // Client component for chat
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,7 +24,6 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-
       <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen relative`}>
         {/* HEADER */}
         <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
@@ -43,16 +42,16 @@ export default function RootLayout({
               <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
                 About
               </Link>
-              <ContactDropdown />   {/* ← click-to-open, stays open */}
+              <ContactDropdown />
             </nav>
           </div>
         </header>
 
         <main>{children}</main>
 
-        {/* AI CHATBOT — always visible bottom-right */}
+        {/* AI CHATBOT BUTTON — fixed bottom-right */}
         <div className="fixed bottom-6 right-6 z-50">
-          <Chatbot />
+          <ChatbotButton />
         </div>
       </body>
     </html>
