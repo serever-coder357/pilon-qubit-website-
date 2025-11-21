@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -8,6 +8,77 @@ import WebDevelopmentDetails from '../WebDevelopmentDetails';
 
 export default function ServicesContent() {
   const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState<'expanded' | 'comingSoon'>('expanded');
+
+  const services = useMemo(
+    () => [
+      {
+        id: 'marketing',
+        name: 'AI Marketing Automation',
+        icon: '🤖',
+        description:
+          'Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.',
+        highlights: [
+          'AI Voice Assistant (24/7 phone)',
+          'Conversation AI (chat + SMS)',
+          'Review Management',
+          'Content Generation',
+          'Funnel Builder',
+          'Workflow Automation',
+        ],
+        priceHeadline: 'Starting at $299/mo',
+        priceSubtext: 'Month-to-month • No contracts • Setup determined case by case',
+        ctaLabel: 'View Pricing & Features →',
+        theme: 'cyan' as const,
+        status: 'expanded' as const,
+      },
+      {
+        id: 'consulting',
+        name: 'Frontier AI Consulting',
+        icon: '🚀',
+        description:
+          'Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.',
+        highlights: [
+          'AI Strategy & Assessment',
+          'Implementation & Development',
+          'Security & Governance',
+          'Growth & Analytics',
+          '10x faster development',
+          '50% cost reduction',
+        ],
+        priceHeadline: 'Custom Pricing',
+        priceSubtext: 'Contact us for a tailored quote',
+        ctaLabel: 'View Services →',
+        theme: 'blue' as const,
+        status: 'expanded' as const,
+      },
+      {
+        id: 'webdev',
+        name: 'Web Development',
+        icon: '💻',
+        description: 'Custom websites and applications built for performance and scale.',
+        highlights: ['Landing pages that convert', 'Full-stack apps', 'AI-native experiences'],
+        priceHeadline: 'Custom Projects',
+        priceSubtext: 'Performance-first, SEO-ready, analytics from day one',
+        ctaLabel: 'View Details →',
+        theme: 'purple' as const,
+        status: 'expanded' as const,
+      },
+      {
+        id: 'agents',
+        name: 'Agentic Automation Lab',
+        icon: '🧠',
+        description: 'Industry-tuned autonomous agent frameworks and tooling.',
+        highlights: ['Workflow orchestration', 'Evaluation harnesses', 'Tool integration blueprints'],
+        priceHeadline: 'Coming Soon',
+        priceSubtext: 'Join the waitlist for early access',
+        ctaLabel: 'Notify Me',
+        theme: 'cyan' as const,
+        status: 'comingSoon' as const,
+      },
+    ],
+    []
+  );
 
   const scrollToSection = useCallback((id: string) => {
     const section = document.getElementById(id);
@@ -59,116 +130,169 @@ export default function ServicesContent() {
           animate={{ opacity: 1 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
-          {/* Marketing Automation Card */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            onClick={() => scrollToSection('marketing')}
-            className="text-left bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/50 rounded-2xl p-8 cursor-pointer hover:border-cyan-400 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
-          >
-            <div className="text-5xl mb-4">🤖</div>
-            <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors">
-              AI Marketing Automation
-            </h3>
-            <p className="text-cyan-100/70 text-lg mb-6">
-              Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.
-            </p>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-cyan-400">✓</span>
-                <span>AI Voice Assistant (24/7 phone)</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-cyan-400">✓</span>
-                <span>Conversation AI (chat + SMS)</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-cyan-400">✓</span>
-                <span>Review Management</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-cyan-400">✓</span>
-                <span>Content Generation</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-cyan-400">✓</span>
-                <span>Funnel Builder</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-cyan-400">✓</span>
-                <span>Workflow Automation</span>
-              </li>
-            </ul>
-            <div className="text-center">
-              <div className="text-cyan-400 font-bold text-xl mb-2">Starting at $299/mo</div>
-              <div className="text-cyan-100/60 text-sm">Month-to-month • No contracts • Setup determined case by case</div>
-            </div>
-            <span className="block w-full mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg group-hover:from-cyan-400 group-hover:to-blue-500 transition-all text-center">
-              View Pricing & Features →
-            </span>
-          </motion.button>
-
-          {/* Frontier AI Consulting Card */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            onClick={() => scrollToSection('consulting')}
-            className="text-left bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/50 rounded-2xl p-8 cursor-pointer hover:border-blue-400 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-          >
-            <div className="text-5xl mb-4">🚀</div>
-            <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
-              Frontier AI Consulting
-            </h3>
-            <p className="text-cyan-100/70 text-lg mb-6">
-              Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.
-            </p>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-blue-400">✓</span>
-                <span>AI Strategy & Assessment</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-blue-400">✓</span>
-                <span>Implementation & Development</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-blue-400">✓</span>
-                <span>Security & Governance</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-blue-400">✓</span>
-                <span>Growth & Analytics</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-blue-400">✓</span>
-                <span>10x faster development</span>
-              </li>
-              <li className="flex items-center gap-3 text-cyan-100/80">
-                <span className="text-blue-400">✓</span>
-                <span>50% cost reduction</span>
-              </li>
-            </ul>
-            <div className="text-center">
-              <div className="text-blue-400 font-bold text-xl mb-2">Custom Pricing</div>
-              <div className="text-cyan-100/60 text-sm">Contact us for a tailored quote</div>
-            </div>
-            <span className="block w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg group-hover:from-blue-400 group-hover:to-purple-500 transition-all text-center">
-              View Services →
-            </span>
-          </motion.button>
-
-          {/* Web Development Card */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            onClick={() => scrollToSection('webdev')}
-            className="text-left bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
-          >
-            <div className="text-5xl mb-4">💻</div>
-            <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors">Web Development</h3>
-            <p className="text-cyan-100/70 text-lg mb-6">Custom websites and applications built for performance and scale.</p>
-            <span className="block w-full mt-6 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg group-hover:from-purple-400 group-hover:to-pink-500 transition-all text-center">
-              View Details →
-            </span>
-          </motion.button>
+          {services
+            .filter((service) => service.status === 'expanded')
+            .map((service) => (
+              <motion.button
+                key={service.id}
+                whileHover={{ scale: 1.02 }}
+                onClick={() => scrollToSection(service.id)}
+                className={`text-left bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border rounded-2xl p-8 cursor-pointer transition-all group focus:outline-none focus-visible:ring-2 ${
+                  service.theme === 'cyan'
+                    ? 'border-cyan-500/50 hover:border-cyan-400 focus-visible:ring-cyan-400'
+                    : service.theme === 'blue'
+                      ? 'border-blue-500/50 hover:border-blue-400 focus-visible:ring-blue-400'
+                      : 'border-purple-500/50 hover:border-purple-400 focus-visible:ring-purple-400'
+                }`}
+              >
+                <div className="text-5xl mb-4">{service.icon}</div>
+                <h3
+                  className={`text-3xl font-bold text-white mb-4 transition-colors ${
+                    service.theme === 'cyan'
+                      ? 'group-hover:text-cyan-400'
+                      : service.theme === 'blue'
+                        ? 'group-hover:text-blue-400'
+                        : 'group-hover:text-purple-400'
+                  }`}
+                >
+                  {service.name}
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">{service.description}</p>
+                <ul className="space-y-3 mb-8">
+                  {service.highlights.map((highlight) => (
+                    <li key={highlight} className="flex items-center gap-3 text-cyan-100/80">
+                      <span
+                        className={
+                          service.theme === 'cyan'
+                            ? 'text-cyan-400'
+                            : service.theme === 'blue'
+                              ? 'text-blue-400'
+                              : 'text-purple-400'
+                        }
+                      >
+                        ✓
+                      </span>
+                      <span>{highlight}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="text-center">
+                  <div
+                    className={`${
+                      service.theme === 'cyan'
+                        ? 'text-cyan-400'
+                        : service.theme === 'blue'
+                          ? 'text-blue-400'
+                          : 'text-purple-400'
+                    } font-bold text-xl mb-2`}
+                  >
+                    {service.priceHeadline}
+                  </div>
+                  <div className="text-cyan-100/60 text-sm">{service.priceSubtext}</div>
+                </div>
+                <span
+                  className={`block w-full mt-6 px-6 py-3 text-white font-semibold rounded-lg transition-all text-center ${
+                    service.theme === 'cyan'
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 group-hover:from-cyan-400 group-hover:to-blue-500'
+                      : service.theme === 'blue'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 group-hover:from-blue-400 group-hover:to-purple-500'
+                        : 'bg-gradient-to-r from-purple-500 to-pink-600 group-hover:from-purple-400 group-hover:to-pink-500'
+                  }`}
+                >
+                  {service.ctaLabel}
+                </span>
+              </motion.button>
+            ))}
         </motion.div>
+
+        {/* Services tabs */}
+        <div className="max-w-6xl mx-auto mt-14">
+          <div className="flex flex-wrap gap-3 justify-center">
+            {[
+              { key: 'expanded', label: 'Expanded services' },
+              { key: 'comingSoon', label: 'Coming Soon' },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as 'expanded' | 'comingSoon')}
+                className={`px-4 py-2 rounded-full border text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                  activeTab === tab.key
+                    ? 'bg-cyan-500/20 border-cyan-400 text-white'
+                    : 'bg-[#0A0A2A] border-white/10 text-cyan-100/80 hover:border-cyan-400/60'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+            {services
+              .filter((service) =>
+                activeTab === 'expanded' ? service.status === 'expanded' : service.status === 'comingSoon'
+              )
+              .map((service) => (
+                <div
+                  key={`${activeTab}-${service.id}`}
+                  className={`rounded-2xl border p-6 bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] transition-colors ${
+                    service.theme === 'cyan'
+                      ? 'border-cyan-500/40'
+                      : service.theme === 'blue'
+                        ? 'border-blue-500/40'
+                        : 'border-purple-500/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="text-3xl">{service.icon}</div>
+                    <div className="text-xl font-semibold text-white">{service.name}</div>
+                  </div>
+                  <p className="text-cyan-100/70 text-sm mb-4">{service.description}</p>
+                  <ul className="space-y-2 mb-6">
+                    {service.highlights.slice(0, 3).map((highlight) => (
+                      <li key={highlight} className="flex items-center gap-2 text-cyan-100/80 text-sm">
+                        <span
+                          className={
+                            service.theme === 'cyan'
+                              ? 'text-cyan-400'
+                              : service.theme === 'blue'
+                                ? 'text-blue-400'
+                                : 'text-purple-400'
+                          }
+                        >
+                          •
+                        </span>
+                        <span>{highlight}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="text-sm text-cyan-100/60 mb-4">{service.priceSubtext}</div>
+                  {service.status === 'expanded' ? (
+                    <button
+                      onClick={() => scrollToSection(service.id)}
+                      className={`w-full py-3 rounded-lg font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A2A] ${
+                        service.theme === 'cyan'
+                          ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 focus-visible:ring-cyan-400'
+                          : service.theme === 'blue'
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-400 hover:to-purple-500 focus-visible:ring-blue-400'
+                            : 'bg-gradient-to-r from-purple-500 to-pink-600 text-white hover:from-purple-400 hover:to-pink-500 focus-visible:ring-purple-400'
+                      }`}
+                    >
+                      View details
+                    </button>
+                  ) : (
+                    <div className="w-full py-3 rounded-lg border border-white/10 text-center text-cyan-100/60">Coming soon</div>
+                  )}
+                </div>
+              ))}
+
+            {activeTab === 'comingSoon' &&
+              services.filter((service) => service.status === 'comingSoon').length === 0 && (
+                <div className="col-span-1 md:col-span-3 text-center text-cyan-100/70 border border-white/10 rounded-2xl p-6 bg-[#0A0A2A]/60">
+                  No coming soon services right now.
+                </div>
+              )}
+          </div>
+        </div>
 
         {/* Full service details are always visible */}
         <div id="services" className="max-w-6xl mx-auto mt-16 space-y-20">
