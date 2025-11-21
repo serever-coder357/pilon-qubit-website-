@@ -1,84 +1,97 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import WebDevelopmentDetails from '../WebDevelopmentDetails';
 
+type Service = {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  highlights: string[];
+  priceHeadline: string;
+  priceSubtext: string;
+  ctaLabel: string;
+  theme: 'cyan' | 'blue' | 'purple';
+  status: 'expanded' | 'comingSoon';
+};
+
+const services: Service[] = [
+  {
+    id: 'marketing',
+    name: 'AI Marketing Automation',
+    icon: '🤖',
+    description:
+      'Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.',
+    highlights: [
+      'AI Voice Assistant (24/7 phone)',
+      'Conversation AI (chat + SMS)',
+      'Review Management',
+      'Content Generation',
+      'Funnel Builder',
+      'Workflow Automation',
+    ],
+    priceHeadline: 'Starting at $299/mo',
+    priceSubtext: 'Month-to-month • No contracts • Setup determined case by case',
+    ctaLabel: 'View Pricing & Features →',
+    theme: 'cyan',
+    status: 'expanded',
+  },
+  {
+    id: 'consulting',
+    name: 'Frontier AI Consulting',
+    icon: '🚀',
+    description:
+      'Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.',
+    highlights: [
+      'AI Strategy & Assessment',
+      'Implementation & Development',
+      'Security & Governance',
+      'Growth & Analytics',
+      '10x faster development',
+      '50% cost reduction',
+    ],
+    priceHeadline: 'Custom Pricing',
+    priceSubtext: 'Contact us for a tailored quote',
+    ctaLabel: 'View Services →',
+    theme: 'blue',
+    status: 'expanded',
+  },
+  {
+    id: 'webdev',
+    name: 'Web Development',
+    icon: '💻',
+    description: 'Custom websites and applications built for performance and scale.',
+    highlights: ['Landing pages that convert', 'Full-stack apps', 'AI-native experiences'],
+    priceHeadline: 'Custom Projects',
+    priceSubtext: 'Performance-first, SEO-ready, analytics from day one',
+    ctaLabel: 'View Details →',
+    theme: 'purple',
+    status: 'expanded',
+  },
+  {
+    id: 'agents',
+    name: 'Agentic Automation Lab',
+    icon: '🧠',
+    description: 'Industry-tuned autonomous agent frameworks and tooling.',
+    highlights: ['Workflow orchestration', 'Evaluation harnesses', 'Tool integration blueprints'],
+    priceHeadline: 'Coming Soon',
+    priceSubtext: 'Join the waitlist for early access',
+    ctaLabel: 'Notify Me',
+    theme: 'cyan',
+    status: 'comingSoon',
+  },
+];
+
 export default function ServicesContent() {
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState<'expanded' | 'comingSoon'>('expanded');
 
-  const services = useMemo(
-    () => [
-      {
-        id: 'marketing',
-        name: 'AI Marketing Automation',
-        icon: '🤖',
-        description:
-          'Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.',
-        highlights: [
-          'AI Voice Assistant (24/7 phone)',
-          'Conversation AI (chat + SMS)',
-          'Review Management',
-          'Content Generation',
-          'Funnel Builder',
-          'Workflow Automation',
-        ],
-        priceHeadline: 'Starting at $299/mo',
-        priceSubtext: 'Month-to-month • No contracts • Setup determined case by case',
-        ctaLabel: 'View Pricing & Features →',
-        theme: 'cyan' as const,
-        status: 'expanded' as const,
-      },
-      {
-        id: 'consulting',
-        name: 'Frontier AI Consulting',
-        icon: '🚀',
-        description:
-          'Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.',
-        highlights: [
-          'AI Strategy & Assessment',
-          'Implementation & Development',
-          'Security & Governance',
-          'Growth & Analytics',
-          '10x faster development',
-          '50% cost reduction',
-        ],
-        priceHeadline: 'Custom Pricing',
-        priceSubtext: 'Contact us for a tailored quote',
-        ctaLabel: 'View Services →',
-        theme: 'blue' as const,
-        status: 'expanded' as const,
-      },
-      {
-        id: 'webdev',
-        name: 'Web Development',
-        icon: '💻',
-        description: 'Custom websites and applications built for performance and scale.',
-        highlights: ['Landing pages that convert', 'Full-stack apps', 'AI-native experiences'],
-        priceHeadline: 'Custom Projects',
-        priceSubtext: 'Performance-first, SEO-ready, analytics from day one',
-        ctaLabel: 'View Details →',
-        theme: 'purple' as const,
-        status: 'expanded' as const,
-      },
-      {
-        id: 'agents',
-        name: 'Agentic Automation Lab',
-        icon: '🧠',
-        description: 'Industry-tuned autonomous agent frameworks and tooling.',
-        highlights: ['Workflow orchestration', 'Evaluation harnesses', 'Tool integration blueprints'],
-        priceHeadline: 'Coming Soon',
-        priceSubtext: 'Join the waitlist for early access',
-        ctaLabel: 'Notify Me',
-        theme: 'cyan' as const,
-        status: 'comingSoon' as const,
-      },
-    ],
-    []
-  );
+  const expandedServices = services.filter((service) => service.status === 'expanded');
+  const comingSoonServices = services.filter((service) => service.status === 'comingSoon');
 
   const scrollToSection = useCallback((id: string) => {
     const section = document.getElementById(id);
@@ -89,9 +102,24 @@ export default function ServicesContent() {
 
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash === '#services' || pathname === '/services') {
-      scrollToSection('services');
+    if (hash !== '#services' && pathname !== '/services') {
+      return;
     }
+
+    let timeout: number | undefined;
+
+    const frame = requestAnimationFrame(() => {
+      timeout = window.setTimeout(() => {
+        scrollToSection('services');
+      }, 0);
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    };
   }, [pathname, scrollToSection]);
 
   return (
@@ -130,9 +158,7 @@ export default function ServicesContent() {
           animate={{ opacity: 1 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
-          {services
-            .filter((service) => service.status === 'expanded')
-            .map((service) => (
+          {expandedServices.map((service) => (
               <motion.button
                 key={service.id}
                 whileHover={{ scale: 1.02 }}
@@ -227,11 +253,7 @@ export default function ServicesContent() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {services
-              .filter((service) =>
-                activeTab === 'expanded' ? service.status === 'expanded' : service.status === 'comingSoon'
-              )
-              .map((service) => (
+            {(activeTab === 'expanded' ? expandedServices : comingSoonServices).map((service) => (
                 <div
                   key={`${activeTab}-${service.id}`}
                   className={`rounded-2xl border p-6 bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] transition-colors ${
@@ -285,8 +307,7 @@ export default function ServicesContent() {
                 </div>
               ))}
 
-            {activeTab === 'comingSoon' &&
-              services.filter((service) => service.status === 'comingSoon').length === 0 && (
+            {activeTab === 'comingSoon' && comingSoonServices.length === 0 && (
                 <div className="col-span-1 md:col-span-3 text-center text-cyan-100/70 border border-white/10 rounded-2xl p-6 bg-[#0A0A2A]/60">
                   No coming soon services right now.
                 </div>
