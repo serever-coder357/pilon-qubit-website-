@@ -46,12 +46,19 @@ export default function ServicesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
             >
               {/* Marketing Automation Card */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('marketing')}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    setSelectedService('marketing');
+                  }
+                }}
+                tabIndex={0}
+                role="button"
                 className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/50 rounded-2xl p-8 cursor-pointer hover:border-cyan-400 transition-all group"
               >
                 <div className="text-5xl mb-4">🤖</div>
@@ -100,6 +107,13 @@ export default function ServicesPage() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('consulting')}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    setSelectedService('consulting');
+                  }
+                }}
+                tabIndex={0}
+                role="button"
                 className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/50 rounded-2xl p-8 cursor-pointer hover:border-blue-400 transition-all group"
               >
                 <div className="text-5xl mb-4">🚀</div>
@@ -148,6 +162,13 @@ export default function ServicesPage() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('webdev')}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    setSelectedService('webdev');
+                  }
+                }}
+                tabIndex={0}
+                role="button"
                 className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group"
               >
                 <div className="text-5xl mb-4">💻</div>
