@@ -23,7 +23,7 @@ export default function RootLayout({
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
       </head>
       <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen`}>
-        {/* HEADER */}
+        {/* Header */}
         <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
@@ -47,7 +47,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* CHATBOT — client component, safe here */}
+        {/* AI Chatbot */}
         <ChatbotButton />
       </body>
     </html>
