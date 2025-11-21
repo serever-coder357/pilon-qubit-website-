@@ -8,7 +8,6 @@ export default function ChatbotButton() {
     { text: "Hey! I'm the PILON Qubit AI assistant 👋\n\nWe help companies build and scale real AI solutions — from marketing automation to frontier-grade models.\n\nWhat are you working on right now?", sender: 'bot' }
   ]);
   const [input, setInput] = useState('');
-  const [userInfo, setUserInfo] = useState({ name: '', email: '', phone: '' });
 
   const responses = [
     "Love that! What’s your name so I can keep this personal?",
@@ -26,12 +25,10 @@ export default function ChatbotButton() {
 
     setTimeout(() => {
       let reply = responses[messages.length];
-
-      if (messages.length === 1 && userInfo.name === '') {
-        setUserInfo(prev => ({ ...prev, name: userMsg.split(' ')[0] }));
-        reply = reply.replace('{{name}}', userMsg.split(' ')[0]);
+      if (messages.length === 1) {
+        const name = userMsg.split(' ')[0];
+        reply = reply.replace('{{name}}', name);
       }
-
       setMessages(prev => [...prev, { text: reply, sender: 'bot' }]);
     }, 800);
   };
@@ -65,6 +62,14 @@ export default function ChatbotButton() {
                 </div>
               </div>
             ))}
+            {/* ← This shows the message while typing */}
+            {input && (
+              <div className="flex justify-end">
+                <div className="max-w-xs px-4 py-3 rounded-2xl bg-blue-600 text-white opacity-70">
+                  {input}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Input */}
@@ -73,9 +78,9 @@ export default function ChatbotButton() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-cyan-500"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-cyan-500 text-gray-800"
               />
               <button
                 onClick={handleSend}
