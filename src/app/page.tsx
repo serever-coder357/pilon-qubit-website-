@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Import the detailed components (they exist in your repo)
+// Import your detail components (they exist in your repo)
 import MarketingAutomationDetails from './MarketingAutomationDetails';
 import FrontierAIConsultingDetails from './FrontierAIConsultingDetails';
 import WebDevelopmentDetails from './WebDevelopmentDetails';
@@ -24,7 +24,11 @@ export default function ServicesPage() {
           className="mb-16 text-center"
         >
           <h2 className="text-4xl font-bold text-white mb-4">
-            See <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PILON Qubit</span> in Action
+            See{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
+              PILON Qubit
+            </span>{' '}
+            in Action
           </h2>
           <p className="text-cyan-100/70 text-lg mb-8">
             Discover how we transform frontier technology into production-ready solutions
@@ -44,7 +48,7 @@ export default function ServicesPage() {
           </div>
         </motion.div>
 
-        {/* Service Cards */}
+        {/* Service Selection */}
         <AnimatePresence mode="wait">
           {!selectedService ? (
             <motion.div
@@ -52,9 +56,8 @@ export default function ServicesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 lg the rest of your service cards exactly as before
+              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
             >
-              {/* (Your three service cards — unchanged) */}
               {/* Marketing Automation */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
@@ -110,16 +113,19 @@ export default function ServicesPage() {
               </motion.div>
             </motion.div>
           ) : (
-            <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
               <button
                 onClick={() => setSelectedService(null)}
                 className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Services
+                ← Back to Services
               </button>
+
               {selectedService === 'marketing' && <MarketingAutomationDetails />}
               {selectedService === 'consulting' && <FrontierAIConsultingDetails />}
               {selectedService === 'webdev' && <WebDevelopmentDetails />}
