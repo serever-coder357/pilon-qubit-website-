@@ -1,64 +1,40 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Import your detail components (they exist in your repo)
-import MarketingAutomationDetails from './MarketingAutomationDetails';
-import FrontierAIConsultingDetails from './FrontierAIConsultingDetails';
-import WebDevelopmentDetails from './WebDevelopmentDetails';
 
 export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | 'webdev' | null>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
-      {/* NO HEADER HERE — layout.tsx handles it */}
-
       <div className="container mx-auto px-6 py-16">
-        {/* Video Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-16 text-center"
-        >
+        {/* Hero Video */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-16 text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
-            See{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
-              PILON Qubit
-            </span>{' '}
-            in Action
+            See <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PILON Qubit</span> in Action
           </h2>
           <p className="text-cyan-100/70 text-lg mb-8">
             Discover how we transform frontier technology into production-ready solutions
           </p>
           <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-cyan-500/30">
-            <video
-              className="w-full"
-              controls
-              loop
-              autoPlay
-              muted
-              poster="/ai-consulting-hero.webp"
-            >
+            <video className="w-full" controls loop autoPlay muted poster="/ai-consulting-hero.webp">
               <source src="/pqv-new.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
             </video>
           </div>
         </motion.div>
 
-        {/* Service Selection */}
+        {/* Service Cards */}
         <AnimatePresence mode="wait">
           {!selectedService ? (
             <motion.div
-              key="selection"
+              key="cards"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
             >
-              {/* Marketing Automation */}
+              {/* MARKETING AUTOMATION */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('marketing')}
@@ -76,7 +52,7 @@ export default function ServicesPage() {
                 </button>
               </motion.div>
 
-              {/* Frontier AI Consulting */}
+              {/* FRONTIER AI CONSULTING */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('consulting')}
@@ -94,7 +70,7 @@ export default function ServicesPage() {
                 </button>
               </motion.div>
 
-              {/* Web Development */}
+              {/* WEB DEVELOPMENT */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('webdev')}
@@ -113,22 +89,21 @@ export default function ServicesPage() {
               </motion.div>
             </motion.div>
           ) : (
-            <motion.div
-              key="details"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
+            <motion.div key="details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <button
                 onClick={() => setSelectedService(null)}
                 className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 ← Back to Services
               </button>
-
-              {selectedService === 'marketing' && <MarketingAutomationDetails />}
-              {selectedService === 'consulting' && <FrontierAIConsultingDetails />}
-              {selectedService === 'webdev' && <WebDevelopmentDetails />}
+              <div className="text-2xl font-bold text-white">
+                {selectedService === 'marketing' && 'AI Marketing Automation Details'}
+                {selectedService === 'consulting' && 'Frontier AI Consulting Details'}
+                {selectedService === 'webdev' && 'Web Development Details'}
+              </div>
+              <p className="text-cyan-100/70 mt-4">
+                Detailed content coming soon — contact us for a custom quote!
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
