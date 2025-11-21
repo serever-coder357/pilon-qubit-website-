@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Link from 'next/link';
+import ContactDropdown from './ContactDropdown';
+import Chatbot from './Chatbot';   // ← this brings back your AI chat
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,9 +25,9 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
 
-      <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen`}>
-        {/* SINGLE HEADER — ONLY ONE */}
-        <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-50">
+      <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen relative`}>
+        {/* HEADER */}
+        <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
@@ -41,36 +43,17 @@ export default function RootLayout({
               <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
                 About
               </Link>
-
-              {/* HOVER-ONLY DROPDOWN — WORKS EVERYWHERE */}
-              <div className="relative group">
-                <span className="text-white/80 hover:text-white transition-colors font-medium cursor-default">
-                  Contact
-                </span>
-
-                <div className="absolute right-0 mt-3 w-80 bg-[#1A1A4A] border border-cyan-500/50 rounded-xl shadow-2xl p-6 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pointer-events-none group-hover:pointer-events-auto">
-                  <h3 className="text-xl font-bold text-cyan-400 mb-4">Get in Touch</h3>
-                  <div className="space-y-4 text-sm">
-                    <a href="tel:+12104600912" className="block text-cyan-300 hover:text-cyan-100">
-                      Phone 210-460-0912
-                    </a>
-                    <a href="mailto:hello@pilonqubitventures.com" className="block text-cyan-300 hover:text-cyan-100">
-                      Email hello@pilonqubitventures.com
-                    </a>
-                    <div className="pt-3 border-t border-cyan-500/30 text-cyan-200">
-                      <p className="font-semibold">Visit Us</p>
-                      <p className="text-cyan-300 leading-tight">
-                        401 E Sonterra Blvd<br />Ste 375<br />San Antonio, TX 78258
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ContactDropdown />   {/* ← click-to-open, stays open */}
             </nav>
           </div>
         </header>
 
         <main>{children}</main>
+
+        {/* AI CHATBOT — always visible bottom-right */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Chatbot />
+        </div>
       </body>
     </html>
   );
