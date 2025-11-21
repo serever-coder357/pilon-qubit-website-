@@ -12,7 +12,7 @@ export default function ServicesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
       <div className="container mx-auto px-6 py-16">
-        {/* HERO VIDEO — NO HEADER ABOVE THIS */}
+        {/* HERO VIDEO — NO HEADER, NO NAV, NOTHING ABOVE THIS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -46,7 +46,7 @@ export default function ServicesPage() {
               exit={{ opacity: 0 }}
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
             >
-              {/* AI MARKETING AUTOMATION */}
+              {/* MARKETING AUTOMATION */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 onClick={() => setSelectedService('marketing')}
@@ -105,7 +105,6 @@ export default function ServicesPage() {
               >
                 ← Back to Services
               </button>
-
               {selectedService === 'marketing' && <MarketingAutomationDetails />}
               {selectedService === 'consulting' && <FrontierAIConsultingDetails />}
               {selectedService === 'webdev' && <WebDevelopmentDetails />}
