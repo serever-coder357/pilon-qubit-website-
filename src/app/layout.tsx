@@ -17,6 +17,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* ← THIS LINE FIXES LIVE CACHING FOREVER */}
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </head>
+
       <body className={`${inter.className} bg-[#0A0A2A] text-white min-h-screen`}>
         <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -29,7 +36,7 @@ export default function RootLayout({
             </Link>
 
             {/* Navigation */}
-            <nav className="flex items-center gap-8 relative">
+            <nav className="flex items-center gap-8">
               <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
                 Services
               </Link>
@@ -37,19 +44,20 @@ export default function RootLayout({
                 About
               </Link>
 
-              {/* CSS-ONLY DROPDOWN – HOVER/CLICK TO EXPAND */}
+              {/* CONTACT DROPDOWN */}
               <div className="relative group">
                 <button className="text-white/80 hover:text-white transition-colors font-medium">
                   Contact
                 </button>
-                <div className="absolute right-0 mt-3 w-80 bg-[#1A1A4A] border border-cyan-500/50 rounded-xl shadow-2xl p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-0 group-hover:scale-100 origin-top-right">
+
+                <div className="absolute right-0 mt-3 w-80 bg-[#1A1A4A] border border-cyan-500/50 rounded-xl shadow-2xl p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 scale-95 group-hover:scale-100">
                   <h3 className="text-xl font-bold text-cyan-400 mb-4">Get in Touch</h3>
                   <div className="space-y-4 text-sm">
                     <a href="tel:+12104600912" className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 block py-1">
-                      📞 210-460-0912
+                      Phone 210-460-0912
                     </a>
                     <a href="mailto:hello@pilonqubitventures.com" className="flex items-center gap-3 text-cyan-300 hover:text-cyan-100 block py-1">
-                      ✉️ hello@pilonqubitventures.com
+                      Email hello@pilonqubitventures.com
                     </a>
                     <div className="text-cyan-200 pt-3 border-t border-cyan-500/30">
                       <p className="font-semibold">Visit Us</p>
@@ -61,13 +69,3 @@ export default function RootLayout({
                     </div>
                   </div>
                 </div>
-              </div>
-            </nav>
-          </div>
-        </header>
-
-        <main>{children}</main>
-      </body>
-    </html>
-  );
-}
