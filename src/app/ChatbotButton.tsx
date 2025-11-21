@@ -11,7 +11,9 @@ export default function ChatbotButton() {
   const [userName, setUserName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
   useEffect(() => scrollToBottom(), [messages, input]);
 
   const handleSend = () => {
@@ -24,7 +26,7 @@ export default function ChatbotButton() {
     setTimeout(() => {
       let reply = '';
 
-      if (!*userName*) {
+      if (!userName) {
         const name = userMsg.split(' ')[0] || 'there';
         setUserName(name);
         reply = `Nice to meet you, ${name}! Which area are you most interested in — AI-powered marketing automation, custom AI development, or modern web applications?`;
@@ -54,14 +56,22 @@ export default function ChatbotButton() {
               <div className="font-bold text-xl">PILON Qubit AI Assistant</div>
               <div className="text-xs opacity-90">Usually replies instantly</div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white hover:opacity-70 text-2xl">×</button>
+            <button onClick={() => setOpen(false)} className="text-white hover:opacity-70 text-2xl">
+              ×
+            </button>
           </div>
 
           <div className="flex-1 p-5 overflow-y-auto space-y-4 bg-gray-50">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs px-5 py-3 rounded-2xl ${msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}>
-                  {msg.text.split('\n').map((line, j) => <p key={j}>{line}</p>)}
+                <div
+                  className={`max-w-xs px-5 py-3 rounded-2xl ${
+                    msg.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'
+                  }`}
+                >
+                  {msg.text.split('\n').map((line, j) => (
+                    <p key={j}>{line}</p>
+                  ))}
                 </div>
               </div>
             ))}
@@ -77,8 +87,8 @@ export default function ChatbotButton() {
             <div className="flex gap-3">
               <input
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                 placeholder="Type your message..."
                 className="flex-1 px-5 py-4 border border-gray-300 rounded-full focus:outline-none focus:border-cyan-500 text-gray-800"
               />
