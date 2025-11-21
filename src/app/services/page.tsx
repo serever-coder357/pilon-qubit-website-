@@ -1,5 +1,5 @@
-import ServicesContent from '../components/ServicesContent';
+import { redirect } from 'next/navigation';
 
 export default function ServicesPage() {
-  return <ServicesContent />;
+  redirect('/#services');
 }
