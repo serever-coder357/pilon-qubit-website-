@@ -8,22 +8,11 @@ export default function ChatbotButton() {
     { text: "Hey! I'm the PILON Qubit AI assistant 👋\n\nWe help companies build and scale real AI solutions — from marketing automation to frontier-grade models.\n\nWhat are you working on right now?", sender: 'bot' }
   ]);
   const [input, setInput] = useState('');
+  const [userName, setUserName] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, input]);
-
-  const responses = [
-    "Love that! What’s your name so I can keep this personal?",
-    "Awesome {{name}}! Which area interests you most — AI-powered marketing, custom AI development, or web apps?",
-    "Got it! To get you the perfect next step, what’s the best email or phone to reach you?",
-    "Perfect! Someone from our team will reach out within the hour. Anything else I can help with today?"
-  ];
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => scrollToBottom(), [messages, input]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -33,11 +22,21 @@ export default function ChatbotButton() {
     setInput('');
 
     setTimeout(() => {
-      let reply = responses[messages.length] || "Thanks! We'll be in touch soon.";
+      let reply = '';
 
-      if (messages.length === 1) {
-        const name = userMsg.split(' ')[0] || "there";
-        reply = reply.replace('{{name}}', name);
+      // Step 1 – Get name
+      if (!userName) {
+        const name = userMsg.split(' ')[0] || 'there';
+        setUserName(name);
+        reply = `Nice to meet you, ${name}! Which area are you most interested in — AI-powered marketing automation, custom AI development, or modern web applications?`;
+      }
+      // Step 2 – Ask what they're interested in
+      else if (messages.length <= 3) {
+        reply = `Got it, ${userName}! To get you the perfect next step, what’s the best email or phone number to reach you?`;
+      }
+      // Step 3 – Final confirmation
+      else {
+        reply = `Perfect, ${userName}! Someone from our team will reach out within the hour. Anything else I can help with today?`;
       }
 
       setMessages(prev => [...prev, { text: reply, sender: 'bot' }]);
@@ -55,7 +54,6 @@ export default function ChatbotButton() {
 
       {open && (
         <div className="absolute bottom-20 right-0 w-96 h-96 bg-white rounded-2xl shadow-2xl flex flex-col">
-          {/* Header */}
           <div className="bg-gradient-to-r from-cyan-500 to-blue-600 p-4 text-white flex justify-between items-center">
             <div>
               <div className="font-bold">PILON Qubit AI Assistant</div>
@@ -64,7 +62,6 @@ export default function ChatbotButton() {
             <button onClick={() => setOpen(false)} className="text-white hover:opacity-70">✕</button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -74,7 +71,6 @@ export default function ChatbotButton() {
               </div>
             ))}
 
-            {/* Show current typing message */}
             {input && (
               <div className="flex justify-end">
                 <div className="max-w-xs px-4 py-3 rounded-2xl bg-blue-600 text-white opacity-70">
@@ -82,11 +78,9 @@ export default function ChatbotButton() {
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="p-4 bg-white border-t">
             <div className="flex gap-2">
               <input
