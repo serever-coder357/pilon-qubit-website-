@@ -174,46 +174,25 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-6">
               {[
                 {
-                  title: 'Frontier AI & Product Acceleration',
+                  title: 'AI-Powered Features',
                   summary:
-                    'Build and deploy cutting-edge AI solutions that give you a competitive edge. From LLM integrations and agentic workflows to scalable infrastructure, we deliver production-ready systems that perform.',
-                  metrics: '10x faster development • 50% cost reduction',
-                  details: [
-                    'LLM Integration & Fine-tuning',
-                    'Agentic Workflow Development',
-                    'RAG & Vector Database Implementation',
-                    'Model Evaluation & Testing',
-                    'Production Infrastructure & Scaling',
-                    'AI Product Strategy & Roadmapping',
-                  ],
+                    'Chatbots, content generation, and voice assistants built into your product experience with seamless AI-native workflows.',
+                  metrics: 'LLMs • Agents • Automation',
+                  details: ['Chatbots', 'Content generation', 'Voice assistants', 'Process automation'],
                 },
                 {
-                  title: 'Strategic Security & Reliability',
+                  title: 'Performance & Security',
                   summary:
-                    "Embed security and resilience into your products from day one. Our approach combines threat modeling, privacy-by-design principles, and robust QA automation to protect your assets and build user trust.",
-                  metrics: '99.99% uptime • Zero-trust security',
-                  details: [
-                    'Threat Modeling & Risk Assessment',
-                    'Privacy-by-Design Architecture',
-                    'Security Audits & Penetration Testing',
-                    'Compliance (SOC 2, GDPR, HIPAA)',
-                    'Automated QA & Testing Harnesses',
-                    'Incident Response Planning',
-                  ],
+                    'High-performing, secure foundations that deliver Lighthouse 95+ scores with the right safeguards in place.',
+                  metrics: '95+ Lighthouse • Hardened by design',
+                  details: ['95+ Lighthouse scores', 'SSL/HTTPS setup', 'DDoS protection', 'Security audits'],
                 },
                 {
-                  title: 'Growth & GTM Intelligence',
+                  title: 'Ongoing Support',
                   summary:
-                    'Find product-market fit and scale your user base with data-driven precision. From instrumentation and funnel analysis to A/B testing and conversion optimization, we build the engine for sustainable growth.',
-                  metrics: '40% more users • 30% better retention',
-                  details: [
-                    'Analytics Instrumentation & Tracking',
-                    'Conversion Funnel Optimization',
-                    'A/B Testing & Experimentation',
-                    'User Segmentation & Personalization',
-                    'Growth Model Development',
-                    'Go-to-Market Strategy',
-                  ],
+                    'Dedicated partnership for maintenance, optimizations, and the continuous improvements your roadmap needs.',
+                  metrics: 'Maintenance • Optimization • Updates',
+                  details: ['Bug fixes & maintenance', 'Performance optimization', 'Content updates', 'Feature additions'],
                 },
               ].map((service, idx) => (
                 <div

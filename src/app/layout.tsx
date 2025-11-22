@@ -36,7 +36,7 @@ export default function RootLayout({
             </Link>
 
             <nav className="flex items-center gap-8">
-              <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
+              <Link href="/#services" className="text-cyan-400 font-semibold hover:text-cyan-300">
                 Services
               </Link>
               <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
