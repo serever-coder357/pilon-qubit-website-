@@ -5,27 +5,10 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ServicesPage() {
-  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | null>(null);
+  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | 'webdev' | null>(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
-      {/* Header */}
-      <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">PQ</span>
-            </div>
-            <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
-          </Link>
-          <nav className="flex gap-8">
-            <Link href="/services" className="text-cyan-400 font-semibold">Services</Link>
-            <Link href="/#about" className="text-white/80 hover:text-white transition-colors">About</Link>
-            <Link href="/#contact" className="text-white/80 hover:text-white transition-colors">Contact</Link>
-          </nav>
-        </div>
-      </header>
-
       <div className="container mx-auto px-6 py-16">
         {/* Video Section */}
         <motion.div
@@ -62,7 +45,7 @@ export default function ServicesPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+              className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
             >
               {/* Marketing Automation Card */}
               <motion.div
@@ -159,6 +142,50 @@ export default function ServicesPage() {
                   View Services →
                 </button>
               </motion.div>
+
+              {/* Web Development Card */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('webdev')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">💻</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors">
+                  Web Development
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Modern, high-performance websites and applications built for scale with AI-native experiences.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Landing pages that convert</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Full-stack web apps</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>AI-native product experiences</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Performance-first builds</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>SEO-ready architecture</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <div className="text-purple-400 font-bold text-xl mb-2">Custom Projects</div>
+                  <div className="text-cyan-100/60 text-sm">Performance-first, SEO-ready, analytics from day one</div>
+                </div>
+                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-400 hover:to-pink-500 transition-all">
+                  View Details →
+                </button>
+              </motion.div>
             </motion.div>
           ) : (
             <motion.div
@@ -179,6 +206,8 @@ export default function ServicesPage() {
 
               {selectedService === 'marketing' ? (
                 <MarketingAutomationDetails />
+              ) : selectedService === 'webdev' ? (
+                <WebDevelopmentDetails />
               ) : (
                 <FrontierAIConsultingDetails />
               )}
@@ -462,4 +491,21 @@ function FrontierAIConsultingDetails() {
     </div>
   );
 }
-// Force deployment Sat Nov 15 14:56:19 EST 2025
+
+function WebDevelopmentDetails() {
+  return (
+    <div className="py-32 text-center">
+      <h2 className="text-5xl font-bold text-white mb-8">Web Development</h2>
+      <p className="text-2xl text-cyan-100/80 mb-12 max-w-3xl mx-auto">
+        Fast, modern, AI-integrated websites & apps built for scale
+      </p>
+      <div className="text-6xl mb-8">Custom Projects — Let’s Build Yours</div>
+      <Link
+        href="/#contact"
+        className="inline-block px-12 py-6 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xl font-bold rounded-xl hover:from-purple-400 hover:to-pink-500 transition-all"
+      >
+        Get Your Custom Quote
+      </Link>
+    </div>
+  );
+}
