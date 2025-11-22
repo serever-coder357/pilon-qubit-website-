@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+
 import AIChatbot from './components/AIChatbot';
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
 import PersonalizationSelector from './components/PersonalizationSelector';
 import AboutCards from './components/AboutCards';
-import { motion, useReducedMotion } from 'framer-motion';
+
 import { initAnalytics, page } from '@/lib/analytics';
 import { setConsentState } from '@/lib/consent';
 import { detectVisitorType, getPersonalizedContent, trackPersonalization } from '@/lib/personalization';
@@ -21,9 +23,13 @@ function Button(props: any) {
 }
 
 export default function Home() {
-  const [consented, setConsented] = useState<boolean>(() => typeof window !== 'undefined' && localStorage.getItem('pqv-consent') === 'accept');
+  const [consented, setConsented] = useState<boolean>(
+    () => typeof window !== 'undefined' && localStorage.getItem('pqv-consent') === 'accept',
+  );
   const [personalizedContent, setPersonalizedContent] = useState(getPersonalizedContent('unknown'));
   const prefersReducedMotion = useReducedMotion();
+
+  // Fixed hero copy as requested
   const heroTitle = 'Enterprise AI That Drives Real ROI';
   const heroSubtitle =
     'Secure, scalable, and compliant AI systems built for mission-critical operations. We deliver production-ready solutions that reduce costs, accelerate innovation, and build competitive advantage.';
@@ -51,7 +57,11 @@ export default function Home() {
       message: String(fd.get('message') || ''),
       turnstileToken: undefined,
     };
-    const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
     const data = await res.json();
     if (!res.ok || !data.ok) {
       alert(data.error || 'Something went wrong.');
@@ -64,7 +74,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A0A2A] to-[#1A1A4A] text-white">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-cyan-700 px-3 py-2 rounded">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-cyan-700 px-3 py-2 rounded"
+      >
         Skip to content
       </a>
 
@@ -73,10 +86,19 @@ export default function Home() {
           <div className="mx-auto max-w-5xl m-4 rounded-2xl border border-cyan-900/50 bg-[#0a0a2a]/95 p-4 shadow-xl">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
               <p className="text-sm text-cyan-100/80">
-                We use cookies/tech for analytics and advertising. By accepting, you allow measurement and conversion APIs.
+                We use cookies/tech for analytics and advertising. By accepting, you allow measurement and
+                conversion APIs.
               </p>
               <div className="flex gap-2">
-                <Button onClick={() => { localStorage.setItem('pqv-consent', 'decline'); }}>Decline</Button>
+                <Button
+                  onClick={() => {
+                    localStorage.setItem('pqv-consent', 'decline');
+                    setConsented(false);
+                    setConsentState('decline');
+                  }}
+                >
+                  Decline
+                </Button>
                 <Button
                   onClick={() => {
                     localStorage.setItem('pqv-consent', 'accept');
@@ -95,6 +117,7 @@ export default function Home() {
       )}
 
       <main id="main" className="pt-32">
+        {/* HERO */}
         <section className="relative overflow-hidden" aria-labelledby="hero-heading">
           <div className="max-w-7xl mx-auto px-6 py-24 flex flex-col items-center text-center gap-10">
             <div className="max-w-3xl mx-auto">
@@ -106,7 +129,7 @@ export default function Home() {
                     </span>
                   ) : (
                     word + ' '
-                  )
+                  ),
                 )}
               </h2>
               <p className="mt-4 text-cyan-100/80 max-w-3xl mx-auto">{heroSubtitle}</p>
@@ -148,13 +171,15 @@ export default function Home() {
           </div>
         </section>
 
+        {/* SERVICES PREVIEW */}
         <section id="services" className="py-20 border-t border-cyan-900/40 bg-white/5" aria-labelledby="services-heading">
           <div className="max-w-7xl mx-auto px-6">
             <h3 id="services-heading" className="text-3xl font-bold mb-4 text-center">
               From Vision to Velocity
             </h3>
             <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">
-              End-to-end capabilities to accelerate your journey from idea to impact. Our solutions are designed for speed, scale, and strategic advantage.
+              End-to-end capabilities to accelerate your journey from idea to impact. Our solutions are designed for
+              speed, scale, and strategic advantage.
             </p>
             <div className="grid md:grid-cols-3 gap-6">
               {[
@@ -214,26 +239,37 @@ export default function Home() {
           </div>
         </section>
 
+        {/* PROJECT SCOPE GENERATOR */}
         <section id="scope-generator" className="py-20 border-t border-cyan-900/40">
           <div className="max-w-7xl mx-auto px-6">
             <h3 className="text-3xl font-bold mb-6 text-center">Define Your Project</h3>
             <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">
-              Not sure where to start? Our AI-powered project scope generator will help you define your requirements and get a comprehensive project brief in minutes.
+              Not sure where to start? Our AI-powered project scope generator will help you define your requirements
+              and get a comprehensive project brief in minutes.
             </p>
             <ProjectScopeGenerator />
           </div>
         </section>
 
+        {/* ABOUT */}
         <section id="about" className="py-20 border-t border-cyan-900/40" aria-labelledby="about-heading">
           <div className="max-w-5xl mx-auto px-6">
-            <h3 id="about-heading" className="text-3xl font-bold mb-6 text-center">Your Unfair Advantage in Frontier Tech</h3>
+            <h3 id="about-heading" className="text-3xl font-bold mb-6 text-center">
+              Your Unfair Advantage in Frontier Tech
+            </h3>
             <p className="text-cyan-100/80 mb-10 max-w-3xl mx-auto text-center">
-              Born from the intersection of venture capital and hands-on engineering, PILON Qubit brings a unique perspective to frontier technology. Our team has scaled products at leading startups and built critical systems at major tech companies. We understand both the strategic vision needed to raise capital and the technical execution required to ship products that users love. This dual expertise means we don&apos;t just advise—we build alongside you, ensuring every recommendation is grounded in real-world experience and designed for sustainable growth.
+              Born from the intersection of venture capital and hands-on engineering, PILON Qubit brings a unique
+              perspective to frontier technology. Our team has scaled products at leading startups and built critical
+              systems at major tech companies. We understand both the strategic vision needed to raise capital and the
+              technical execution required to ship products that users love. This dual expertise means we don&apos;t
+              just advise—we build alongside you, ensuring every recommendation is grounded in real-world experience and
+              designed for sustainable growth.
             </p>
             <AboutCards />
           </div>
         </section>
 
+        {/* CONTACT */}
         <section id="contact" className="py-20 border-t border-cyan-900/40 bg-white/5">
           <SmartContactForm />
         </section>

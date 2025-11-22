@@ -3,11 +3,8 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
-const SERVICES_NAV = [
-  { id: 'ai-marketing', label: 'AI Marketing Automation' },
-  { id: 'frontier-ai', label: 'Frontier AI Consulting' },
-  { id: 'web-development', label: 'Web Development' },
-];
+export default function ServicesPage() {
+  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | 'webdev' | null>(null);
 
 export default function ServicesPage() {
   return (
@@ -39,12 +36,15 @@ export default function ServicesPage() {
           </div>
         </motion.div>
 
-        <div className="mt-10 flex flex-wrap gap-3 justify-center">
-          {SERVICES_NAV.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className="rounded-full border border-cyan-500/40 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-cyan-500/20 hover:border-cyan-400 transition"
+        {/* Two-Column Service Selection */}
+        <AnimatePresence mode="wait">
+          {!selectedService ? (
+            <motion.div
+              key="selection"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
             >
               {item.label}
             </a>
@@ -143,14 +143,90 @@ export default function ServicesPage() {
                     <span className={service.accent}>✓</span>
                     <span>{bullet}</span>
                   </li>
-                ))}
-              </ul>
-              <div className="text-center">
-                <div className={`${service.accent} font-bold text-xl mb-2`}>{service.price}</div>
-                <div className="text-cyan-100/60 text-sm">{service.subtext}</div>
-              </div>
-              <span
-                className={`mt-6 block w-full px-6 py-3 text-center text-white font-semibold rounded-lg transition-all ${service.button}`}
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>Implementation & Development</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>Security & Governance</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>Growth & Analytics</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>10x faster development</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-blue-400">✓</span>
+                    <span>50% cost reduction</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <div className="text-blue-400 font-bold text-xl mb-2">Custom Pricing</div>
+                  <div className="text-cyan-100/60 text-sm">Contact us for a tailored quote</div>
+                </div>
+                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all">
+                  View Services →
+                </button>
+              </motion.div>
+
+              {/* Web Development Card */}
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                onClick={() => setSelectedService('webdev')}
+                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/50 rounded-2xl p-8 cursor-pointer hover:border-purple-400 transition-all group"
+              >
+                <div className="text-5xl mb-4">💻</div>
+                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-purple-400 transition-colors">
+                  Web Development
+                </h3>
+                <p className="text-cyan-100/70 text-lg mb-6">
+                  Modern, high-performance websites and applications built for scale with AI-native experiences.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Landing pages that convert</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Full-stack web apps</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>AI-native product experiences</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>Performance-first builds</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-cyan-100/80">
+                    <span className="text-purple-400">✓</span>
+                    <span>SEO-ready architecture</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <div className="text-purple-400 font-bold text-xl mb-2">Custom Projects</div>
+                  <div className="text-cyan-100/60 text-sm">Performance-first, SEO-ready, analytics from day one</div>
+                </div>
+                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-400 hover:to-pink-500 transition-all">
+                  View Details →
+                </button>
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <button
+                onClick={() => setSelectedService(null)}
+                className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
               >
                 {service.buttonLabel}
               </span>
@@ -163,14 +239,16 @@ export default function ServicesPage() {
             <MarketingAutomationDetails />
           </section>
 
-          <section id="frontier-ai" className="pt-4 border-t border-white/5" aria-label="Frontier AI Consulting">
-            <FrontierAIConsultingDetails />
-          </section>
-
-          <section id="web-development" className="pt-4 border-t border-white/5" aria-label="Web Development">
-            <WebDevelopmentDetails />
-          </section>
-        </div>
+              {selectedService === 'marketing' ? (
+                <MarketingAutomationDetails />
+              ) : selectedService === 'webdev' ? (
+                <WebDevelopmentDetails />
+              ) : (
+                <FrontierAIConsultingDetails />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
