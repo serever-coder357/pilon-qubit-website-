@@ -1,10 +1,6 @@
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const SYSTEM_PROMPT = `
 You are the AI assistant for PILON Qubit Ventures (pilonqubitventures.com).
 
@@ -26,7 +22,9 @@ Goals:
 `;
 
 export async function POST(req: Request) {
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
     return NextResponse.json(
       {
         error:
@@ -39,6 +37,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const incoming = Array.isArray(body?.messages) ? (body.messages as any[]) : [];
+
+    const client = new OpenAI({ apiKey });
 
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
