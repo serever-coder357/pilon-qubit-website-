@@ -207,8 +207,8 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-6">
             <h3 className="text-3xl font-bold mb-6 text-center">Define Your Project</h3>
             <p className="text-cyan-100/80 mb-10 max-w-2xl mx-auto text-center">
-              Not sure where to start? Our AI-powered project scope generator will help you define your requirements
-              and get a comprehensive project brief in minutes.
+              Use the AI-assisted project scope generator to outline your requirements and get a clear,
+              investor-ready project brief in minutes.
             </p>
             <ProjectScopeGenerator />
           </div>
