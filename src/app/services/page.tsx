@@ -1,190 +1,180 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+
+const SERVICES_NAV = [
+  { id: 'ai-marketing', label: 'AI Marketing Automation' },
+  { id: 'frontier-ai', label: 'Frontier AI Consulting' },
+  { id: 'web-development', label: 'Web Development' },
+];
 
 export default function ServicesPage() {
-  const [selectedService, setSelectedService] = useState<'marketing' | 'consulting' | null>(null);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A]">
-      {/* Header */}
-      <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">PQ</span>
-            </div>
-            <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
-          </Link>
-          <nav className="flex gap-8">
-            <Link href="/services" className="text-cyan-400 font-semibold">Services</Link>
-            <Link href="/#about" className="text-white/80 hover:text-white transition-colors">About</Link>
-            <Link href="/#contact" className="text-white/80 hover:text-white transition-colors">Contact</Link>
-          </nav>
-        </div>
-      </header>
-
       <div className="container mx-auto px-6 py-16">
-        {/* Video Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-16 text-center"
+          className="mb-10"
         >
-          <h2 className="text-4xl font-bold text-white mb-4">
-            See <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PILON Qubit</span> in Action
-          </h2>
-          <p className="text-cyan-100/70 text-lg mb-8">
-            Discover how we transform frontier technology into production-ready solutions
-          </p>
-          <div className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-cyan-500/30">
-            <video
-              className="w-full"
-              controls
-              loop
-              autoPlay
-              muted
-              poster="/ai-consulting-hero.webp"
-            >
-              <source src="/pqv-new.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <div className="text-center md:text-left">
+              <h2 className="text-4xl font-bold text-white mb-4">
+                See <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">PILON Qubit</span> in Action
+              </h2>
+              <p className="text-cyan-100/70 text-lg">
+                Discover how we transform frontier technology into production-ready solutions
+              </p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-xl border border-cyan-700/20 aspect-video">
+              <video
+                src="/pilonqubitvideo.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-cover"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
           </div>
         </motion.div>
 
-        {/* Two-Column Service Selection */}
-        <AnimatePresence mode="wait">
-          {!selectedService ? (
-            <motion.div
-              key="selection"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+        <div className="mt-10 flex flex-wrap gap-3 justify-center">
+          {SERVICES_NAV.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="rounded-full border border-cyan-500/40 px-4 py-2 text-sm font-semibold text-white/90 hover:bg-cyan-500/20 hover:border-cyan-400 transition"
             >
-              {/* Marketing Automation Card */}
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                onClick={() => setSelectedService('marketing')}
-                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-cyan-500/50 rounded-2xl p-8 cursor-pointer hover:border-cyan-400 transition-all group"
-              >
-                <div className="text-5xl mb-4">🤖</div>
-                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-cyan-400 transition-colors">
-                  AI Marketing Automation
-                </h3>
-                <p className="text-cyan-100/70 text-lg mb-6">
-                  Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.
-                </p>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-cyan-400">✓</span>
-                    <span>AI Voice Assistant (24/7 phone)</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-cyan-400">✓</span>
-                    <span>Conversation AI (chat + SMS)</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-cyan-400">✓</span>
-                    <span>Review Management</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-cyan-400">✓</span>
-                    <span>Content Generation</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-cyan-400">✓</span>
-                    <span>Funnel Builder</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-cyan-400">✓</span>
-                    <span>Workflow Automation</span>
-                  </li>
-                </ul>
-                <div className="text-center">
-                  <div className="text-cyan-400 font-bold text-xl mb-2">Starting at $299/mo</div>
-                  <div className="text-cyan-100/60 text-sm">Month-to-month • No contracts • Setup determined case by case</div>
-                </div>
-                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all">
-                  View Pricing & Features →
-                </button>
-              </motion.div>
+              {item.label}
+            </a>
+          ))}
+        </div>
 
-              {/* Frontier AI Consulting Card */}
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                onClick={() => setSelectedService('consulting')}
-                className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-blue-500/50 rounded-2xl p-8 cursor-pointer hover:border-blue-400 transition-all group"
-              >
-                <div className="text-5xl mb-4">🚀</div>
-                <h3 className="text-3xl font-bold text-white mb-4 group-hover:text-blue-400 transition-colors">
-                  Frontier AI Consulting
-                </h3>
-                <p className="text-cyan-100/70 text-lg mb-6">
-                  Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.
-                </p>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-blue-400">✓</span>
-                    <span>AI Strategy & Assessment</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-blue-400">✓</span>
-                    <span>Implementation & Development</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-blue-400">✓</span>
-                    <span>Security & Governance</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-blue-400">✓</span>
-                    <span>Growth & Analytics</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-blue-400">✓</span>
-                    <span>10x faster development</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-cyan-100/80">
-                    <span className="text-blue-400">✓</span>
-                    <span>50% cost reduction</span>
-                  </li>
-                </ul>
-                <div className="text-center">
-                  <div className="text-blue-400 font-bold text-xl mb-2">Custom Pricing</div>
-                  <div className="text-cyan-100/60 text-sm">Contact us for a tailored quote</div>
-                </div>
-                <button className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-400 hover:to-purple-500 transition-all">
-                  View Services →
-                </button>
-              </motion.div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="details"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-12 grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {[
+            {
+              id: 'ai-marketing',
+              icon: '🤖',
+              title: 'AI Marketing Automation',
+              description:
+                'Complete marketing automation platform powered by AI. Save $3K/mo on marketing staff with 24/7 automated operations.',
+              bullets: [
+                'AI Voice Assistant (24/7 phone)',
+                'Conversation AI (chat + SMS)',
+                'Review Management',
+                'Content Generation',
+                'Funnel Builder',
+                'Workflow Automation',
+              ],
+              price: 'Starting at $299/mo',
+              subtext: 'Month-to-month • No contracts • Setup determined case by case',
+              buttonLabel: 'View Pricing & Features →',
+              gradient: 'from-[#1A1A4A] to-[#0A0A2A]',
+              border: 'border-cyan-500/50 hover:border-cyan-400',
+              accent: 'text-cyan-400',
+              button: 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500',
+            },
+            {
+              id: 'frontier-ai',
+              icon: '🚀',
+              title: 'Frontier AI Consulting',
+              description:
+                'Custom AI development and strategic consulting for frontier technology companies. From LLM integrations to production infrastructure.',
+              bullets: [
+                'AI Strategy & Assessment',
+                'Implementation & Development',
+                'Security & Governance',
+                'Growth & Analytics',
+                '10x faster development',
+                '50% cost reduction',
+              ],
+              price: 'Custom Pricing',
+              subtext: 'Contact us for a tailored quote',
+              buttonLabel: 'View Services →',
+              gradient: 'from-[#1A1A4A] to-[#0A0A2A]',
+              border: 'border-blue-500/50 hover:border-blue-400',
+              accent: 'text-blue-400',
+              button: 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-400 hover:to-purple-500',
+            },
+            {
+              id: 'web-development',
+              icon: '💻',
+              title: 'Web Development',
+              description: 'Modern, high-performance websites and applications built for scale with AI-native experiences.',
+              bullets: [
+                'Landing pages that convert',
+                'Full-stack web apps',
+                'AI-native product experiences',
+                'Performance-first builds',
+                'SEO-ready architecture',
+              ],
+              price: 'Custom Projects',
+              subtext: 'Performance-first, SEO-ready, analytics from day one',
+              buttonLabel: 'View Details →',
+              gradient: 'from-[#1A1A4A] to-[#0A0A2A]',
+              border: 'border-purple-500/50 hover:border-purple-400',
+              accent: 'text-purple-400',
+              button: 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500',
+            },
+          ].map((service) => (
+            <motion.a
+              key={service.id}
+              whileHover={{ scale: 1.02 }}
+              href={`#${service.id}`}
+              className={`bg-gradient-to-br ${service.gradient} border ${service.border} rounded-2xl p-8 cursor-pointer transition-all group block`}
             >
-              <button
-                onClick={() => setSelectedService(null)}
-                className="mb-8 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+              <div className="text-5xl mb-4">{service.icon}</div>
+              <h3
+                className={`text-3xl font-bold text-white mb-4 transition-colors ${service.accent} ${
+                  service.accent === 'text-cyan-400'
+                    ? 'group-hover:text-cyan-400'
+                    : service.accent === 'text-blue-400'
+                      ? 'group-hover:text-blue-400'
+                      : 'group-hover:text-purple-400'
+                }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Services
-              </button>
+                {service.title}
+              </h3>
+              <p className="text-cyan-100/70 text-lg mb-6">{service.description}</p>
+              <ul className="space-y-3 mb-8">
+                {service.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-center gap-3 text-cyan-100/80">
+                    <span className={service.accent}>✓</span>
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="text-center">
+                <div className={`${service.accent} font-bold text-xl mb-2`}>{service.price}</div>
+                <div className="text-cyan-100/60 text-sm">{service.subtext}</div>
+              </div>
+              <span
+                className={`mt-6 block w-full px-6 py-3 text-center text-white font-semibold rounded-lg transition-all ${service.button}`}
+              >
+                {service.buttonLabel}
+              </span>
+            </motion.a>
+          ))}
+        </motion.div>
 
-              {selectedService === 'marketing' ? (
-                <MarketingAutomationDetails />
-              ) : (
-                <FrontierAIConsultingDetails />
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className="max-w-6xl mx-auto mt-16 space-y-20">
+          <section id="ai-marketing">
+            <MarketingAutomationDetails />
+          </section>
+
+          <section id="frontier-ai" className="pt-4 border-t border-white/5" aria-label="Frontier AI Consulting">
+            <FrontierAIConsultingDetails />
+          </section>
+
+          <section id="web-development" className="pt-4 border-t border-white/5" aria-label="Web Development">
+            <WebDevelopmentDetails />
+          </section>
+        </div>
       </div>
     </div>
   );
@@ -462,4 +452,118 @@ function FrontierAIConsultingDetails() {
     </div>
   );
 }
-// Force deployment Sat Nov 15 14:56:19 EST 2025
+
+function WebDevelopmentDetails() {
+  const highlights = [
+    {
+      title: 'Performance-first builds',
+      description: 'Lighthouse 95+ targets, optimized assets, and edge caching baked in from day one.',
+      icon: '⚡',
+    },
+    {
+      title: 'AI-native experiences',
+      description: 'Chat, voice, and workflow automation embedded directly into your product flows.',
+      icon: '🧠',
+    },
+    {
+      title: 'Secure & compliant',
+      description: 'Best practices for auth, auditing, and data protection across the stack.',
+      icon: '🛡️',
+    },
+  ];
+
+  const stacks = [
+    'Next.js + React',
+    'TypeScript',
+    'Tailwind CSS',
+    'Node/Edge APIs',
+    'Postgres/Prisma',
+    'Vercel/Cloudflare',
+  ];
+
+  const packages = [
+    {
+      name: 'Launch-ready sites',
+      features: [
+        'Conversion-focused landing pages',
+        'SEO + analytics setup',
+        'CMS for fast publishing',
+        'Accessibility + performance tuning',
+      ],
+      accent: 'from-purple-500 to-pink-600',
+    },
+    {
+      name: 'Full-stack apps',
+      features: [
+        'User auth & RBAC',
+        'Realtime + integrations',
+        'AI assistants & automation',
+        'Observability + reliability',
+      ],
+      accent: 'from-blue-500 to-cyan-500',
+    },
+  ];
+
+  return (
+    <div>
+      <h2 className="text-4xl font-bold text-white mb-4">Web Development</h2>
+      <p className="text-cyan-100/70 text-lg mb-10 max-w-3xl">
+        Fast, modern, AI-integrated websites and applications built for scale, performance, and security.
+      </p>
+
+      <div className="grid md:grid-cols-3 gap-6 mb-12">
+        {highlights.map((item) => (
+          <div
+            key={item.title}
+            className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/40 rounded-xl p-6"
+          >
+            <div className="text-3xl mb-3">{item.icon}</div>
+            <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+            <p className="text-cyan-100/70 text-sm">{item.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-12">
+        {packages.map((pkg) => (
+          <div
+            key={pkg.name}
+            className="bg-gradient-to-br from-[#1A1A4A] to-[#0A0A2A] border border-purple-500/40 rounded-2xl p-6"
+          >
+            <div className="inline-flex items-center rounded-full bg-white/5 px-3 py-1 text-sm text-cyan-100/80 mb-4">
+              {pkg.name}
+            </div>
+            <ul className="space-y-3 text-sm text-cyan-100/80">
+              {pkg.features.map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
+                  <span className="text-purple-400 mt-0.5">•</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6">
+              <Link
+                href="/#contact"
+                className={`inline-flex items-center gap-2 rounded-lg px-5 py-3 font-semibold text-white bg-gradient-to-r ${pkg.accent} hover:opacity-90 transition`}
+              >
+                Plan your build
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/40 rounded-2xl p-6">
+        <h3 className="text-xl font-bold text-white mb-3">Preferred stack</h3>
+        <div className="flex flex-wrap gap-2 text-sm text-cyan-100/80">
+          {stacks.map((tech) => (
+            <span key={tech} className="px-3 py-1 rounded-full border border-white/10 bg-white/5">
+              {tech}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
