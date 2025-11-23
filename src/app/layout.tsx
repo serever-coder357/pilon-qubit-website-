@@ -22,7 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta
+          httpEquiv="Cache-Control"
+          content="no-cache, no-store, must-revalidate"
+        />
       </head>
       <body className="font-sans bg-[#0A0A2A] text-white min-h-screen">
         {/* Header */}
@@ -32,14 +35,17 @@ export default function RootLayout({
               <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">PQ</span>
               </div>
-              <span className="text-white font-bold text-xl">PILON Qubit Ventures</span>
+              <span className="text-white font-bold text-xl">
+                PILON Qubit Ventures
+              </span>
             </Link>
 
             <nav className="flex items-center gap-8">
-              <Link href="/services" className="text-cyan-400 font-semibold hover:text-cyan-300">
-                Services
-              </Link>
-              <Link href="/#about" className="text-white/80 hover:text-white transition-colors">
+              {/* Only About and Contact on the right */}
+              <Link
+                href="/#about"
+                className="text-white/80 hover:text-white transition-colors"
+              >
                 About
               </Link>
               <ContactDropdown />
