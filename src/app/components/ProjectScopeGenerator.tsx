@@ -1,390 +1,234 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
-interface Message {
-  role: 'assistant' | 'user';
-  content: string;
-}
-
-interface ProjectScope {
-  title: string;
-  challenge: string;
-  approach: string[];
-  technologies: string[];
-  timeline: string;
-  team: string;
-  outcomes: string[];
-}
-
-const INITIAL_QUESTIONS = [
-  {
-    id: 'industry',
-    question: "Let's start! What industry are you in?",
-    placeholder: "e.g., Healthcare, Fintech, E-commerce, SaaS..."
-  },
-  {
-    id: 'challenge',
-    question: "What's the main challenge or goal you're trying to address?",
-    placeholder: "Describe your current challenge or what you want to build..."
-  },
-  {
-    id: 'technical',
-    question: "Do you have any specific technical requirements or constraints?",
-    placeholder: "e.g., Must integrate with existing systems, specific compliance needs..."
-  },
-  {
-    id: 'timeline',
-    question: "What's your desired timeline?",
-    placeholder: "e.g., 3 months, 6 months, ASAP..."
-  },
-  {
-    id: 'team',
-    question: "Tell me about your current team and technical capabilities.",
-    placeholder: "e.g., 5 engineers, no AI expertise, need full support..."
-  }
-];
+type Complexity = 'simple' | 'standard' | 'advanced';
 
 export default function ProjectScopeGenerator() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [projectScope, setProjectScope] = useState<ProjectScope | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const [projectType, setProjectType] = useState('AI marketing automation');
+  const [industry, setIndustry] = useState('');
+  const [goals, setGoals] = useState('');
+  const [timeline, setTimeline] = useState('6–8 weeks');
+  const [budget, setBudget] = useState('');
+  const [integrations, setIntegrations] = useState('');
+  const [complexity, setComplexity] = useState<Complexity>('standard');
 
-  const handleStart = () => {
-    setIsOpen(true);
-    setMessages([{
-      role: 'assistant',
-      content: INITIAL_QUESTIONS[0].question
-    }]);
-  };
+  const [loading, setLoading] = useState(false);
+  const [scope, setScope] = useState<string | null>(null);
 
-  const handleSubmitAnswer = async () => {
-    if (!input.trim()) return;
+  function generateScope() {
+    setLoading(true);
 
-    const currentQuestion = INITIAL_QUESTIONS[currentStep];
-    const userMessage: Message = { role: 'user', content: input };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: input }));
-    setInput('');
+    // Very small timeout to show "thinking" but never fail
+    setTimeout(() => {
+      const lines: string[] = [];
 
-    if (currentStep < INITIAL_QUESTIONS.length - 1) {
-      // Move to next question
-      setTimeout(() => {
-        setCurrentStep(prev => prev + 1);
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: INITIAL_QUESTIONS[currentStep + 1].question
-        }]);
-      }, 500);
-    } else {
-      // Generate project scope
-      await generateProjectScope();
-    }
-  };
-
-  const generateProjectScope = async () => {
-    setIsGenerating(true);
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      content: "Perfect! Let me analyze your requirements and generate a comprehensive project scope..."
-    }]);
-
-    try {
-      const response = await fetch('/api/generate-scope', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers })
-      });
-
-      const data = await response.json();
-      
-      if (data.ok && data.scope) {
-        setProjectScope(data.scope);
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: "Excellent! I've created a comprehensive project scope based on your needs. This is just a starting point - we'll work together to refine it and adjust everything to fit your specific budget and timeline. Download the PDF below or click 'Discuss with Team' to continue the conversation!"
-        }]);
-      } else {
-        throw new Error('Failed to generate scope');
+      lines.push(`# Project Scope – ${projectType}`);
+      if (industry.trim()) {
+        lines.push(`**Industry / Context:** ${industry.trim()}`);
       }
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: "I encountered an issue generating your scope. Please try again or contact us directly."
-      }]);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+      if (goals.trim()) {
+        lines.push(`**Primary Goals:** ${goals.trim()}`);
+      }
 
-  const handleDownloadPDF = async () => {
-    if (!projectScope) return;
+      lines.push('');
+      lines.push('## 1. Overview');
+      lines.push(
+        `We will design, build, and launch a ${projectType.toLowerCase()} solution tailored to your business. The focus is on delivering measurable outcomes (revenue, efficiency, or customer experience) rather than just deploying technology.`,
+      );
 
-    try {
-      const response = await fetch('/api/generate-scope-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: projectScope })
-      });
+      lines.push('');
+      lines.push('## 2. Core Features');
+      const featureBullets: string[] = [];
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'project-scope-pilon-qubit.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Failed to download PDF. Please try again.');
-    }
-  };
+      if (projectType.toLowerCase().includes('marketing')) {
+        featureBullets.push('AI-powered assistant for leads (chat and/or SMS).');
+        featureBullets.push('Automated follow-up sequences and campaigns.');
+        featureBullets.push('Dashboards for pipeline, conversion and ROI.');
+      } else if (projectType.toLowerCase().includes('web')) {
+        featureBullets.push('Modern, responsive UI built with React / Next.js.');
+        featureBullets.push('SEO-ready structure and fast page loads.');
+        featureBullets.push('Analytics and event tracking integrated from day one.');
+      } else {
+        featureBullets.push('LLM-backed workflows to automate key processes.');
+        featureBullets.push('APIs and connectors for your internal systems.');
+        featureBullets.push('Basic monitoring and logging for reliability.');
+      }
 
-  const handleReset = () => {
-    setCurrentStep(0);
-    setMessages([{
-      role: 'assistant',
-      content: INITIAL_QUESTIONS[0].question
-    }]);
-    setInput('');
-    setProjectScope(null);
-    setAnswers({});
-  };
+      if (integrations.trim()) {
+        featureBullets.push(`Integrations with: ${integrations.trim()}.`);
+      }
 
-  if (!isOpen) {
-    return (
-      <div className="flex justify-center my-12">
-        <motion.button
-          onClick={handleStart}
-          className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          🚀 Generate AI Project Scope
-        </motion.button>
-      </div>
-    );
+      lines.push(
+        featureBullets.map((f) => `- ${f}`).join('\n'),
+      );
+
+      lines.push('');
+      lines.push('## 3. Phases & Timeline');
+
+      if (complexity === 'simple') {
+        lines.push(
+          `**Phase 1 – Discovery & Setup (1–2 weeks):** Confirm requirements, define success metrics, finalize scope, and configure core environment.`,
+        );
+        lines.push(
+          `**Phase 2 – Build & Integrate (2–3 weeks):** Implement core functionality, simple flows, and essential reporting.`,
+        );
+        lines.push(
+          `**Phase 3 – Launch (1 week):** UAT, fixes, documentation, and handoff.`,
+        );
+      } else if (complexity === 'standard') {
+        lines.push(
+          `**Phase 1 – Discovery & Design (1–2 weeks):** Deep dive on use cases, architecture, data flows, and security considerations.`,
+        );
+        lines.push(
+          `**Phase 2 – Build & Iteration (3–5 weeks):** Implement features in weekly sprints with check-ins and demos.`,
+        );
+        lines.push(
+          `**Phase 3 – Hardening & Launch (1–2 weeks):** Performance tuning, edge-case handling, and production rollout.`,
+        );
+      } else {
+        lines.push(
+          `**Phase 1 – Strategy & Architecture (2–3 weeks):** Multi-stakeholder workshops, solution architecture, and risk assessment.`,
+        );
+        lines.push(
+          `**Phase 2 – Implementation (6–10 weeks):** Incremental delivery of features with staging environments and integration testing.`,
+        );
+        lines.push(
+          `**Phase 3 – Production & Enablement (2–4 weeks):** Monitoring, training, documentation, and long-term roadmap.`,
+        );
+      }
+
+      lines.push('');
+      lines.push('## 4. Constraints & Assumptions');
+
+      if (budget.trim()) {
+        lines.push(`- Target budget: ${budget.trim()}.`);
+      } else {
+        lines.push('- Budget to be finalized after discovery, based on confirmed scope.');
+      }
+
+      lines.push('- Project assumes access to required APIs, data sources, and accounts.');
+      lines.push('- Any additional major integrations or new systems may require change orders.');
+
+      lines.push('');
+      lines.push('## 5. Success Metrics');
+      lines.push('- Clear before/after metrics for the chosen goals (e.g. lead volume, response time, conversion rate).');
+      lines.push('- System stability and performance under expected load.');
+      lines.push('- Usability for internal teams and/or end users.');
+
+      lines.push('');
+      lines.push('---');
+      lines.push(
+        'This draft scope is meant as a starting point. In a full engagement, we would refine this into a detailed statement of work, technical architecture, and delivery plan.',
+      );
+
+      setScope(lines.join('\n'));
+      setLoading(false);
+    }, 300);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    generateScope();
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-4xl"
-      >
-        <div className="bg-gradient-to-br from-[#0a0a2a] to-[#1a1a4a] rounded-2xl border border-cyan-900/50 shadow-2xl overflow-hidden flex flex-col" style={{maxHeight: '85vh'}}>
-        {/* Header */}
-        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4" style={{flexShrink: 0}}>
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-2xl font-bold text-white">AI Project Scope Generator</h3>
-              <p className="text-cyan-100 mt-1">Let&apos;s define your project together</p>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:text-cyan-200 transition-colors"
-              aria-label="Close"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <div className="max-w-4xl mx-auto bg-[#0E1030]/70 border border-cyan-900/50 rounded-2xl p-6 md:p-8 shadow-xl">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-1">Project type</label>
+            <input
+              className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              placeholder="AI marketing automation, web app, internal tool..."
+            />
           </div>
-          
-          {/* Progress Bar */}
-          {!projectScope && (
-            <div className="mt-4">
-              <div className="flex justify-between text-xs text-cyan-100 mb-2">
-                <span>Progress</span>
-                <span>{currentStep + 1} / {INITIAL_QUESTIONS.length}</span>
-              </div>
-              <div className="w-full bg-cyan-900/30 rounded-full h-2">
-                <motion.div
-                  className="bg-cyan-300 h-2 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${((currentStep + 1) / INITIAL_QUESTIONS.length) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-semibold mb-1">Industry / context</label>
+            <input
+              className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+              placeholder="Real estate, healthcare, SaaS, local services..."
+            />
+          </div>
         </div>
 
-        {/* Messages */}
-        <div ref={messagesContainerRef} className="p-4 space-y-4" style={{flex: 1, overflowY: 'auto', minHeight: 0}}>
-          <AnimatePresence>
-            {messages.map((msg, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-4 rounded-lg ${
-                    msg.role === 'user'
-                      ? 'bg-cyan-600 text-white'
-                      : 'bg-[#1a1a4a] text-cyan-100 border border-cyan-900/50'
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+        <div>
+          <label className="block text-sm font-semibold mb-1">Main goals</label>
+          <textarea
+            className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            rows={3}
+            value={goals}
+            onChange={(e) => setGoals(e.target.value)}
+            placeholder="Increase inbound leads, reduce manual work, shorten response time, improve UX..."
+          />
+        </div>
 
-          {isGenerating && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start"
+        <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-1">Timeline</label>
+            <input
+              className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              value={timeline}
+              onChange={(e) => setTimeline(e.target.value)}
+              placeholder="e.g. 4–6 weeks"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Budget (optional)</label>
+            <input
+              className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              placeholder="e.g. $10k–$25k"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Complexity</label>
+            <select
+              className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              value={complexity}
+              onChange={(e) => setComplexity(e.target.value as Complexity)}
             >
-              <div className="bg-[#1a1a4a] text-cyan-100 border border-cyan-900/50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  <span>Analyzing your requirements...</span>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          <div ref={messagesEndRef} />
+              <option value="simple">Simple MVP</option>
+              <option value="standard">Standard project</option>
+              <option value="advanced">Advanced / multi-system</option>
+            </select>
+          </div>
         </div>
 
-        {/* Project Scope Display */}
-        {projectScope && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="p-6 bg-[#0a0a2a] border-t border-cyan-900/50 overflow-y-auto"
-            style={{flex: 1, minHeight: 0}}
+        <div>
+          <label className="block text-sm font-semibold mb-1">Key tools or integrations (optional)</label>
+          <input
+            className="w-full rounded-md bg-[#05071c] border border-cyan-900/60 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            value={integrations}
+            onChange={(e) => setIntegrations(e.target.value)}
+            placeholder="CRMs, data sources, internal systems, third-party APIs..."
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 rounded-md bg-cyan-500 text-sm font-semibold text-black hover:bg-cyan-400 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <h4 className="text-xl font-bold text-cyan-400 mb-4">📋 Your Project Scope</h4>
-            
-            <div className="space-y-4 text-cyan-100">
-              <div>
-                <h5 className="font-semibold text-cyan-300 mb-2">Project Title</h5>
-                <p>{projectScope.title}</p>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-cyan-300 mb-2">Challenge</h5>
-                <p>{projectScope.challenge}</p>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-cyan-300 mb-2">Proposed Approach</h5>
-                <ul className="list-disc list-inside space-y-1">
-                  {projectScope.approach.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-cyan-300 mb-2">Recommended Technologies</h5>
-                <div className="flex flex-wrap gap-2">
-                  {projectScope.technologies.map((tech, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-cyan-900/30 rounded-full text-sm">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h5 className="font-semibold text-cyan-300 mb-2">Timeline</h5>
-                  <p>{projectScope.timeline}</p>
-                </div>
-                <div>
-                  <h5 className="font-semibold text-cyan-300 mb-2">Team</h5>
-                  <p>{projectScope.team}</p>
-                </div>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-cyan-300 mb-2">Expected Outcomes</h5>
-                <ul className="list-disc list-inside space-y-1">
-                  {projectScope.outcomes.map((outcome, idx) => (
-                    <li key={idx}>{outcome}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleDownloadPDF}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
-              >
-                📥 Download PDF
-              </button>
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  setTimeout(() => {
-                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                  }, 300);
-                }}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
-              >
-                💬 Let&apos;s Chat!
-              </button>
-              <button
-                onClick={handleReset}
-                className="px-6 py-3 bg-gray-700 text-white rounded-lg font-semibold hover:bg-gray-600 transition-all"
-              >
-                🔄 Start Over
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Input Area */}
-        {!projectScope && !isGenerating && (
-          <div className="p-4 bg-[#0a0a2a] border-t border-cyan-900/50" style={{flexShrink: 0}}>
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmitAnswer()}
-                placeholder={INITIAL_QUESTIONS[currentStep]?.placeholder || "Type your answer..."}
-                className="flex-1 px-4 py-3 bg-[#1a1a4a] border border-cyan-900/50 rounded-lg text-white placeholder-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              />
-              <button
-                onClick={handleSubmitAnswer}
-                disabled={!input.trim()}
-                className="px-4 py-3 bg-cyan-600 text-white rounded-lg font-semibold hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap"
-              >
-                ➤
-              </button>
-            </div>
-          </div>
-        )}
+            {loading ? 'Generating scope…' : 'Generate project scope'}
+          </button>
         </div>
-      </motion.div>
+      </form>
+
+      {scope && (
+        <div className="mt-8 border-t border-cyan-900/60 pt-6">
+          <h4 className="text-lg font-semibold mb-3 text-cyan-300">Generated Project Scope</h4>
+          <div className="text-sm whitespace-pre-line text-cyan-100/90 bg-[#05071c] border border-cyan-900/60 rounded-xl p-4 max-h-[480px] overflow-y-auto">
+            {scope}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
