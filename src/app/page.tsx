@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
-import AIChatbot from './components/AIChatbot';
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
 import AboutCards from './components/AboutCards';
@@ -241,8 +240,6 @@ export default function Home() {
       <footer className="border-t border-cyan-900/40 py-8 text-center text-cyan-100/60">
         © {new Date().getFullYear()} PILON Qubit Ventures — All rights reserved.
       </footer>
-
-      <AIChatbot />
     </div>
   );
 }
