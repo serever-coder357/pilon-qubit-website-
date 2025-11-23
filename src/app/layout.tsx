@@ -41,7 +41,6 @@ export default function RootLayout({
             </Link>
 
             <nav className="flex items-center gap-8">
-              {/* Only About and Contact on the right */}
               <Link
                 href="/#about"
                 className="text-white/80 hover:text-white transition-colors"
@@ -55,6 +54,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
+        {/* Unified AI lead-capture widget */}
         <AIChatWidget />
       </body>
     </html>

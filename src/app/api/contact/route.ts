@@ -1,58 +1,94 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resendApiKey = process.env.RESEND_API_KEY;
+const contactTo = process.env.CONTACT_TO || 'hello@pilonqubitventures.com';
+const contactFrom =
+  process.env.CONTACT_FROM || 'PILON Qubit Ventures <noreply@pilonqubitventures.com>';
 
-async function verifyTurnstile(token: string | undefined, ip: string | null) {
-  if (!process.env.TURNSTILE_SECRET_KEY) return { success: true, code: 'demo_mode' } as const;
-  if (!token) return { success: true, code: 'demo_mode' } as const;
-  const form = new URLSearchParams();
-  form.append('secret', process.env.TURNSTILE_SECRET_KEY);
-  form.append('response', token);
-  if (ip) form.append('remoteip', ip);
-
-  const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, cache: 'no-store',
-  });
-  const data = await resp.json();
-  return { success: !!data.success, code: data['error-codes']?.[0] } as const;
-}
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function POST(req: Request) {
+  if (!resend) {
+    console.error('RESEND_API_KEY is missing');
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          'Email service is not configured yet. Please email hello@pilonqubitventures.com directly.',
+      },
+      { status: 500 },
+    );
+  }
+
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
-    const json = await req.json();
-    const { name, email, company, message, turnstileToken } = json || {};
+    const body = await req.json();
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
+    const name: string = String(body.name || '').trim();
+    const email: string = String(body.email || '').trim();
+    const company: string = String(body.company || '').trim();
+    const message: string = String(body.message || '').trim();
+
+    const pageUrl: string | undefined = body.pageUrl || undefined;
+    const userAgent: string | undefined = body.userAgent || undefined;
+    const source: string | undefined = body.source || undefined;
+    const createdAt: string | undefined = body.createdAt || undefined;
+
+    if (!name || !email) {
+      return NextResponse.json(
+        { ok: false, error: 'Name and email are required.' },
+        { status: 400 },
+      );
     }
 
-    const check = await verifyTurnstile(turnstileToken, ip);
-    if (!check.success && check.code !== 'demo_mode') {
-      return NextResponse.json({ ok: false, error: `Verification failed: ${check.code || 'invalid'}` }, { status: 400 });
+    const subject =
+      source === 'ai-chat-widget'
+        ? 'New AI chat lead — PILON Qubit Ventures'
+        : 'New website lead — PILON Qubit Ventures';
+
+    const lines: string[] = [];
+
+    lines.push(`Name: ${name}`);
+    lines.push(`Email / Contact: ${email}`);
+    if (company) lines.push(`Company: ${company}`);
+    lines.push('');
+
+    if (message) {
+      lines.push('Message:');
+      lines.push(message);
+      lines.push('');
     }
 
-    const to = process.env.CONTACT_TO_EMAIL!;
-    const from = process.env.CONTACT_FROM_EMAIL!;
+    lines.push('Meta:');
+    if (source) lines.push(`- Source: ${source}`);
+    if (pageUrl) lines.push(`- Page URL: ${pageUrl}`);
+    if (userAgent) lines.push(`- User Agent: ${userAgent}`);
+    if (createdAt) lines.push(`- Created At: ${createdAt}`);
+    lines.push(`- Received At (server): ${new Date().toISOString()}`);
 
-    if (resend) {
-      await resend.emails.send({
-        from, to, subject: `New website inquiry from ${name}`,
-        text: `Name: ${name}
-Email: ${email}
-Company: ${company || '-'}
+    const text = lines.join('\n');
 
-Message:
-${message}`,
-      });
-    } else {
-      console.log('Demo mode: Email would be sent to', to, 'from', name);
-    }
+    const emailResult = await resend.emails.send({
+      from: contactFrom,
+      to: contactTo,
+      subject,
+      text,
+      reply_to: email,
+    });
+
+    const emailId = emailResult?.data?.id ?? 'no-id';
+    console.log('Contact email sent:', emailId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
+    console.error('API /api/contact error:', err);
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          'There was a problem sending your message. Please email hello@pilonqubitventures.com directly.',
+      },
+      { status: 500 },
+    );
   }
 }
