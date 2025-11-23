@@ -6,12 +6,10 @@ import { motion, useReducedMotion } from 'framer-motion';
 import AIChatbot from './components/AIChatbot';
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
-import PersonalizationSelector from './components/PersonalizationSelector';
 import AboutCards from './components/AboutCards';
 
 import { initAnalytics, page } from '@/lib/analytics';
 import { setConsentState } from '@/lib/consent';
-import { detectVisitorType, getPersonalizedContent, trackPersonalization } from '@/lib/personalization';
 
 function Button(props: any) {
   return (
@@ -26,7 +24,6 @@ export default function Home() {
   const [consented, setConsented] = useState<boolean>(
     () => typeof window !== 'undefined' && localStorage.getItem('pqv-consent') === 'accept',
   );
-  const [personalizedContent, setPersonalizedContent] = useState(getPersonalizedContent('unknown'));
   const prefersReducedMotion = useReducedMotion();
 
   const heroTitle = 'Enterprise AI That Drives Real ROI';
@@ -39,37 +36,6 @@ export default function Home() {
       page();
     }
   }, [consented]);
-
-  useEffect(() => {
-    const detected = detectVisitorType();
-    setPersonalizedContent(getPersonalizedContent(detected));
-    trackPersonalization(detected, 'page_view');
-  }, []);
-
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const payload = {
-      name: String(fd.get('name') || ''),
-      email: String(fd.get('email') || ''),
-      company: String(fd.get('company') || ''),
-      message: String(fd.get('message') || ''),
-      turnstileToken: undefined,
-    };
-    const res = await fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.ok) {
-      alert(data.error || 'Something went wrong.');
-      return;
-    }
-    (window as any).analytics?.track?.('contact_submitted_success');
-    (e.currentTarget as HTMLFormElement).reset();
-    alert("Thanks! We'll be in touch shortly.");
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A0A2A] to-[#1A1A4A] text-white">
@@ -113,10 +79,10 @@ export default function Home() {
         </div>
       )}
 
-      <main id="main" className="pt-20">
+      <main id="main" className="pt-16">
         {/* HERO */}
         <section className="relative overflow-hidden" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-6 py-16 flex flex-col items-center text-center gap-10">
+          <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col items-center text-center gap-10">
             <div className="max-w-3xl mx-auto">
               <h2 id="hero-heading" className="text-4xl md:text-5xl font-extrabold leading-tight">
                 {heroTitle.split(' ').map((word, i, arr) =>
@@ -132,7 +98,7 @@ export default function Home() {
               <p className="mt-4 text-cyan-100/80 max-w-3xl mx-auto">{heroSubtitle}</p>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                 <Button onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                  {personalizedContent.ctaPrimary}
+                  Start Building
                 </Button>
                 <a
                   href="/services"
@@ -214,22 +180,12 @@ export default function Home() {
               ].map((service, idx) => (
                 <div
                   key={idx}
-                  className="p-6 rounded-2xl border border-cyan-900/40 bg-[#0E1030]/60 backdrop-blur hover:border-cyan-500/40 transition-all cursor-pointer group"
-                  onClick={() => {
-                    const el = document.getElementById(`service-details-${idx}`);
-                    if (el) {
-                      el.classList.toggle('hidden');
-                      el.classList.toggle('block');
-                    }
-                  }}
+                  className="p-6 rounded-2xl border border-cyan-900/40 bg-[#0E1030]/60 backdrop-blur hover:border-cyan-500/40 transition-all"
                 >
-                  <div className="font-semibold mb-3 text-lg text-cyan-400 flex items-center justify-between">
-                    {service.title}
-                    <span className="text-sm opacity-50 group-hover:opacity-100 transition-opacity">▼</span>
-                  </div>
+                  <div className="font-semibold mb-3 text-lg text-cyan-400">{service.title}</div>
                   <div className="text-cyan-100/80 mb-4">{service.summary}</div>
                   <div className="text-sm text-cyan-100/60 mb-4">{service.metrics}</div>
-                  <div id={`service-details-${idx}`} className="hidden mt-4 pt-4 border-t border-cyan-900/40">
+                  <div className="mt-4 pt-4 border-t border-cyan-900/40">
                     <div className="text-sm font-semibold text-cyan-400 mb-2">What We Deliver:</div>
                     <ul className="text-sm text-cyan-100/70 space-y-1">
                       {service.details.map((detail, i) => (
@@ -287,7 +243,6 @@ export default function Home() {
       </footer>
 
       <AIChatbot />
-      <PersonalizationSelector />
     </div>
   );
 }
