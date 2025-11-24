@@ -1,34 +1,38 @@
 import OpenAI from 'openai';
-import { NextResponse } from 'next/server';
+import { Resend } from 'resend';
+import { NextRequest, NextResponse } from 'next/server';
 
-const SYSTEM_PROMPT = `
-You are the AI assistant for PILON Qubit Ventures (pilonqubitventures.com).
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-Tone:
-- Friendly, clear, and confident.
-- Short answers, bullet points when helpful.
-- Avoid heavy jargon unless the user is technical.
+const SYSTEM_PROMPT = `You are the AI assistant for PILON Qubit Ventures, a boutique firm focused on enterprise AI, AI marketing automation, and frontier AI consulting.
+Speak in a clear, friendly, expert tone.
+You only answer based on reasonable industry knowledge and what a typical AI consulting firm like PILON Qubit would offer.
+Your goals:
+1) Understand the visitor's needs.
+2) Explain how PILON Qubit can help (services, engagement models, etc.).
+3) If the visitor shows buying intent (wants a quote, strategy session, implementation help, timeline, or pricing), politely ask for their name and email so the team can follow up.`;
 
-Context:
-- PILON Qubit builds production-ready AI systems (agents, automation, chatbots, content workflows).
-- Also designs and develops modern web apps and websites with AI integration.
-- Focus on security, compliance, and real ROI for mission-critical operations.
+type RequestMessage = {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
 
-Goals:
-1. Understand who the visitor is (founder/startup, enterprise, technical, general).
-2. Clarify their problem, context, and rough timeline.
-3. Explain concretely how PILON Qubit can help (not generic AI fluff).
-4. Suggest a clear next step (contact form, booking a strategy session, or sharing more details).
-`;
+type LeadPayload = {
+  name?: string;
+  email?: string;
+  context?: string;
+};
 
-export async function POST(req: Request) {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
+export async function POST(req: NextRequest) {
+  if (!openai) {
     return NextResponse.json(
       {
+        ok: false,
         error:
-          'AI is not fully configured yet. Please contact us at hello@pilonqubitventures.com while we finalize the assistant.',
+          'AI is not fully configured yet. Please contact hello@pilonqubitventures.com while we finalize the assistant.',
       },
       { status: 500 },
     );
@@ -36,31 +40,68 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const incoming = Array.isArray(body?.messages) ? (body.messages as any[]) : [];
+    const incoming: RequestMessage[] = Array.isArray(body?.messages)
+      ? body.messages
+      : [];
+    const lead: LeadPayload | undefined = body?.lead;
 
-    const client = new OpenAI({ apiKey });
-
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         ...incoming.map((m) => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
+          role: m.role,
           content: String(m.content ?? ''),
         })),
-      ] as any,
+      ],
       temperature: 0.6,
     });
 
     const reply =
       completion.choices[0]?.message?.content?.trim() ||
-      "I'm not sure what to say yet, but I’d love to learn more about your project so we can help.";
+      "I'm not sure what to say yet, but I'd love to learn more about your project.";
 
-    return NextResponse.json({ reply });
+    if (lead?.email && resend) {
+      const transcript = incoming
+        .slice(-10)
+        .map((m) => {
+          const speaker = m.role === 'assistant' ? 'Assistant' : m.role === 'system' ? 'System' : 'User';
+          const safeContent = String(m.content ?? '').replace(/\n/g, '<br />');
+          return `<p><strong>${speaker}:</strong> ${safeContent}</p>`;
+        })
+        .join('');
+
+      const from = process.env.RESEND_FROM_EMAIL || 'hello@pilonqubitventures.com';
+      const leadContext = lead.context ? `<p><strong>Context:</strong> ${lead.context}</p>` : '';
+      const leadName = lead.name ? `<p><strong>Name:</strong> ${lead.name}</p>` : '';
+
+      resend.emails
+        .send({
+          from,
+          to: 'hello@pilonqubitventures.com',
+          subject: 'New AI chat lead from PILON Qubit website',
+          html: `
+            <h3>New AI chat lead</h3>
+            ${leadName}
+            <p><strong>Email:</strong> ${lead.email}</p>
+            ${leadContext}
+            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+            <h4>Recent conversation</h4>
+            ${transcript}
+          `,
+          reply_to: lead.email,
+        })
+        .catch((error) => {
+          console.error('AI chat lead email failed:', error);
+        });
+    }
+
+    return NextResponse.json({ ok: true, reply });
   } catch (err) {
     console.error('API /api/chat error:', err);
     return NextResponse.json(
       {
+        ok: false,
         error:
           'There was a problem talking to the AI service. Please email hello@pilonqubitventures.com or use the main contact form.',
       },

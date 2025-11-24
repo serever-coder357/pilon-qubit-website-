@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Link from 'next/link';
 import ContactDropdown from './ContactDropdown';
-import AIChatWidget from './components/AIChatWidget';
+import ChatbotButton from './ChatbotButton';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -55,7 +55,7 @@ export default function RootLayout({
         <main>{children}</main>
 
         {/* Unified AI lead-capture widget */}
-        <AIChatWidget />
+        <ChatbotButton />
       </body>
     </html>
   );

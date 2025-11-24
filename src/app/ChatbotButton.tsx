@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import AIChatbotWidget from './components/AIChatbotWidget';
+import AIChatWidget from './components/AIChatWidget';
 
 export default function ChatbotButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,7 +25,7 @@ export default function ChatbotButton() {
         </button>
       )}
 
-      {isOpen && <AIChatbotWidget onClose={() => setIsOpen(false)} />}
+      {isOpen && <AIChatWidget isOpen={isOpen} onClose={() => setIsOpen(false)} />}
     </>
   );
 }

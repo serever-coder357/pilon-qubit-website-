@@ -1,16 +1,11 @@
-import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { NextRequest, NextResponse } from 'next/server';
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const contactTo = process.env.CONTACT_TO || 'hello@pilonqubitventures.com';
-const contactFrom =
-  process.env.CONTACT_FROM || 'PILON Qubit Ventures <noreply@pilonqubitventures.com>';
-
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   if (!resend) {
-    console.error('RESEND_API_KEY is missing');
     return NextResponse.json(
       {
         ok: false,
@@ -24,15 +19,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const name: string = String(body.name || '').trim();
-    const email: string = String(body.email || '').trim();
-    const company: string = String(body.company || '').trim();
-    const message: string = String(body.message || '').trim();
-
-    const pageUrl: string | undefined = body.pageUrl || undefined;
-    const userAgent: string | undefined = body.userAgent || undefined;
-    const source: string | undefined = body.source || undefined;
-    const createdAt: string | undefined = body.createdAt || undefined;
+    const name: string = String(body?.name ?? '').trim();
+    const email: string = String(body?.email ?? '').trim();
+    const company: string = String(body?.company ?? '').trim();
+    const message: string = String(body?.message ?? '').trim();
 
     if (!name || !email) {
       return NextResponse.json(
@@ -41,43 +31,33 @@ export async function POST(req: Request) {
       );
     }
 
-    const subject =
-      source === 'ai-chat-widget'
-        ? 'New AI chat lead — PILON Qubit Ventures'
-        : 'New website lead — PILON Qubit Ventures';
+    const from = process.env.RESEND_FROM_EMAIL || 'hello@pilonqubitventures.com';
 
-    const lines: string[] = [];
+    const htmlSections = [
+      `<p><strong>Name:</strong> ${name}</p>`,
+      `<p><strong>Email:</strong> ${email}</p>`,
+    ];
 
-    lines.push(`Name: ${name}`);
-    lines.push(`Email / Contact: ${email}`);
-    if (company) lines.push(`Company: ${company}`);
-    lines.push('');
-
-    if (message) {
-      lines.push('Message:');
-      lines.push(message);
-      lines.push('');
+    if (company) {
+      htmlSections.push(`<p><strong>Company:</strong> ${company}</p>`);
     }
 
-    lines.push('Meta:');
-    if (source) lines.push(`- Source: ${source}`);
-    if (pageUrl) lines.push(`- Page URL: ${pageUrl}`);
-    if (userAgent) lines.push(`- User Agent: ${userAgent}`);
-    if (createdAt) lines.push(`- Created At: ${createdAt}`);
-    lines.push(`- Received At (server): ${new Date().toISOString()}`);
+    if (message) {
+      const safeMessage = message.replace(/\n/g, '<br />');
+      htmlSections.push(`<p><strong>Message:</strong><br />${safeMessage}</p>`);
+    }
 
-    const text = lines.join('\n');
+    htmlSections.push(
+      `<p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>`,
+    );
 
-    const emailResult = await resend.emails.send({
-      from: contactFrom,
-      to: contactTo,
-      subject,
-      text,
+    await resend.emails.send({
+      from,
+      to: 'hello@pilonqubitventures.com',
+      subject: 'New lead from PILON Qubit website contact form',
+      html: htmlSections.join(''),
       reply_to: email,
     });
-
-    const emailId = emailResult?.data?.id ?? 'no-id';
-    console.log('Contact email sent:', emailId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
