@@ -1,70 +1,64 @@
-import OpenAI from 'openai';
-import { NextResponse } from 'next/server';
+import { NextRequest } from "next/server";
+import OpenAI from "openai";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `
-You are the AI assistant for PILON Qubit Ventures (pilonqubitventures.com).
+export const runtime = "edge";
 
-Tone:
-- Friendly, clear, and confident.
-- Short answers, bullet points when helpful.
-- Avoid heavy jargon unless the user is technical.
-
-Context:
-- PILON Qubit builds production-ready AI systems (agents, automation, chatbots, content workflows).
-- Also designs and develops modern web apps and websites with AI integration.
-- Focus on security, compliance, and real ROI for mission-critical operations.
-
-Goals:
-1. Understand who the visitor is (founder/startup, enterprise, technical, general).
-2. Clarify their problem, context, and rough timeline.
-3. Explain concretely how PILON Qubit can help (not generic AI fluff).
-4. Suggest a clear next step (contact form, booking a strategy session, or sharing more details).
-`;
-
-export async function POST(req: Request) {
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      {
-        error:
-          'AI is not fully configured yet. Please contact us at hello@pilonqubitventures.com while we finalize the assistant.',
-      },
-      { status: 500 },
-    );
-  }
-
+export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const incoming = Array.isArray(body?.messages) ? (body.messages as any[]) : [];
+    const { messages } = await req.json();
 
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+    if (!messages || !Array.isArray(messages)) {
+      return new Response(JSON.stringify({ error: "Invalid payload" }), { status: 400 });
+    }
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      stream: true,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...incoming.map((m) => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: String(m.content ?? ''),
-        })),
-      ] as any,
-      temperature: 0.6,
+        {
+          role: "system",
+          content: `
+You are the Pilon Qubit AI Assistant.
+
+Role:
+- World-class web engineer + growth strategist.
+- Help users build and scale digital products, websites, AI tools, and startups.
+- Ask clarifying questions.
+- Encourage capturing contact info only when it makes sense.
+- Keep responses friendly, competent, concise, and high-value.
+`
+        },
+        ...messages,
+      ],
     });
 
-    const reply =
-      completion.choices[0]?.message?.content?.trim() ||
-      "I'm not sure what to say yet, but I’d love to learn more about your project so we can help.";
-
-    return NextResponse.json({ reply });
-  } catch (err) {
-    console.error('API /api/chat error:', err);
-    return NextResponse.json(
-      {
-        error:
-          'There was a problem talking to the AI service. Please email hello@pilonqubitventures.com or use the main contact form.',
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of response) {
+            const text = chunk.choices?.[0]?.delta?.content || "";
+            controller.enqueue(encoder.encode(text));
+          }
+        } catch (err) {
+          controller.error(err);
+        } finally {
+          controller.close();
+        }
       },
-      { status: 500 },
-    );
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
+  } catch (err: any) {
+    console.error("AI route error:", err);
+    return new Response(JSON.stringify({ error: "AI route failed" }), { status: 500 });
   }
 }
