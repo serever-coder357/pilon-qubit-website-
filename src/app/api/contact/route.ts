@@ -1,58 +1,73 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-async function verifyTurnstile(token: string | undefined, ip: string | null) {
-  if (!process.env.TURNSTILE_SECRET_KEY) return { success: true, code: 'demo_mode' } as const;
-  if (!token) return { success: true, code: 'demo_mode' } as const;
-  const form = new URLSearchParams();
-  form.append('secret', process.env.TURNSTILE_SECRET_KEY);
-  form.append('response', token);
-  if (ip) form.append('remoteip', ip);
-
-  const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, cache: 'no-store',
-  });
-  const data = await resp.json();
-  return { success: !!data.success, code: data['error-codes']?.[0] } as const;
-}
-
-export async function POST(req: Request) {
+// All leads (forms + AI widget) should end up here.
+export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
-    const json = await req.json();
-    const { name, email, company, message, turnstileToken } = json || {};
+    const body = await req.json();
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
+    const {
+      name,
+      email,
+      phone,
+      message,
+      source,      // e.g. "website-contact-form" or "ai-assistant"
+      context,     // optional: extra JSON/string context (e.g. conversation transcript)
+    } = body || {};
+
+    if (!email || !message) {
+      return NextResponse.json(
+        { success: false, error: 'Missing required fields: email and message.' },
+        { status: 400 },
+      );
     }
 
-    const check = await verifyTurnstile(turnstileToken, ip);
-    if (!check.success && check.code !== 'demo_mode') {
-      return NextResponse.json({ ok: false, error: `Verification failed: ${check.code || 'invalid'}` }, { status: 400 });
+    const subjectSource = source ? ` (${source})` : '';
+    const safeName = name && String(name).trim().length > 0 ? String(name).trim() : 'Not provided';
+    const safePhone = phone && String(phone).trim().length > 0 ? String(phone).trim() : 'Not provided';
+
+    const textLines = [
+      `New website lead from Pilon Qubit`,
+      '',
+      `Name: ${safeName}`,
+      `Email: ${email}`,
+      `Phone: ${safePhone}`,
+      `Source: ${source || 'Not provided'}`,
+      '',
+      'Message:',
+      String(message),
+    ];
+
+    if (context) {
+      textLines.push('', 'Additional context:', typeof context === 'string' ? context : JSON.stringify(context, null, 2));
     }
 
-    const to = process.env.CONTACT_TO_EMAIL!;
-    const from = process.env.CONTACT_FROM_EMAIL!;
+    const text = textLines.join('\n');
 
-    if (resend) {
-      await resend.emails.send({
-        from, to, subject: `New website inquiry from ${name}`,
-        text: `Name: ${name}
-Email: ${email}
-Company: ${company || '-'}
+    const data = await resend.emails.send({
+      // If your Resend domain is different, adjust this "from" line.
+      from: 'Pilon Qubit Website <hello@pilonqubitventures.com>',
+      to: ['hello@pilonqubitventures.com'],
+      reply_to: email,
+      subject: `New website lead${subjectSource}`,
+      text,
+    });
 
-Message:
-${message}`,
-      });
-    } else {
-      console.log('Demo mode: Email would be sent to', to, 'from', name);
-    }
+    // Optional: log the Resend id for debugging in Vercel logs
+    console.log('Resend lead email sent:', data?.data?.id ?? data);
 
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error in /api/contact:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to send lead via email.',
+        details: process.env.NODE_ENV === 'development' ? String(error?.message ?? error) : undefined,
+      },
+      { status: 500 },
+    );
   }
 }
