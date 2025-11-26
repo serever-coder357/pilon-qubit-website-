@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-import AIWidget from "@/components/AIWidget";
+import AIWidget from "@/app/components/AIWidget";
 
 export const metadata: Metadata = {
   title: "Pilon Qubit Ventures",
@@ -17,10 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-black text-white antialiased">
-        <div className="flex min-h-screen flex-col">
-          {children}
-        </div>
-        {/* Global AI assistant widget */}
+        <div className="flex min-h-screen flex-col">{children}</div>
         <AIWidget />
       </body>
     </html>
