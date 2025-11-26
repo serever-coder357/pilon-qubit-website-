@@ -40,5 +40,3 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 
-# legacy duplicate AI widget (canonical lives in src/components/AIWidget.tsx)
-src/app/components/AIWidget.tsx
