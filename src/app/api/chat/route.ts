@@ -1,72 +1,126 @@
+import OpenAI from 'openai';
+import { Resend } from 'resend';
 import { NextRequest, NextResponse } from 'next/server';
 
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
-const OWNER_PHONE = '+12108385034';
+const SYSTEM_PROMPT = `
+You are the AI assistant for PILON Qubit Ventures, a boutique firm focused on enterprise AI, AI marketing automation, and frontier AI consulting.
+Speak in a clear, friendly, expert tone.
+You only answer based on reasonable industry knowledge and what a firm like PILON Qubit would offer.
+Your goals:
+1) Understand the visitor's needs.
+2) Explain how PILON Qubit can help (services, engagement models, etc.).
+3) If the visitor shows buying intent (quote, strategy session, implementation help, timeline, or pricing), politely ask for their name and email so the team can follow up.
+`;
 
-async function sendSMS(to: string, message: string): Promise<{ success: boolean; error?: string }> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-    console.error('Twilio credentials not configured');
-    return { success: false, error: 'Twilio credentials not configured' };
-  }
+type RequestMessage = {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
 
-  try {
-    const auth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
-    
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          To: to,
-          From: TWILIO_PHONE_NUMBER,
-          Body: message,
-        }),
-      }
-    );
+type LeadPayload = {
+  name?: string;
+  email?: string;
+  context?: string;
+};
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Twilio API error:', errorData);
-      return { success: false, error: errorData.message || 'Twilio API error' };
-    }
+const model = 'gpt-4o-mini';
 
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to send SMS:', error);
-    return { success: false, error: 'Network error' };
-  }
-}
+export async function POST(req: NextRequest) {
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY;
 
-export async function POST(request: NextRequest) {
-  try {
-    const { name, contact, message } = await request.json();
-    
-    if (!name || !contact) {
-      return NextResponse.json({ error: 'Name and contact required' }, { status: 400 });
-    }
-
-    // Send SMS notification
-    const smsMessage = `🎯 New Lead from Website!\n\nName: ${name}\nContact: ${contact}\nMessage: ${message || 'No message'}\n\nFrom: pilonqubitventures.com`;
-    
-    const result = await sendSMS(OWNER_PHONE, smsMessage);
-    
-    if (result.success) {
-      return NextResponse.json({ success: true });
-    } else {
-      return NextResponse.json({ error: result.error || 'Failed to send notification' }, { status: 500 });
-    }
-    
-  } catch (error) {
-    console.error('Contact form error:', error);
+  if (!openaiApiKey) {
     return NextResponse.json(
-      { error: 'Failed to process submission' },
-      { status: 500 }
+      { ok: false, error: 'Missing OpenAI API Key' },
+      { status: 500 },
+    );
+  }
+
+  if (!resendApiKey) {
+    return NextResponse.json(
+      { ok: false, error: 'Missing Resend API Key' },
+      { status: 500 },
+    );
+  }
+
+  const openai = new OpenAI({ apiKey: openaiApiKey });
+  const resend = new Resend(resendApiKey);
+
+  try {
+    const body = await req.json();
+    const incoming: RequestMessage[] = Array.isArray(body?.messages)
+      ? body.messages
+      : [];
+    const lead: LeadPayload | undefined = body?.lead;
+
+    const normalizedMessages = incoming
+      .filter((m) => m && typeof m.content === 'string' && m.role)
+      .map((m) => ({
+        role:
+          m.role === 'assistant'
+            ? 'assistant'
+            : m.role === 'system'
+              ? 'system'
+              : 'user',
+        content: String(m.content ?? ''),
+      } as RequestMessage));
+
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...normalizedMessages],
+      temperature: 0.6,
+    });
+
+    const reply =
+      completion.choices[0]?.message?.content?.trim() ||
+      "I'm here to help—tell me a bit more about what you're building and what success looks like.";
+
+    if (lead?.email) {
+      const transcript = normalizedMessages
+        .slice(-10)
+        .map((m) => {
+          const speaker =
+            m.role === 'assistant' ? 'Assistant' : m.role === 'system' ? 'System' : 'User';
+          const safeContent = String(m.content ?? '').replace(/\n/g, '<br />');
+          return `<p><strong>${speaker}:</strong> ${safeContent}</p>`;
+        })
+        .join('');
+
+      const leadContext = lead.context ? `<p><strong>Context:</strong> ${lead.context}</p>` : '';
+      const leadName = lead.name ? `<p><strong>Name:</strong> ${lead.name}</p>` : '';
+      const from = process.env.RESEND_FROM_EMAIL || 'hello@pilonqubitventures.com';
+
+      resend.emails
+        .send({
+          from,
+          to: 'hello@pilonqubitventures.com',
+          subject: 'New AI chat lead from PILON Qubit website',
+          html: `
+            <h3>New AI chat lead</h3>
+            ${leadName}
+            <p><strong>Email:</strong> ${lead.email}</p>
+            ${leadContext}
+            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+            <h4>Recent conversation</h4>
+            ${transcript}
+          `,
+          reply_to: lead.email,
+        })
+        .catch((error) => {
+          console.error('AI chat lead email failed:', error);
+        });
+    }
+
+    return NextResponse.json({ ok: true, reply });
+  } catch (err) {
+    console.error('API /api/chat error:', err);
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          'There was a problem talking to the AI service. Please email hello@pilonqubitventures.com or use the main contact form.',
+      },
+      { status: 500 },
     );
   }
 }

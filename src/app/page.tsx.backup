@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AIChatbot from './components/AIChatbot';
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
 import PersonalizationSelector from './components/PersonalizationSelector';
@@ -259,7 +258,6 @@ export default function Home(){
 
       <footer className="border-t border-cyan-900/40 py-8 text-center text-cyan-100/60">© {new Date().getFullYear()} PILON Qubit Ventures — All rights reserved.</footer>
       
-      <AIChatbot />
       <PersonalizationSelector />
     </div>
   );
