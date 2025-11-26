@@ -1,64 +1,85 @@
-import { NextRequest } from "next/server";
+// src/app/api/chat/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-export const runtime = "edge";
+let client: OpenAI | null = null;
+
+if (!OPENAI_API_KEY) {
+  console.error(
+    "OPENAI_API_KEY is not set. The /api/chat route will return an error at runtime."
+  );
+} else {
+  client = new OpenAI({
+    apiKey: OPENAI_API_KEY,
+  });
+}
 
 export async function POST(req: NextRequest) {
+  if (!client) {
+    return NextResponse.json(
+      {
+        error:
+          "AI service is not configured. Please set OPENAI_API_KEY in the environment.",
+      },
+      { status: 500 }
+    );
+  }
+
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages } = body || {};
 
     if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Invalid payload" }), { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid payload: 'messages' must be an array." },
+        { status: 400 }
+      );
     }
 
-    const response = await client.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4.1-mini",
-      stream: true,
       messages: [
         {
           role: "system",
           content: `
 You are the Pilon Qubit AI Assistant.
 
-Role:
-- World-class web engineer + growth strategist.
-- Help users build and scale digital products, websites, AI tools, and startups.
-- Ask clarifying questions.
-- Encourage capturing contact info only when it makes sense.
-- Keep responses friendly, competent, concise, and high-value.
-`
+Act as:
+- Senior full-stack engineer (Next.js, TypeScript, AI).
+- UX/UI architect.
+- Growth and go-to-market strategist.
+
+Goals:
+- Clarify what the user wants to build or grow.
+- Ask smart clarifying questions.
+- Give concrete, actionable next steps.
+- When relevant, suggest how Pilon Qubit Ventures can partner to execute.
+
+Tone:
+- Direct, pragmatic, helpful.
+- No fluff. High signal.
+`,
         },
         ...messages,
       ],
     });
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of response) {
-            const text = chunk.choices?.[0]?.delta?.content || "";
-            controller.enqueue(encoder.encode(text));
-          }
-        } catch (err) {
-          controller.error(err);
-        } finally {
-          controller.close();
-        }
-      },
-    });
+    const choice = completion.choices?.[0];
+    const reply =
+      choice?.message?.content ?? "I’m here, but I couldn’t generate a response.";
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    });
+    return NextResponse.json({ reply });
   } catch (err: any) {
-    console.error("AI route error:", err);
-    return new Response(JSON.stringify({ error: "AI route failed" }), { status: 500 });
+    console.error("Error in /api/chat:", err);
+    return NextResponse.json(
+      {
+        error:
+          err?.message ||
+          "Unexpected error talking to the AI service. Try again shortly.",
+      },
+      { status: 500 }
+    );
   }
 }
