@@ -31,16 +31,6 @@ export default function AIWidget() {
     }
   }, [messages]);
 
-  async function safeJson(res: Response): Promise<any | null> {
-    const ct = res.headers.get("content-type") || "";
-    if (!ct.includes("application/json")) return null;
-    try {
-      return await res.json();
-    } catch {
-      return null;
-    }
-  }
-
   async function sendMessage() {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
@@ -92,14 +82,25 @@ export default function AIWidget() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      const data = await safeJson(res);
+      let data: { reply?: string; error?: string } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        // If the API returned an empty body (e.g. plain 405/500), ignore JSON parse error
+        data = null;
+      }
 
-      if (!res.ok || !data || !data.reply) {
+      if (!res.ok || !data?.reply) {
+        const errorText =
+          data?.error ||
+          `Chat endpoint returned ${res.status} ${res.statusText || ""}`.trim();
+
         const errorMsg: Msg = {
           role: "assistant",
           content:
-            (data && data.error) ||
-            `There was an issue talking to the AI (status ${res.status}). Try again or send a message through the contact form.`,
+            "There was an issue talking to the AI (" +
+            errorText +
+            "). Try again or send a message through the contact form.",
         };
         setMessages((prev) => [...prev, errorMsg]);
         return;
@@ -116,7 +117,7 @@ export default function AIWidget() {
       const errorMsg: Msg = {
         role: "assistant",
         content:
-          "There was an issue talking to the AI. Try again or send a message through the contact form.",
+          "There was a network issue talking to the AI. Try again or send a message through the contact form.",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
