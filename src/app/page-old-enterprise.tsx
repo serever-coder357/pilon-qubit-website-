@@ -44,7 +44,8 @@ export default function Home(){
     };
     const res = await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     const data = await res.json();
-    if(!res.ok || !data.ok){ alert(data.error || 'Something went wrong.'); return; }
+    const isSuccess = res.ok && (data?.ok === true || data?.success === true);
+    if(!isSuccess){ alert(data.error || 'Something went wrong.'); return; }
     (window as any).analytics?.track?.('contact_submitted_success');
     (e.currentTarget as HTMLFormElement).reset();
     alert("Thanks! We'll be in touch shortly.");
