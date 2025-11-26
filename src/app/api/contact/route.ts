@@ -1,3 +1,4 @@
+// src/app/api/contact/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
@@ -11,17 +12,16 @@ const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME || "Leads";
 
+let resend: Resend | null = null;
+
 if (!RESEND_API_KEY) {
-  console.error("Missing RESEND_API_KEY environment variable");
+  console.error(
+    "RESEND_API_KEY is not set. /api/contact will skip email sending but can still sync Airtable."
+  );
+} else {
+  resend = new Resend(RESEND_API_KEY);
 }
 
-if (!CONTACT_TO) {
-  console.error("Missing CONTACT_TO / PRODUCTION_EMAIL_TO environment variable");
-}
-
-const resend = new Resend(RESEND_API_KEY || "");
-
-// Helper: create record in Airtable
 async function createAirtableRecord(params: {
   name?: string;
   email: string;
@@ -74,6 +74,18 @@ async function createAirtableRecord(params: {
   }
 }
 
+// GET for basic health check
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    emailConfigured: Boolean(resend && CONTACT_TO),
+    airtableConfigured:
+      Boolean(AIRTABLE_API_KEY) &&
+      Boolean(AIRTABLE_BASE_ID) &&
+      Boolean(AIRTABLE_TABLE_NAME),
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -83,13 +95,16 @@ export async function POST(req: NextRequest) {
       email,
       phone,
       message,
-      source,  // e.g. "website-contact-form" or "ai-assistant"
-      context, // optional: extra JSON/string context (conversation, etc.)
+      source, // "website-contact-form" or "ai-assistant"
+      context, // optional extra context
     } = body || {};
 
     if (!email || !message) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: email and message." },
+        {
+          success: false,
+          error: "Missing required fields: email and message.",
+        },
         { status: 400 }
       );
     }
@@ -128,18 +143,31 @@ export async function POST(req: NextRequest) {
 
     const text = textLines.join("\n");
 
-    // 1) Email via Resend
-    const emailResult = await resend.emails.send({
-      from: `Pilon Qubit Website <${CONTACT_TO}>`,
-      to: [CONTACT_TO],
-      reply_to: email,
-      subject: `New website lead${subjectSource}`,
-      text,
-    });
+    // 1) Email via Resend (if configured)
+    if (resend && CONTACT_TO) {
+      try {
+        const emailResult = await resend.emails.send({
+          from: `Pilon Qubit Website <${CONTACT_TO}>`,
+          to: [CONTACT_TO],
+          reply_to: email,
+          subject: `New website lead${subjectSource}`,
+          text,
+        });
 
-    console.log("Resend lead email sent:", emailResult?.data?.id ?? emailResult);
+        console.log(
+          "Resend lead email sent:",
+          emailResult?.data?.id ?? emailResult
+        );
+      } catch (err) {
+        console.error("Error sending lead email via Resend:", err);
+      }
+    } else {
+      console.warn(
+        "Resend not configured or CONTACT_TO missing; skipping email send."
+      );
+    }
 
-    // 2) Airtable record (fire-and-forget style)
+    // 2) Airtable record (fire-and-forget)
     createAirtableRecord({
       name: safeName === "Not provided" ? undefined : safeName,
       email,
