@@ -7,6 +7,7 @@ const CONTACT_TO =
   process.env.CONTACT_TO ||
   process.env.PRODUCTION_EMAIL_TO ||
   "hello@pilonqubitventures.com";
+const CONTACT_FROM = process.env.RESEND_FROM_EMAIL || "hello@pilonqubitventures.com";
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
@@ -144,7 +145,7 @@ export async function POST(req: NextRequest) {
 
     // 1) Email via Resend
     const emailResult = await resend.emails.send({
-      from: `Pilon Qubit Website <${CONTACT_TO}>`,
+      from: `Pilon Qubit Website <${CONTACT_FROM}>`,
       to: [CONTACT_TO],
       reply_to: email,
       subject: `New website lead${subjectSource}`,
