@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   try {
     if (!RESEND_API_KEY) {
       return NextResponse.json(
-        { success: false, error: "Missing RESEND_API_KEY environment variable" },
+        { ok: false, success: false, error: "Missing RESEND_API_KEY environment variable" },
         { status: 500 },
       );
     }
@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     if (!email || !message) {
       return NextResponse.json(
         {
+          ok: false,
           success: false,
           error: "Missing required fields: email and message.",
         },
@@ -163,12 +164,13 @@ export async function POST(req: NextRequest) {
       source,
     }).catch((err) => console.error("Airtable sync error:", err));
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true, success: true });
   } catch (error: any) {
     console.error("Error in /api/contact:", error);
 
     return NextResponse.json(
       {
+        ok: false,
         success: false,
         error: "Failed to send lead via email / Airtable.",
         details:
@@ -183,6 +185,7 @@ export async function POST(req: NextRequest) {
 
 const methodNotAllowedResponse = NextResponse.json(
   {
+    ok: false,
     success: false,
     error: "Use POST with name, email/phone, and message to contact the team.",
   },
