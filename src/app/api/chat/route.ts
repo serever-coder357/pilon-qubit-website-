@@ -11,28 +11,12 @@ if (!OPENAI_API_KEY) {
     "OPENAI_API_KEY is not set. The /api/chat route will return an error at runtime."
   );
 } else {
-  client = new OpenAI({ apiKey: OPENAI_API_KEY });
-}
-
-// Simple GET so you can hit /api/chat in a browser and verify JSON
-export async function GET() {
-  if (!client) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "OPENAI_API_KEY is not configured.",
-      },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({
-    ok: true,
-    message: "Pilon Qubit chat endpoint is ready.",
+  client = new OpenAI({
+    apiKey: OPENAI_API_KEY,
   });
 }
 
-export async function POST(req: NextRequest) {
+async function handleChat(messages: any[]) {
   if (!client) {
     return NextResponse.json(
       {
@@ -43,23 +27,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  try {
-    const body = await req.json();
-    const { messages } = body || {};
-
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: "Invalid payload: 'messages' must be an array." },
-        { status: 400 }
-      );
-    }
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
+  const completion = await client.chat.completions.create({
+    model: "gpt-4.1-mini",
+    messages: [
+      {
+        role: "system",
+        content: `
 You are the Pilon Qubit AI Assistant.
 
 Act as:
@@ -77,18 +50,33 @@ Tone:
 - Direct, pragmatic, helpful.
 - No fluff. High signal.
 `,
-        },
-        ...messages,
-      ],
-    });
+      },
+      ...messages,
+    ],
+  });
 
-    const choice = completion.choices?.[0];
-    const reply =
-      choice?.message?.content ?? "I’m here, but I couldn’t generate a response.";
+  const choice = completion.choices?.[0];
+  const reply =
+    choice?.message?.content ?? "I’m here, but I couldn’t generate a response.";
 
-    return NextResponse.json({ reply });
+  return NextResponse.json({ reply });
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { messages } = body || {};
+
+    if (!messages || !Array.isArray(messages)) {
+      return NextResponse.json(
+        { error: "Invalid payload: 'messages' must be an array." },
+        { status: 400 }
+      );
+    }
+
+    return await handleChat(messages);
   } catch (err: any) {
-    console.error("Error in /api/chat:", err);
+    console.error("Error in /api/chat POST:", err);
     return NextResponse.json(
       {
         error:
@@ -98,4 +86,15 @@ Tone:
       { status: 500 }
     );
   }
+}
+
+// Optional GET handler so hitting /api/chat in browser gives a clear message
+export async function GET() {
+  return NextResponse.json(
+    {
+      info:
+        "Pilon Qubit chat endpoint is alive. Send a POST request with { messages: [...] }.",
+    },
+    { status: 200 }
+  );
 }
