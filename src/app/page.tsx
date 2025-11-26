@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 import SmartContactForm from './components/SmartContactForm';
@@ -131,14 +130,19 @@ export default function Home() {
               <div className="relative w-full overflow-hidden rounded-3xl border border-cyan-500/30 bg-[#0C1230] shadow-2xl aspect-[16/9]">
                 <div className="absolute -inset-8 rounded-3xl bg-cyan-500/20 blur-3xl" aria-hidden />
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-blue-600/10" aria-hidden />
-                <Image
-                  src="/ai-brain.svg"
-                  alt="Stylized neural brain graphic"
+                <video
+                  className="relative z-10 h-full w-full object-cover"
                   width={960}
                   height={540}
-                  className="h-full w-full object-cover"
-                  priority
-                />
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                >
+                  <source src="/pilonqubitvideo.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
               </div>
             </div>
           </div>
