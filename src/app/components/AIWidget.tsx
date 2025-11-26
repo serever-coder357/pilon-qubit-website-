@@ -35,7 +35,6 @@ export default function AIWidget() {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
 
-    // Strongly typed user message
     const userMessage: Msg = { role: "user", content: trimmed };
     const newMessages: Msg[] = [...messages, userMessage];
 
@@ -83,33 +82,25 @@ export default function AIWidget() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      if (!res.ok || !res.body) {
-        setLoading(false);
+      const data: { reply?: string; error?: string } = await res.json();
+
+      if (!res.ok || !data.reply) {
         const errorMsg: Msg = {
           role: "assistant",
           content:
+            data.error ||
             "I couldn’t reach the AI service. Please try again or use the contact page.",
         };
         setMessages((prev) => [...prev, errorMsg]);
         return;
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
+      const assistantMessage: Msg = {
+        role: "assistant",
+        content: String(data.reply),
+      };
 
-      let runningText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        runningText += decoder.decode(value, { stream: true });
-        const assistantMessage: Msg = {
-          role: "assistant",
-          content: runningText,
-        };
-        setMessages([...newMessages, assistantMessage]);
-      }
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
       console.error("AI chat error:", err);
       const errorMsg: Msg = {
