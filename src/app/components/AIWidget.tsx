@@ -2,10 +2,16 @@
 
 import { useState, useRef, useEffect } from "react";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type MsgRole = "user" | "assistant";
+
+type Msg = {
+  role: MsgRole;
+  content: string;
+};
 
 export default function AIWidget() {
   const [open, setOpen] = useState(false);
+
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -13,6 +19,7 @@ export default function AIWidget() {
         "Hi, I'm the Pilon Qubit AI assistant. What are you trying to build or improve right now?",
     },
   ]);
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -28,7 +35,10 @@ export default function AIWidget() {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
 
-    const newMessages = [...messages, { role: "user", content: trimmed }];
+    // Strongly typed user message
+    const userMessage: Msg = { role: "user", content: trimmed };
+    const newMessages: Msg[] = [...messages, userMessage];
+
     setMessages(newMessages);
     setInput("");
     setLoading(true);
@@ -57,34 +67,30 @@ export default function AIWidget() {
       !leadPrompted &&
       /build|quote|help|website|project|startup|ai|contact/i.test(trimmed)
     ) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Before we go deeper, what’s the best email to reach you? I can send a summary and a tailored proposal after this chat.",
-        },
-      ]);
+      const promptMessage: Msg = {
+        role: "assistant",
+        content:
+          "Before we go deeper, what’s the best email to reach you? I can send a summary and a tailored proposal after this chat.",
+      };
+      setMessages((prev) => [...prev, promptMessage]);
       setLeadPrompted(true);
     }
 
     try {
-      const res = await fetch("/api/ai/chat", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      if (!res.body) {
+      if (!res.ok || !res.body) {
         setLoading(false);
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              "I couldn’t reach the AI service. Please try again or use the contact page.",
-          },
-        ]);
+        const errorMsg: Msg = {
+          role: "assistant",
+          content:
+            "I couldn’t reach the AI service. Please try again or use the contact page.",
+        };
+        setMessages((prev) => [...prev, errorMsg]);
         return;
       }
 
@@ -98,18 +104,20 @@ export default function AIWidget() {
         if (done) break;
 
         runningText += decoder.decode(value, { stream: true });
-        setMessages([...newMessages, { role: "assistant", content: runningText }]);
+        const assistantMessage: Msg = {
+          role: "assistant",
+          content: runningText,
+        };
+        setMessages([...newMessages, assistantMessage]);
       }
     } catch (err) {
       console.error("AI chat error:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "There was an issue talking to the AI. Try again or send a message through the contact form.",
-        },
-      ]);
+      const errorMsg: Msg = {
+        role: "assistant",
+        content:
+          "There was an issue talking to the AI. Try again or send a message through the contact form.",
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
     }
