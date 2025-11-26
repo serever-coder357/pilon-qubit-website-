@@ -31,6 +31,16 @@ export default function AIWidget() {
     }
   }, [messages]);
 
+  async function safeJson(res: Response): Promise<any | null> {
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) return null;
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
   async function sendMessage() {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
@@ -82,14 +92,14 @@ export default function AIWidget() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      const data: { reply?: string; error?: string } = await res.json();
+      const data = await safeJson(res);
 
-      if (!res.ok || !data.reply) {
+      if (!res.ok || !data || !data.reply) {
         const errorMsg: Msg = {
           role: "assistant",
           content:
-            data.error ||
-            "I couldn’t reach the AI service. Please try again or use the contact page.",
+            (data && data.error) ||
+            `There was an issue talking to the AI (status ${res.status}). Try again or send a message through the contact form.`,
         };
         setMessages((prev) => [...prev, errorMsg]);
         return;
