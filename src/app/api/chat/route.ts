@@ -124,3 +124,12 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export function GET() {
+  return NextResponse.json({
+    ok: false,
+    error: 'Use POST with a messages array to chat with the assistant.',
+  });
+}
+
+export const OPTIONS = GET;

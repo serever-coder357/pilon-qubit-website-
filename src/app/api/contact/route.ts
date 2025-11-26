@@ -180,3 +180,12 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export function GET() {
+  return NextResponse.json({
+    success: false,
+    error: 'Use POST with name, email/phone, and message to contact the team.',
+  });
+}
+
+export const OPTIONS = GET;
