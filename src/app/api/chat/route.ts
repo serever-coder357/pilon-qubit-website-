@@ -11,8 +11,24 @@ if (!OPENAI_API_KEY) {
     "OPENAI_API_KEY is not set. The /api/chat route will return an error at runtime."
   );
 } else {
-  client = new OpenAI({
-    apiKey: OPENAI_API_KEY,
+  client = new OpenAI({ apiKey: OPENAI_API_KEY });
+}
+
+// Simple GET so you can hit /api/chat in a browser and verify JSON
+export async function GET() {
+  if (!client) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "OPENAI_API_KEY is not configured.",
+      },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    message: "Pilon Qubit chat endpoint is ready.",
   });
 }
 
