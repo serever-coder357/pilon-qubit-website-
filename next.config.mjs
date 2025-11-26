@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const nextConfig = {
-  output: 'export',
+  // Use the default server output so API routes remain available (chat + contact).
   trailingSlash: true,
   images: {
     unoptimized: true,
