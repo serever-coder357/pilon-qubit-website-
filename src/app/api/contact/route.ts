@@ -20,8 +20,6 @@ if (!CONTACT_TO) {
   console.error("Missing CONTACT_TO / PRODUCTION_EMAIL_TO environment variable");
 }
 
-const resend = new Resend(RESEND_API_KEY || "");
-
 /**
  * Create a lead record in Airtable.
  * Non-blocking for user: errors are logged but do not break the response.
@@ -80,6 +78,15 @@ async function createAirtableRecord(params: {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!RESEND_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: "Missing RESEND_API_KEY environment variable" },
+        { status: 500 },
+      );
+    }
+
+    const resend = new Resend(RESEND_API_KEY);
+
     const body = await req.json();
 
     const {

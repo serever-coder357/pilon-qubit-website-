@@ -24,6 +24,7 @@ export default function AIWidget() {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [leadPrompted, setLeadPrompted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,6 +42,7 @@ export default function AIWidget() {
     setMessages(newMessages);
     setInput("");
     setLoading(true);
+    setError(null);
 
     // Automatic lead capture if email detected
     if (/\S+@\S+\.\S+/.test(trimmed)) {
@@ -76,39 +78,26 @@ export default function AIWidget() {
     }
 
     try {
-      const res = await fetch("/api/ai/chat", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      if (!res.body) {
-        setLoading(false);
-        const errorMsg: Msg = {
-          role: "assistant",
-          content:
-            "I couldn’t reach the AI service. Please try again or use the contact page.",
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-        return;
+      const data = await res.json();
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "I couldn’t reach the AI service.");
       }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
+      const assistantMessage: Msg = {
+        role: "assistant",
+        content:
+          data.reply ||
+          "I’m here to help—tell me more about your project and what success looks like.",
+      };
 
-      let runningText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        runningText += decoder.decode(value, { stream: true });
-        const assistantMessage: Msg = {
-          role: "assistant",
-          content: runningText,
-        };
-        setMessages([...newMessages, assistantMessage]);
-      }
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
       console.error("AI chat error:", err);
       const errorMsg: Msg = {
@@ -117,6 +106,7 @@ export default function AIWidget() {
           "There was an issue talking to the AI. Try again or send a message through the contact form.",
       };
       setMessages((prev) => [...prev, errorMsg]);
+      setError(err instanceof Error ? err.message : "AI service unavailable.");
     } finally {
       setLoading(false);
     }
@@ -167,6 +157,9 @@ export default function AIWidget() {
               ))}
               {loading && (
                 <div className="text-xs text-gray-400">Assistant is thinking…</div>
+              )}
+              {error && (
+                <div className="text-xs text-red-500">{error}</div>
               )}
             </div>
 
