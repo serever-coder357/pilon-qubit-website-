@@ -76,9 +76,9 @@ export default function Home() {
       <main id="main" className="pt-16">
         {/* HERO */}
         <section className="relative overflow-hidden border-b border-cyan-900/40" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-6 py-16 lg:py-20">
-            <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="space-y-6">
+          <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
+            <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+              <div className="space-y-6 max-w-xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
                   Operator-ready AI builds
                 </div>
@@ -121,15 +121,15 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="absolute -inset-6 rounded-3xl bg-cyan-500/20 blur-3xl" aria-hidden />
-                <div className="relative overflow-hidden rounded-3xl border border-cyan-500/30 bg-[#0C1230] shadow-2xl">
+              <div className="w-full lg:max-w-xl">
+                <div className="relative w-full overflow-hidden rounded-3xl shadow-2xl border border-cyan-500/30 aspect-[16/9] bg-[#0C1230]">
+                  <div className="absolute -inset-8 rounded-3xl bg-cyan-500/20 blur-3xl" aria-hidden />
                   <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-blue-600/10" aria-hidden />
                   <Image
                     src="/ai-brain.svg"
                     alt="Stylized neural brain graphic"
-                    width={640}
-                    height={640}
+                    width={960}
+                    height={540}
                     className="h-full w-full object-cover"
                     priority
                   />
