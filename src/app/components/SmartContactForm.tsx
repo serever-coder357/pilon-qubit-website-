@@ -144,9 +144,11 @@ export default function SmartContactForm() {
         }),
       });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok && data.ok) {
+        const isSuccess = data?.ok === true || data?.success === true;
+
+      if (isSuccess) {
         setSubmitStatus('success');
         setFormData({ name: '', email: '', company: '', message: '' });
         setErrors({});

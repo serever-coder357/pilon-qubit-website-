@@ -95,9 +95,10 @@ export function getPersonalizedContent(type: VisitorType): PersonalizedContent {
       testimonialFocus: 'startup',
     },
     enterprise: {
-      heroTitle: 'Enterprise AI That Drives Real ROI',
-      heroSubtitle: 'Secure, scalable, and compliant AI systems built for mission-critical operations. We deliver production-ready solutions that reduce costs, accelerate innovation, and build competitive advantage.',
-      ctaPrimary: 'Book Strategy Session',
+      heroTitle: 'Where Frontier Technology Meets Operator Grit',
+      heroSubtitle:
+        'We partner with visionary founders and forward-thinking enterprises to transform bold ideas into market-ready products. Combining venture perspective with hands-on engineering, we deliver AI and quantum solutions that ship fast, scale reliably, and drive measurable business impact.',
+      ctaPrimary: 'Start Building',
       ctaSecondary: 'See Our Approach',
       serviceHighlight: 'Security & Reliability',
       testimonialFocus: 'enterprise',

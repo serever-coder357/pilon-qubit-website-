@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AIChatbot from './components/AIChatbot';
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
 import PersonalizationSelector from './components/PersonalizationSelector';
@@ -45,7 +44,8 @@ export default function Home(){
     };
     const res = await fetch('/api/contact', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     const data = await res.json();
-    if(!res.ok || !data.ok){ alert(data.error || 'Something went wrong.'); return; }
+    const isSuccess = res.ok && (data?.ok === true || data?.success === true);
+    if(!isSuccess){ alert(data.error || 'Something went wrong.'); return; }
     (window as any).analytics?.track?.('contact_submitted_success');
     (e.currentTarget as HTMLFormElement).reset();
     alert("Thanks! We'll be in touch shortly.");
@@ -197,7 +197,6 @@ export default function Home(){
 
       <footer className="border-t border-cyan-900/40 py-8 text-center text-cyan-100/60">© {new Date().getFullYear()} PILON Qubit Ventures — All rights reserved.</footer>
       
-      <AIChatbot />
       <PersonalizationSelector />
     </div>
   );

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Link from 'next/link';
 import ContactDropdown from './ContactDropdown';
-import ChatbotButton from './ChatbotButton';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -41,7 +40,6 @@ export default function RootLayout({
             </Link>
 
             <nav className="flex items-center gap-8">
-              {/* Only About and Contact on the right */}
               <Link
                 href="/#about"
                 className="text-white/80 hover:text-white transition-colors"
@@ -54,9 +52,6 @@ export default function RootLayout({
         </header>
 
         <main>{children}</main>
-
-        {/* AI Chatbot */}
-        <ChatbotButton />
       </body>
     </html>
   );

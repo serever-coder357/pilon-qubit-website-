@@ -1,0 +1,38 @@
+<svg width="640" height="640" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Neural brain illustration">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e6ff" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.9" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="640" height="640" fill="#0b1028" rx="48" ry="48" />
+  <rect x="32" y="32" width="576" height="576" fill="url(#glow)" />
+  <g stroke="url(#g1)" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <path d="M320 110c-84 0-140 62-140 138 0 46 21 80 21 116 0 36-21 70-21 110 0 58 54 96 140 96" />
+    <path d="M320 110c84 0 140 62 140 138 0 46-21 80-21 116 0 36 21 70 21 110 0 58-54 96-140 96" />
+    <path d="M320 180c-52 0-90 37-90 88 0 32 14 55 14 82 0 26-14 50-14 78 0 41 38 69 90 69" />
+    <path d="M320 180c52 0 90 37 90 88 0 32-14 55-14 82 0 26 14 50 14 78 0 41-38 69-90 69" />
+    <path d="M320 240c-22 0-38 14-38 36 0 14 6 24 6 36s-6 24-6 38c0 21 16 36 38 36" />
+    <path d="M320 240c22 0 38 14 38 36 0 14-6 24-6 36s6 24 6 38c0 21-16 36-38 36" />
+  </g>
+  <g fill="#67e8f9">
+    <circle cx="320" cy="110" r="7" />
+    <circle cx="320" cy="180" r="7" />
+    <circle cx="320" cy="240" r="7" />
+    <circle cx="320" cy="320" r="7" />
+    <circle cx="320" cy="400" r="7" />
+    <circle cx="320" cy="470" r="7" />
+    <circle cx="320" cy="540" r="7" />
+    <circle cx="210" cy="248" r="6" />
+    <circle cx="210" cy="348" r="6" />
+    <circle cx="210" cy="450" r="6" />
+    <circle cx="430" cy="248" r="6" />
+    <circle cx="430" cy="348" r="6" />
+    <circle cx="430" cy="450" r="6" />
+  </g>
+</svg>

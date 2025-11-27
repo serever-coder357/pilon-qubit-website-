@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
 
 import SmartContactForm from './components/SmartContactForm';
 import ProjectScopeGenerator from './components/ProjectScopeGenerator';
@@ -23,11 +22,6 @@ export default function Home() {
   const [consented, setConsented] = useState<boolean>(
     () => typeof window !== 'undefined' && localStorage.getItem('pqv-consent') === 'accept',
   );
-  const prefersReducedMotion = useReducedMotion();
-
-  const heroTitle = 'Enterprise AI That Drives Real ROI';
-  const heroSubtitle =
-    'Secure, scalable, and compliant AI systems built for mission-critical operations. We deliver production-ready solutions that reduce costs, accelerate innovation, and build competitive advantage.';
 
   useEffect(() => {
     if (consented) {
@@ -80,61 +74,101 @@ export default function Home() {
 
       <main id="main" className="pt-16">
         {/* HERO */}
-        <section className="relative overflow-hidden" aria-labelledby="hero-heading">
-          <div className="max-w-7xl mx-auto px-6 py-12 flex flex-col items-center text-center gap-10">
-            <div className="max-w-3xl mx-auto">
-              <h2 id="hero-heading" className="text-4xl md:text-5xl font-extrabold leading-tight">
-                {heroTitle.split(' ').map((word, i, arr) =>
-                  i === arr.length - 1 ? (
-                    <span key={i} className="text-cyan-400">
-                      {word}
-                    </span>
-                  ) : (
-                    word + ' '
-                  ),
-                )}
-              </h2>
-              <p className="mt-4 text-cyan-100/80 max-w-3xl mx-auto">{heroSubtitle}</p>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <Button onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                  Start Building
-                </Button>
-                <a
-                  href="/services"
-                  className="px-4 py-2 rounded border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-[#0A0A2A] transition-colors font-semibold"
+        <section
+          className="relative overflow-hidden border-b border-cyan-900/40 bg-[#04061a]"
+          aria-labelledby="hero-heading"
+        >
+          <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
+            <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
+              {/* Left column */}
+              <div className="max-w-xl space-y-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
+                  Operator-ready AI builds
+                </div>
+                <h1
+                  id="hero-heading"
+                  className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
                 >
-                  See our approach
-                </a>
-                <a
-                  href="#services"
-                  className="px-4 py-2 rounded border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-[#0A0A2A] transition-colors font-semibold"
-                >
-                  Services
-                </a>
+                  Where Frontier Technology Meets <span className="text-cyan-400">Operator Grit</span>
+                </h1>
+                <p className="text-base text-slate-200 sm:text-lg">
+                  We partner with visionary founders and forward-thinking enterprises to transform bold ideas into
+                  market-ready products. Combining venture perspective with hands-on engineering, we deliver AI and
+                  quantum solutions that ship fast, scale reliably, and drive measurable business impact.
+                </p>
+                <div className="flex flex-wrap items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="rounded-md bg-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-cyan-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A2A]"
+                  >
+                    Start Building
+                  </button>
+                  <a
+                    href="/services"
+                    className="rounded-md border border-cyan-500 px-6 py-3 text-sm font-semibold text-cyan-300 hover:bg-cyan-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#04061a]"
+                  >
+                    See Our Approach
+                  </a>
+                </div>
+                <div className="grid gap-4 text-sm text-cyan-100/70 sm:grid-cols-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+                    <span className="h-2 w-2 rounded-full bg-cyan-400" aria-hidden />
+                    <div>
+                      <div className="font-semibold text-white">Enterprise-grade delivery</div>
+                      <div>Security, compliance, and reliability baked into every build.</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+                    <span className="h-2 w-2 rounded-full bg-cyan-400" aria-hidden />
+                    <div>
+                      <div className="font-semibold text-white">Outcomes-first partnership</div>
+                      <div>Co-created roadmaps that tie AI delivery to business impact.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right column */}
+              <div className="w-full lg:max-w-xl">
+                <div className="relative w-full overflow-hidden rounded-3xl border border-cyan-500/30 bg-[#0C1230] shadow-2xl aspect-[16/9]">
+                  <div className="absolute -inset-8 rounded-3xl bg-cyan-500/20 blur-3xl" aria-hidden />
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-blue-600/10" aria-hidden />
+                  <video
+                    className="relative z-10 h-full w-full object-cover"
+                    width={960}
+                    height={540}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                  >
+                    <source src="/pilonqubitvideo.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="relative w-full max-w-5xl mx-auto rounded-2xl overflow-hidden border border-cyan-400/20 shadow-xl aspect-video">
-              <video
-                src="/pqv-new.mp4"
-                className="h-full w-full object-cover"
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
-              >
+        {/* WORK EXAMPLES */}
+        <section className="py-8 bg-gradient-to-b from-[#0A0A2A] to-[#1A1A4A]">
+          <div className="max-w-4xl mx-auto px-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                See <span className="text-cyan-400">PILON Qubit</span> in Action
+              </h2>
+              <p className="text-cyan-100/80 text-sm md:text-base max-w-2xl mx-auto">
+                Discover how we transform frontier technology into production-ready solutions
+              </p>
+            </div>
+            <div className="relative rounded-xl overflow-hidden border border-cyan-900/50 shadow-2xl bg-black max-h-[60vh]">
+              <video className="w-full h-auto max-h-[60vh] object-contain" controls preload="none" poster="/pilonqubit.jpg">
+                <source src="/pilonqubitvideo.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
-              {!prefersReducedMotion && (
-                <motion.div
-                  aria-hidden
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.25 }}
-                  transition={{ duration: 1.2, delay: 0.3 }}
-                  className="absolute -inset-6 -z-10 rounded-3xl bg-cyan-500 blur-3xl"
-                />
-              )}
             </div>
           </div>
         </section>

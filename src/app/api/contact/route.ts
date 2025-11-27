@@ -1,58 +1,181 @@
-import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+export const runtime = "nodejs";
 
-async function verifyTurnstile(token: string | undefined, ip: string | null) {
-  if (!process.env.TURNSTILE_SECRET_KEY) return { success: true, code: 'demo_mode' } as const;
-  if (!token) return { success: true, code: 'demo_mode' } as const;
-  const form = new URLSearchParams();
-  form.append('secret', process.env.TURNSTILE_SECRET_KEY);
-  form.append('response', token);
-  if (ip) form.append('remoteip', ip);
+// ---- Types ----
 
-  const resp = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, cache: 'no-store',
-  });
-  const data = await resp.json();
-  return { success: !!data.success, code: data['error-codes']?.[0] } as const;
+type ContactRequestBody = {
+  name?: string;
+  email?: string;
+  company?: string;
+  role?: string;
+  budget?: string;
+  timeline?: string;
+  message?: string;
+  source?: string;
+};
+
+// ---- Helpers ----
+
+function jsonError(message: string, status: number) {
+  return NextResponse.json(
+    {
+      ok: false,
+      success: false,
+      error: message,
+    },
+    { status }
+  );
 }
 
-export async function POST(req: Request) {
+function sanitizeString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function buildPlainTextEmail(
+  payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
+    ContactRequestBody
+) {
+  const lines: string[] = [];
+
+  lines.push(`New contact from Pilon Qubit Ventures website`);
+  lines.push("");
+  lines.push(`Name: ${payload.name}`);
+  lines.push(`Email: ${payload.email}`);
+
+  if (payload.company) lines.push(`Company: ${payload.company}`);
+  if (payload.role) lines.push(`Role: ${payload.role}`);
+  if (payload.budget) lines.push(`Budget: ${payload.budget}`);
+  if (payload.timeline) lines.push(`Timeline: ${payload.timeline}`);
+  if (payload.source) lines.push(`Source: ${payload.source}`);
+
+  lines.push("");
+  lines.push("Message:");
+  lines.push(payload.message);
+
+  return lines.join("\n");
+}
+
+function buildHtmlEmail(
+  payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
+    ContactRequestBody
+) {
+  return `
+    <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #0f172a;">
+      <h2>New contact from Pilon Qubit Ventures website</h2>
+      <p><strong>Name:</strong> ${payload.name}</p>
+      <p><strong>Email:</strong> ${payload.email}</p>
+      ${payload.company ? `<p><strong>Company:</strong> ${payload.company}</p>` : ""}
+      ${payload.role ? `<p><strong>Role:</strong> ${payload.role}</p>` : ""}
+      ${payload.budget ? `<p><strong>Budget:</strong> ${payload.budget}</p>` : ""}
+      ${payload.timeline ? `<p><strong>Timeline:</strong> ${payload.timeline}</p>` : ""}
+      ${payload.source ? `<p><strong>Source:</strong> ${payload.source}</p>` : ""}
+      <hr style="margin: 16px 0;" />
+      <p><strong>Message:</strong></p>
+      <p>${payload.message.replace(/\n/g, "<br />")}</p>
+    </div>
+  `;
+}
+
+// ---- Handler ----
+
+export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
-    const json = await req.json();
-    const { name, email, company, message, turnstileToken } = json || {};
+    let body: unknown;
 
-    if (!name || !email || !message) {
-      return NextResponse.json({ ok: false, error: 'Missing required fields' }, { status: 400 });
+    try {
+      body = await req.json();
+    } catch {
+      return jsonError("Invalid JSON body", 400);
     }
 
-    const check = await verifyTurnstile(turnstileToken, ip);
-    if (!check.success && check.code !== 'demo_mode') {
-      return NextResponse.json({ ok: false, error: `Verification failed: ${check.code || 'invalid'}` }, { status: 400 });
+    if (!body || typeof body !== "object") {
+      return jsonError("Request body must be an object", 400);
     }
 
-    const to = process.env.CONTACT_TO_EMAIL!;
-    const from = process.env.CONTACT_FROM_EMAIL!;
+    const raw = body as ContactRequestBody;
 
-    if (resend) {
-      await resend.emails.send({
-        from, to, subject: `New website inquiry from ${name}`,
-        text: `Name: ${name}
-Email: ${email}
-Company: ${company || '-'}
+    const name = sanitizeString(raw.name) ?? "Unknown";
+    const email = sanitizeString(raw.email);
+    const message = sanitizeString(raw.message);
 
-Message:
-${message}`,
-      });
+    const company = sanitizeString(raw.company);
+    const role = sanitizeString(raw.role);
+    const budget = sanitizeString(raw.budget);
+    const timeline = sanitizeString(raw.timeline);
+    const source = sanitizeString(raw.source);
+
+    if (!email) {
+      return jsonError("Email is required", 400);
+    }
+
+    if (!message) {
+      return jsonError("Message is required", 400);
+    }
+
+    const payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
+      ContactRequestBody = {
+      name,
+      email,
+      message,
+      company,
+      role,
+      budget,
+      timeline,
+      source,
+    };
+
+    // --- Send email via Resend ---
+
+    const resendApiKey = process.env.RESEND_API_KEY;
+
+    if (!resendApiKey) {
+      console.error("Contact API: RESEND_API_KEY is not set. Skipping email send.");
     } else {
-      console.log('Demo mode: Email would be sent to', to, 'from', name);
+      const resend = new Resend(resendApiKey);
+
+      const toEmail = process.env.CONTACT_TO_EMAIL || "hello@pilonqubitventures.com";
+      const fromEmail =
+        process.env.CONTACT_FROM_EMAIL || "Pilon Qubit Ventures <hello@pilonqubitventures.com>";
+
+      try {
+        await resend.emails.send({
+          from: fromEmail,
+          to: toEmail,
+          subject: `New contact from ${payload.name}`,
+          reply_to: payload.email,
+          text: buildPlainTextEmail(payload),
+          html: buildHtmlEmail(payload),
+        });
+      } catch (err) {
+        console.error("Contact API: Resend email send failed:", err);
+        // Do not surface a 500 to the user just because email failed.
+      }
     }
 
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
+    // Optional: re-add Airtable/CRM sync here as fire-and-forget if needed.
+    // someSync(payload).catch((err) => console.error("Airtable sync error:", err));
+
+    return NextResponse.json(
+      {
+        ok: true,
+        success: true,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Contact API: unexpected error", error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        success: false,
+        error: "Internal Server Error",
+      },
+      { status: 500 }
+    );
   }
 }
