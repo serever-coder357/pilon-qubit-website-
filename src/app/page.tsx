@@ -144,7 +144,7 @@ export default function Home() {
                     playsInline
                     preload="auto"
                   >
-                    <source src="/pilonqubitvideo.mp4" type="video/mp4" />
+                    <source src="https://pilonqubitventures.com/pqv-new.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                 </div>
