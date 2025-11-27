@@ -710,3 +710,104 @@ function ContactCTA({ title, description }: ContactCTAProps) {
     </div>
   );
 }
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+
+function NavBar() {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const scrollToServices = () => {
+    const element = document.querySelector('#services-root');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-6 py-4 flex items-center justify-between relative">
+      {/* Logo */}
+      <Link href="/" className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-xl">PQ</span>
+        </div>
+        <span className="text-white font-bold text-xl">
+          PILON Qubit Ventures
+        </span>
+      </Link>
+
+      {/* NAV RIGHT */}
+      <div className="flex items-center gap-10 text-sm">
+        {/* Services */}
+        <button
+          type="button"
+          onClick={scrollToServices}
+          className="text-white/80 hover:text-white transition-colors"
+        >
+          Services
+        </button>
+
+        {/* CONTACT DROPDOWN */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            className="text-white/80 hover:text-white transition-colors"
+          >
+            Contact
+          </button>
+
+          {open && (
+            <div className="absolute right-0 mt-3 w-72 rounded-xl bg-[#111132] border border-cyan-500/30 shadow-xl p-4 z-50">
+              <h4 className="text-white font-semibold mb-3">Get in Touch</h4>
+
+              {/* PHONE */}
+              <a
+                href="tel:2104600912"
+                className="block py-2 text-cyan-200 hover:text-white transition-colors"
+              >
+                📞 (210) 460-0912
+              </a>
+
+              {/* EMAIL */}
+              <a
+                href="mailto:hello@pilonqubitventures.com"
+                className="block py-2 text-cyan-200 hover:text-white transition-colors"
+              >
+                ✉️ hello@pilonqubitventures.com
+              </a>
+
+              {/* ADDRESS → maps link */}
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=401+E+Sonterra+Blvd+Suite+375+San+Antonio+TX+78258"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-2 text-cyan-200 hover:text-white transition-colors"
+              >
+                📍 401 E Sonterra Blvd Suite 375<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;San Antonio, TX 78258
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default NavBar;
