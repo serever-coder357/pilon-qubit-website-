@@ -42,8 +42,7 @@
             loop
             playsInline
           >
-            {/* IMPORTANT: set src to the SAME video file your old hero used */}
-            <source src="/REPLACE_WITH_YOUR_EXISTING_HERO_VIDEO.mp4" type="video/mp4" />
+            <source src="https://pilonqubitventures.com/pqv-new.mp4" type="video/mp4" />
           </video>
         </div>
       </div>
