@@ -23,12 +23,7 @@ export default function HomePage() {
             </span>
           </Link>
           <nav className="flex gap-8">
-            <a
-              href="#services-section"
-              className="text-white/80 hover:text-white transition-colors"
-            >
-              Services
-            </a>
+            {/* We keep only Contact, no #services-section anchor */}
             <a
               href="#contact"
               className="text-white/80 hover:text-white transition-colors"
@@ -40,7 +35,7 @@ export default function HomePage() {
       </header>
 
       <main className="container mx-auto px-6 py-16">
-        {/* HERO: text + video, NO CTA buttons */}
+        {/* HERO: text + video, no CTA buttons */}
         <section className="grid gap-12 md:grid-cols-2 items-center mb-16">
           <div>
             <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
@@ -73,15 +68,14 @@ export default function HomePage() {
               controls
               poster="/ai-consulting-hero.webp"
             >
-              {/* Hosted video in /public */}
               <source src="/pqv-new.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>
         </section>
 
-        {/* SERVICES SUMMARY CARDS */}
-        <section id="services-section" className="mb-12">
+        {/* SERVICE CARDS (click to extend page with details) */}
+        <section className="mb-12">
           <div className="grid md:grid-cols-3 gap-8">
             {/* AI Marketing Automation */}
             <button
@@ -185,7 +179,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* DETAIL SECTIONS */}
+        {/* DETAIL SECTIONS – just extend page, no images/videos */}
         {selectedService === null && (
           <p className="text-center text-cyan-100/70 mb-16">
             Select one of the services above to see detailed options and
@@ -197,7 +191,7 @@ export default function HomePage() {
         {selectedService === 'consulting' && <ConsultingDetail />}
         {selectedService === 'webdev' && <WebDevelopmentDetail />}
 
-        {/* CONTACT FORM (shared target for all CTAs) */}
+        {/* CONTACT FORM */}
         <section id="contact" className="mt-20 mb-12 max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4">
             Contact PILON Qubit
@@ -215,27 +209,20 @@ export default function HomePage() {
 
 /* ===========================
    DETAIL COMPONENTS
+   (NO media, only menus)
    =========================== */
 
 function MarketingDetail() {
   return (
     <section className="mb-20">
-      {/* Hero image */}
-      <div className="mb-10 text-center">
+      <div className="mb-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-3">
           AI Marketing Automation
         </h2>
-        <p className="text-cyan-100/80 mb-6 max-w-2xl mx-auto">
+        <p className="text-cyan-100/80 max-w-2xl mx-auto">
           Save ~$3K/mo on marketing staff with our complete AI-powered
           automation platform. 24/7 operation, no contracts.
         </p>
-        <div className="rounded-3xl overflow-hidden border border-cyan-500/40 shadow-xl max-w-4xl mx-auto">
-          <img
-            src="/pilonqubit.webp"
-            alt="AI Marketing Automation"
-            className="w-full h-full object-cover"
-          />
-        </div>
       </div>
 
       {/* Pricing tiers */}
@@ -258,9 +245,12 @@ function MarketingDetail() {
             <li>• Email support</li>
             <li>• 1 user included</li>
           </ul>
-          <button className="mt-auto px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-sm font-semibold">
+          <a
+            href="#contact"
+            className="mt-auto inline-flex justify-center px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-sm font-semibold"
+          >
             Get Started
-          </button>
+          </a>
         </div>
 
         {/* Growth */}
@@ -285,9 +275,12 @@ function MarketingDetail() {
             <li>• Priority support</li>
             <li>• 3 users included</li>
           </ul>
-          <button className="mt-auto px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-sm font-semibold">
+          <a
+            href="#contact"
+            className="mt-auto inline-flex justify-center px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-sm font-semibold"
+          >
             Start Growing
-          </button>
+          </a>
         </div>
 
         {/* Pro */}
@@ -308,9 +301,12 @@ function MarketingDetail() {
             <li>• 24/7 phone support</li>
             <li>• 10 users included</li>
           </ul>
-          <button className="mt-auto px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-sm font-semibold">
+          <a
+            href="#contact"
+            className="mt-auto inline-flex justify-center px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-sm font-semibold"
+          >
             Go Pro
-          </button>
+          </a>
         </div>
 
         {/* Enterprise */}
@@ -367,7 +363,7 @@ function MarketingDetail() {
         </div>
       </div>
 
-      {/* Contact CTA to form */}
+      {/* Contact CTA */}
       <div className="bg-gradient-to-r from-cyan-500/20 via-blue-500/20 to-purple-500/20 border border-cyan-500/40 rounded-2xl p-8 text-center mb-4">
         <h3 className="text-2xl font-semibold mb-3">
           Prefer to Talk to a Human?
@@ -389,23 +385,15 @@ function MarketingDetail() {
 function ConsultingDetail() {
   return (
     <section className="mb-20">
-      {/* Hero image */}
-      <div className="mb-10 text-center">
+      <div className="mb-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-3">
           Frontier AI Consulting
         </h2>
-        <p className="text-cyan-100/80 mb-6 max-w-2xl mx-auto">
+        <p className="text-cyan-100/80 max-w-2xl mx-auto">
           From strategy to deployment, we deliver end-to-end AI solutions that
           drive real business impact. 10x faster development, 50% cost
           reduction.
         </p>
-        <div className="rounded-3xl overflow-hidden border border-cyan-500/40 shadow-xl max-w-4xl mx-auto">
-          <img
-            src="/ai-consulting-hero.webp"
-            alt="Frontier AI Consulting"
-            className="w-full h-full object-cover"
-          />
-        </div>
       </div>
 
       {/* Capability grid */}
@@ -507,25 +495,12 @@ function ConsultingDetail() {
 function WebDevelopmentDetail() {
   return (
     <section className="mb-20">
-      {/* Hero video */}
-      <div className="mb-10 text-center">
+      <div className="mb-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-3">Web Development</h2>
-        <p className="text-cyan-100/80 mb-6 max-w-2xl mx-auto">
+        <p className="text-cyan-100/80 max-w-2xl mx-auto">
           Custom websites and web applications built with cutting-edge
           technology and AI integration. Fast, secure, and designed to convert.
         </p>
-        <div className="rounded-3xl overflow-hidden border border-cyan-500/40 shadow-xl max-w-4xl mx-auto">
-          <video
-            className="w-full h-full object-cover"
-            autoPlay
-            muted
-            loop
-            controls
-          >
-            <source src="/pilonqubitvideo-original.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
       </div>
 
       {/* Capability grid */}
@@ -586,7 +561,7 @@ function WebDevelopmentDetail() {
         />
       </div>
 
-      {/* Tech stack & pricing summary */}
+      {/* Tech stack summary */}
       <div className="bg-gradient-to-br from-[#15153A] to-[#0B0B2E] border border-cyan-500/40 rounded-2xl p-8 mb-8">
         <h3 className="text-2xl font-bold mb-4">Technology Stack</h3>
         <div className="grid md:grid-cols-4 gap-6 text-sm text-cyan-100/85">
