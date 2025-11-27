@@ -74,7 +74,10 @@ export default function Home() {
 
       <main id="main" className="pt-16">
         {/* HERO */}
-        <section className="relative overflow-hidden border-b border-cyan-900/40" aria-labelledby="hero-heading">
+        <section
+          className="relative overflow-hidden border-b border-cyan-900/40 bg-[#04061a]"
+          aria-labelledby="hero-heading"
+        >
           <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
             <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
               {/* Left column */}
@@ -103,7 +106,7 @@ export default function Home() {
                   </button>
                   <a
                     href="/services"
-                    className="rounded-md border border-cyan-500 px-6 py-3 text-sm font-semibold text-cyan-300 hover:bg-cyan-900/40"
+                    className="rounded-md border border-cyan-500 px-6 py-3 text-sm font-semibold text-cyan-300 hover:bg-cyan-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#04061a]"
                   >
                     See Our Approach
                   </a>
