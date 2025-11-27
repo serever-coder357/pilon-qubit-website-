@@ -144,9 +144,9 @@ export default function SmartContactForm() {
         }),
       });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        const isSuccess = data?.ok === true || data?.success === true;
+      const isSuccess = data?.ok === true || data?.success === true;
 
       if (isSuccess) {
         setSubmitStatus('success');
