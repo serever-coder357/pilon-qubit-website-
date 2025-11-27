@@ -38,9 +38,6 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A] text-white">
       {/* Top nav */}
       <header className="border-b border-cyan-500/20 bg-[#0A0A2A]/80 backdrop-blur-sm sticky top-0 z-40">
-  <NavBar />
-</header>
-
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
@@ -150,8 +147,7 @@ interface ServicesSummaryProps {
 
 function ServicesSummary({ onSelect }: ServicesSummaryProps) {
   return (
-    <section id="services-root" className="mb-12">
-
+    <section className="mb-12">
       <div className="grid md:grid-cols-3 gap-8">
         {/* AI Marketing Automation */}
         <button
@@ -161,8 +157,8 @@ function ServicesSummary({ onSelect }: ServicesSummaryProps) {
         >
           <h3 className="text-2xl font-bold mb-4">AI Marketing Automation</h3>
           <p className="text-cyan-100/80 mb-6 text-sm">
-            Complete marketing automation platform powered by AI. Save
-            ~$3K/mo on marketing staff with 24/7 automated operations.
+            Complete marketing automation platform powered by AI. Save ~$3K/mo
+            on marketing staff with 24/7 automated operations.
           </p>
           <ul className="space-y-2 text-sm text-cyan-100/85 mb-6">
             <li>✓ AI Voice Assistant (24/7 phone)</li>
@@ -711,104 +707,3 @@ function ContactCTA({ title, description }: ContactCTAProps) {
     </div>
   );
 }
-import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-
-function NavBar() {
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  const scrollToServices = () => {
-    const element = document.querySelector('#services-root');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setOpen(false);
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-6 py-4 flex items-center justify-between relative">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-xl">PQ</span>
-        </div>
-        <span className="text-white font-bold text-xl">
-          PILON Qubit Ventures
-        </span>
-      </Link>
-
-      {/* NAV RIGHT */}
-      <div className="flex items-center gap-10 text-sm">
-        {/* Services */}
-        <button
-          type="button"
-          onClick={scrollToServices}
-          className="text-white/80 hover:text-white transition-colors"
-        >
-          Services
-        </button>
-
-        {/* CONTACT DROPDOWN */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            type="button"
-            onClick={() => setOpen(!open)}
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            Contact
-          </button>
-
-          {open && (
-            <div className="absolute right-0 mt-3 w-72 rounded-xl bg-[#111132] border border-cyan-500/30 shadow-xl p-4 z-50">
-              <h4 className="text-white font-semibold mb-3">Get in Touch</h4>
-
-              {/* PHONE */}
-              <a
-                href="tel:2104600912"
-                className="block py-2 text-cyan-200 hover:text-white transition-colors"
-              >
-                📞 (210) 460-0912
-              </a>
-
-              {/* EMAIL */}
-              <a
-                href="mailto:hello@pilonqubitventures.com"
-                className="block py-2 text-cyan-200 hover:text-white transition-colors"
-              >
-                ✉️ hello@pilonqubitventures.com
-              </a>
-
-              {/* ADDRESS → maps link */}
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=401+E+Sonterra+Blvd+Suite+375+San+Antonio+TX+78258"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-2 text-cyan-200 hover:text-white transition-colors"
-              >
-                📍 401 E Sonterra Blvd Suite 375<br />
-                &nbsp;&nbsp;&nbsp;&nbsp;San Antonio, TX 78258
-              </a>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default NavBar;
