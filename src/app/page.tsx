@@ -150,7 +150,8 @@ interface ServicesSummaryProps {
 
 function ServicesSummary({ onSelect }: ServicesSummaryProps) {
   return (
-    <section className="mb-12">
+    <section id="services-root" className="mb-12">
+
       <div className="grid md:grid-cols-3 gap-8">
         {/* AI Marketing Automation */}
         <button
