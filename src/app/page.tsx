@@ -8,11 +8,20 @@ type ServiceKey = 'marketing' | 'consulting' | 'webdev' | null;
 
 export default function HomePage() {
   const [selectedService, setSelectedService] = useState<ServiceKey>(null);
+  const [contactOpen, setContactOpen] = useState(false);
   const detailRef = useRef<HTMLDivElement | null>(null);
 
-  // When a service is selected, scroll to the detail area
+  // Scroll helper
+  const scrollToContactForm = () => {
+    const el = document.getElementById('contact');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Scroll to the detail/services area whenever selection changes
   useEffect(() => {
-    if (selectedService && detailRef.current) {
+    if (selectedService !== null && detailRef.current) {
       detailRef.current.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
@@ -34,6 +43,20 @@ export default function HomePage() {
     }
   };
 
+  const handleNavServicesClick = () => {
+    setSelectedService(null);
+    if (detailRef.current) {
+      detailRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  };
+
+  const toggleContactPanel = () => {
+    setContactOpen((prev) => !prev);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A0A2A] via-[#1A1A4A] to-[#0A0A2A] text-white">
       {/* Top nav */}
@@ -47,20 +70,72 @@ export default function HomePage() {
               PILON Qubit Ventures
             </span>
           </Link>
-          <nav className="flex gap-8">
+          <nav className="flex gap-4 items-center">
             <button
               type="button"
-              onClick={() => handleSelect(null)}
+              onClick={handleNavServicesClick}
               className="text-white/80 hover:text-white transition-colors text-sm"
             >
               Services
             </button>
-            <a
-              href="#contact"
-              className="text-white/80 hover:text-white transition-colors text-sm"
-            >
-              Contact
-            </a>
+
+            {/* CONTACT DROPDOWN WITH FULL INFO */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={toggleContactPanel}
+                className="text-sm font-semibold px-4 py-2 rounded-full border border-cyan-400/60 bg-cyan-500/10 hover:bg-cyan-500/20 hover:border-cyan-300 transition-colors"
+              >
+                Contact
+              </button>
+              {contactOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#05051A] border border-cyan-500/40 rounded-xl shadow-xl p-4 text-xs md:text-sm z-50">
+                  <div className="font-semibold text-cyan-200 text-xs uppercase tracking-wide mb-2">
+                    Contact PILON Qubit
+                  </div>
+
+                  {/* Address */}
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=401+E+Sonterra+Blvd+Suite+375+San+Antonio+TX+78258"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-cyan-100 hover:text-cyan-50 mb-3 leading-snug"
+                  >
+                    401 E Sonterra Blvd Suite 375
+                    <br />
+                    San Antonio, TX 78258
+                  </a>
+
+                  {/* Phone */}
+                  <a
+                    href="tel:+12104600912"
+                    className="block text-cyan-100 hover:text-cyan-50 mb-2"
+                  >
+                    +1 (210) 460-0912
+                  </a>
+
+                  {/* Email */}
+                  <a
+                    href="mailto:hello@pilonqubitventures.com"
+                    className="block text-cyan-100 hover:text-cyan-50 mb-3"
+                  >
+                    hello@pilonqubitventures.com
+                  </a>
+
+                  {/* Link to contact form */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactOpen(false);
+                      scrollToContactForm();
+                    }}
+                    className="inline-flex px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-50 text-xs font-semibold hover:bg-cyan-500/30"
+                  >
+                    Open contact form
+                  </button>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </header>
@@ -95,7 +170,7 @@ export default function HomePage() {
               loop
               playsInline
             >
-              {/* host pqv-new.mp4 in /public */}
+              {/* Host pqv-new.mp4 in /public */}
               <source src="/pqv-new.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
@@ -172,11 +247,12 @@ function ServicesSummary({ onSelect }: ServicesSummaryProps) {
             <div className="text-cyan-400 font-semibold text-base mb-1">
               Starting at $299/mo
             </div>
-            <div className="text-cyan-100/60 text-xs mb-2">
+            <div className="text-cyan-100/60 text-xs mb-3">
               Month-to-month • No contracts • Setup case by case
             </div>
-            <div className="text-cyan-200 text-xs">
-              Click to view pricing →
+            {/* HIGH-CONTRAST CTA */}
+            <div className="inline-flex px-4 py-2 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-50 text-sm font-semibold">
+              View pricing &amp; plans →
             </div>
           </div>
         </button>
@@ -205,11 +281,12 @@ function ServicesSummary({ onSelect }: ServicesSummaryProps) {
             <div className="text-blue-400 font-semibold text-base mb-1">
               Custom Pricing
             </div>
-            <div className="text-cyan-100/60 text-xs mb-2">
+            <div className="text-cyan-100/60 text-xs mb-3">
               Contact us for a tailored quote
             </div>
-            <div className="text-cyan-200 text-xs">
-              Click to view details →
+            {/* HIGH-CONTRAST CTA */}
+            <div className="inline-flex px-4 py-2 rounded-full bg-blue-500/20 border border-blue-400 text-cyan-50 text-sm font-semibold">
+              View consulting details →
             </div>
           </div>
         </button>
@@ -236,11 +313,12 @@ function ServicesSummary({ onSelect }: ServicesSummaryProps) {
             <div className="text-purple-300 font-semibold text-base mb-1">
               Custom Quotes
             </div>
-            <div className="text-cyan-100/60 text-xs mb-2">
+            <div className="text-cyan-100/60 text-xs mb-3">
               Tailored pricing for your project
             </div>
-            <div className="text-cyan-200 text-xs">
-              Click to view details →
+            {/* HIGH-CONTRAST CTA */}
+            <div className="inline-flex px-4 py-2 rounded-full bg-purple-500/20 border border-purple-300 text-cyan-50 text-sm font-semibold">
+              View web dev details →
             </div>
           </div>
         </button>
