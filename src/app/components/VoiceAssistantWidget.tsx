@@ -3,12 +3,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 /**
- * VoiceAssistantWidget — DEBUG VERSION
- * ----------------------------------------------------------
- * This version logs EVERY realtime event to the console so we
- * can identify the correct event types for transcripts and AI
- * text. After inspection, we’ll replace this with production
- * handlers.
+ * VoiceAssistantWidget – PRODUCTION VERSION
+ *
+ * - Floating mic button bottom-right
+ * - Opens panel with status + transcript
+ * - Connects to /api/realtime to mint an ephemeral session
+ * - Uses WebRTC + Realtime API for audio in/out
+ * - Listens to response.audio_transcript.delta for assistant transcript
+ * - On stop, sends transcript (or stub) to /api/contact as a lead
  */
 
 type Status =
@@ -35,16 +37,20 @@ export function VoiceAssistantWidget() {
   const micStreamRef = useRef<MediaStream | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
-  // Prevent sending multiple emails for a single session
+  // Prevent sending multiple emails for the same conversation
   const leadSentRef = useRef(false);
 
   const cleanup = useCallback(() => {
     try {
       if (dcRef.current) dcRef.current.close();
-    } catch {}
+    } catch {
+      // ignore
+    }
     try {
       if (pcRef.current) pcRef.current.close();
-    } catch {}
+    } catch {
+      // ignore
+    }
 
     pcRef.current = null;
     dcRef.current = null;
@@ -63,10 +69,12 @@ export function VoiceAssistantWidget() {
   }, []);
 
   useEffect(() => {
-    return () => cleanup();
+    return () => {
+      cleanup();
+    };
   }, [cleanup]);
 
-  // Always send a lead when conversation stops (stub OK)
+  // Always send a lead when conversation stops (even if transcript is empty)
   const sendTranscriptAsLead = useCallback(async (rawText: string) => {
     if (leadSentRef.current) return;
     leadSentRef.current = true;
@@ -76,13 +84,15 @@ export function VoiceAssistantWidget() {
 
     const messageBody =
       trimmed.length > 0
-        ? `Source: voice-operator\nTimestamp: ${now}\n\nTranscript:\n\n${trimmed}`
-        : `Source: voice-operator\nTimestamp: ${now}\n\nNo transcript text captured, but the visitor used the voice assistant.\nRecommend follow-up.`
+        ? `Source: voice-operator\nTimestamp: ${now}\n\nAssistant transcript (what the AI said):\n\n${trimmed}`
+        : `Source: voice-operator\nTimestamp: ${now}\n\nNo text transcript captured, but the visitor used the voice assistant.\nRecommend follow-up to qualify this lead.`;
 
     try {
       await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: "Voice Operator Lead",
           email: "no-reply@pilonqubitventures.com",
@@ -93,31 +103,33 @@ export function VoiceAssistantWidget() {
         }),
       });
     } catch (err) {
-      console.error("[VoiceAssistantWidget] Failed sending lead:", err);
+      console.error("[VoiceAssistantWidget] Failed to send lead:", err);
     }
   }, []);
 
-  // -----------------------------------------------------
-  // START CONVERSATION
-  // -----------------------------------------------------
   const startConversation = useCallback(async () => {
     if (status !== "idle") return;
 
     setError(null);
     setStatus("requesting-permission");
     setTranscript("");
-    leadSentRef.current = false;
+    leadSentRef.current = false; // new session
 
     try {
-      // 1) Get ephemeral key
+      // 1) Get ephemeral key from backend
       const tokenResp = await fetch("/api/realtime", { method: "POST" });
       if (!tokenResp.ok) {
         const text = await tokenResp.text();
-        throw new Error(`Realtime session failed: ${text}`);
+        throw new Error(
+          `Failed to create realtime session: ${tokenResp.status} ${text}`,
+        );
       }
       const sessionData = await tokenResp.json();
-      const ephemeralKey = sessionData?.client_secret?.value;
-      if (!ephemeralKey) throw new Error("Missing ephemeral key");
+      const ephemeralKey: string | undefined =
+        sessionData?.client_secret?.value;
+      if (!ephemeralKey) {
+        throw new Error("No ephemeral key returned from /api/realtime");
+      }
 
       // 2) WebRTC setup
       const pc = new RTCPeerConnection();
@@ -141,37 +153,31 @@ export function VoiceAssistantWidget() {
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
-      // ------------------------------
-      // DEBUG: Log all realtime events
-      // ------------------------------
-      dc.addEventListener("message", (event) => {
-        console.group("%c REALTIME EVENT", "color:cyan; font-weight: bold;");
-        try {
-          const parsed = JSON.parse(event.data);
-          console.log(parsed);
-
-          // We do NOT try to interpret transcripts here.
-          // After reviewing logs, we will add correct handlers.
-
-        } catch {
-          console.warn("NON-JSON EVENT:", event.data);
-        }
-        console.groupEnd();
-      });
-
       dc.addEventListener("open", () => {
-        console.log("%cDATA CHANNEL OPEN", "color:lime; font-size:14px;");
-
         const sessionUpdateEvent = {
           type: "session.update",
           session: {
             instructions:
-              "You are the AI Operator Assistant for PILON Qubit Ventures.\n" +
-              "Keep answers short and professional.\n" +
-              "Ask for: name, email, company, phone, project need.\n" +
-              "After collecting info, say ONE closing line.\n" +
-              "Then remain silent unless the user asks more.\n" +
-              "Do NOT loop.\n",
+              "You are the AI Operator Assistant for PILON Qubit Ventures.\n\n" +
+              "Primary Goals:\n" +
+              "1) Understand the visitor's business, goals, pain points, and timeline.\n" +
+              "2) Determine whether they need: (a) AI Marketing Automation, (b) AI Consulting & Strategy, " +
+              "or (c) Web Development, or a combination.\n" +
+              "3) Provide short, practical guidance.\n" +
+              "4) Capture lead information with high accuracy.\n\n" +
+              "Rules:\n" +
+              "- Keep responses short and conversational (2–4 sentences).\n" +
+              "- Ask ONE question at a time.\n" +
+              "- Ask clarifying questions before making recommendations.\n" +
+              "- Before ending, ALWAYS collect: Full Name, Work Email, Company, Phone Number (optional but preferred), " +
+              "and a short summary of what they want to build.\n\n" +
+              "Final Step (DO NOT LOOP):\n" +
+              "- After you have collected the lead details, say once: " +
+              "\"Great, I'll package this for the PILON Qubit Ventures team so they can follow up with you.\"\n" +
+              "- Then give ONE short closing sentence (for example: \"If you have any other questions, you can ask them now.\").\n" +
+              "- After that, STOP speaking. Do NOT repeat this message. Remain silent unless the user clearly asks a new question.\n" +
+              "Tone:\n" +
+              "- Smart, concise, professional. No hype.",
             modalities: ["audio", "text"],
           },
         };
@@ -180,14 +186,50 @@ export function VoiceAssistantWidget() {
         setStatus("listening");
       });
 
+      dc.addEventListener("message", (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+
+          // We saw from your logs that your model uses:
+          //  - response.audio_transcript.delta
+          // for assistant speech transcription.
+          if (parsed.type === "response.audio_transcript.delta") {
+            const deltaText: string =
+              parsed.delta?.text ?? parsed.delta ?? "";
+            if (deltaText) {
+              setTranscript((prev) =>
+                prev.length ? prev + deltaText : deltaText,
+              );
+            }
+          }
+
+          if (
+            parsed.type === "response.completed" ||
+            parsed.type === "response.done"
+          ) {
+            setStatus("listening");
+          }
+
+          if (parsed.type === "response.started") {
+            setStatus("responding");
+          }
+
+          // (Optional) You can keep some logging during rollout:
+          // console.log("RT EVENT:", parsed.type, parsed);
+        } catch {
+          // non-JSON or unknown event — ignore
+        }
+      });
+
       dc.addEventListener("error", (e) => {
         console.error("[VoiceAssistantWidget] DataChannel error:", e);
         setError("Connection error.");
         setStatus("error");
       });
 
-      // WebRTC SDP negotiation
+      // 5) SDP negotiation
       setStatus("connecting");
+
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -204,8 +246,8 @@ export function VoiceAssistantWidget() {
       );
 
       if (!sdpResp.ok) {
-        const t = await sdpResp.text();
-        throw new Error(`SDP negotiation failed: ${t}`);
+        const text = await sdpResp.text();
+        throw new Error(`SDP negotiation failed: ${text}`);
       }
 
       const answerSdp = await sdpResp.text();
@@ -213,20 +255,17 @@ export function VoiceAssistantWidget() {
 
       setStatus("listening");
     } catch (err: any) {
-      console.error("[VoiceAssistantWidget] Start error:", err);
-      setError(err?.message ?? "Unknown error");
+      console.error("[VoiceAssistantWidget] startConversation error:", err);
+      setError(err?.message ?? "Unexpected error starting voice assistant.");
       setStatus("error");
       cleanup();
     }
-  }, [status, cleanup]);
+  }, [cleanup, status]);
 
-  // -----------------------------------------------------
-  // STOP CONVERSATION
-  // -----------------------------------------------------
   const stopConversation = useCallback(() => {
-    const textBeforeCleanup = transcript;
+    const currentTranscript = transcript;
     cleanup();
-    void sendTranscriptAsLead(textBeforeCleanup);
+    void sendTranscriptAsLead(currentTranscript);
   }, [cleanup, sendTranscriptAsLead, transcript]);
 
   const handlePrimaryClick = async () => {
@@ -242,7 +281,7 @@ export function VoiceAssistantWidget() {
   const label =
     status === "idle" || status === "error" ? "Start Conversation" : "Stop";
 
-  const statusLabel =
+  const statusLabel: string =
     status === "idle"
       ? "Idle"
       : status === "requesting-permission"
@@ -259,59 +298,77 @@ export function VoiceAssistantWidget() {
 
   return (
     <div className="fixed bottom-4 right-4 z-40">
-      {/* Button */}
+      {/* Floating bubble */}
       <button
         type="button"
         onClick={toggleOpen}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500 text-white shadow-lg"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500 text-white shadow-lg outline-none ring-cyan-300 transition hover:bg-cyan-400 focus-visible:ring-2"
+        aria-label="Open AI voice assistant"
       >
-        🎙️
+        <span className="text-xl font-bold">🎙️</span>
       </button>
 
       {/* Panel */}
       {isOpen && (
-        <div className="mt-3 w-80 rounded-2xl bg-slate-900/95 p-4 text-slate-50 shadow-2xl backdrop-blur">
-          <div className="flex justify-between">
+        <div className="mt-3 w-80 max-w-[90vw] rounded-2xl bg-slate-900/95 p-4 text-slate-50 shadow-2xl backdrop-blur">
+          <div className="flex items-start justify-between gap-2">
             <div>
-              <h2 className="text-sm font-semibold text-cyan-300">
-                PILON AI OPERATOR (DEBUG MODE)
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-cyan-300">
+                PILON AI OPERATOR
               </h2>
-              <p className="mt-1 text-xs text-slate-400">
-                Open DevTools → Console to see realtime events.
+              <p className="mt-1 text-xs text-slate-300">
+                Ask about AI marketing, AI consulting, or web dev. We&apos;ll
+                keep it short and practical.
               </p>
             </div>
-
             <button
+              type="button"
               onClick={toggleOpen}
-              className="text-slate-400 hover:text-slate-200"
+              className="rounded-full px-2 text-xs text-slate-400 hover:text-slate-200"
+              aria-label="Close voice assistant"
             >
               ✕
             </button>
           </div>
 
-          <div className="mt-3 bg-slate-800/70 p-2 rounded-xl text-xs">
-            <p className="text-cyan-200 font-medium">Status</p>
-            <p className="text-slate-200 mt-1">{statusLabel}</p>
-            {error && <p className="text-rose-400 mt-1">{error}</p>}
+          <div className="mt-3 rounded-xl bg-slate-800/80 p-2 text-xs">
+            <p className="font-medium text-cyan-200">Status</p>
+            <p className="mt-1 text-[11px] text-slate-200">{statusLabel}</p>
+            {error && (
+              <p className="mt-1 text-[11px] text-rose-400">
+                Error: {error || "Something went wrong."}
+              </p>
+            )}
           </div>
 
-          <div className="mt-3 max-h-40 overflow-y-auto bg-slate-800/50 p-2 rounded-xl text-[11px] whitespace-pre-wrap">
-            {transcript || (
-              <span className="text-slate-500">Transcript will appear here</span>
+          <div className="mt-3 max-h-40 overflow-y-auto rounded-xl bg-slate-800/60 p-2 text-[11px] leading-snug text-slate-100">
+            {transcript ? (
+              <pre className="whitespace-pre-wrap font-mono text-[11px]">
+                {transcript}
+              </pre>
+            ) : (
+              <p className="text-slate-400">
+                When you speak, we&apos;ll show key transcript snippets here.
+              </p>
             )}
           </div>
 
           <button
             type="button"
             onClick={handlePrimaryClick}
-            className={`mt-3 w-full rounded-xl py-2 text-sm font-semibold ${
+            className={`mt-3 flex w-full items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold shadow-md outline-none ring-cyan-400 transition focus-visible:ring-2 ${
               status === "idle" || status === "error"
-                ? "bg-cyan-500"
-                : "bg-rose-500"
+                ? "bg-cyan-500 hover:bg-cyan-400 text-slate-900"
+                : "bg-rose-500 hover:bg-rose-400 text-slate-50"
             }`}
           >
             {label}
           </button>
+
+          <p className="mt-2 text-[10px] text-slate-400">
+            By using this assistant you agree that your audio may be processed
+            by OpenAI to power the conversation.
+          </p>
         </div>
       )}
     </div>
