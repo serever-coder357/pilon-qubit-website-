@@ -1,175 +1,262 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useCallback, useRef, useState } from "react";
 
-type Role = "user" | "assistant";
+type Status =
+  | "idle"
+  | "recording"
+  | "thinking"
+  | "playing"
+  | "error";
 
-type Message = {
-  id: string;
-  role: Role;
-  text: string;
-};
+interface VoiceResult {
+  ok: boolean;
+  userText?: string;
+  replyText?: string;
+  audioBase64?: string;
+  audioMimeType?: string;
+  error?: string;
+  details?: string;
+}
 
-export default function ChatPanel({ onClose }: { onClose: () => void }) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "Hi, I’m the PQV Assistant. Tell me what you’re looking for, and I’ll help route it correctly.",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+export default function ChatPanel() {
+  const [status, setStatus] = useState<Status>("idle");
+  const [lastUserText, setLastUserText] = useState<string | null>(null);
+  const [lastReplyText, setLastReplyText] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  };
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages.length]);
+  const isRecording = status === "recording";
+  const isBusy = status === "thinking" || status === "playing";
 
-  const handleSend = async () => {
-    const content = input.trim();
-    if (!content || isSending) return;
-
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      text: content,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsSending(true);
-
+  const startRecording = useCallback(async () => {
     try {
-      const res = await fetch("/api/assistant", {
+      if (typeof window === "undefined") return;
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("error");
+        setErrorMessage("Your browser does not support microphone capture.");
+        return;
+      }
+
+      setErrorMessage(null);
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        try {
+          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          chunksRef.current = [];
+
+          await sendAudioToServer(blob);
+        } catch (err: any) {
+          console.error("Error after recording stop:", err);
+          setStatus("error");
+          setErrorMessage("Something went wrong processing your audio.");
+        } finally {
+          // stop all tracks to release the mic
+          stream.getTracks().forEach((t) => t.stop());
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setStatus("recording");
+    } catch (err: any) {
+      console.error("startRecording error:", err);
+      setStatus("error");
+      setErrorMessage("Could not access your microphone.");
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    }
+    setStatus("thinking");
+  }, []);
+
+  const handleMicClick = useCallback(() => {
+    if (isBusy) {
+      return;
+    }
+
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isBusy, isRecording, startRecording, stopRecording]);
+
+  const sendAudioToServer = useCallback(async (blob: Blob) => {
+    try {
+      setStatus("thinking");
+
+      const formData = new FormData();
+      formData.append("audio", blob, "voice.webm");
+
+      const res = await fetch("/api/voice-assistant", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: content }),
+        body: formData,
       });
 
       if (!res.ok) {
-        throw new Error(`API error: ${res.status}`);
+        const text = await res.text().catch(() => "");
+        console.error("Voice API HTTP error:", res.status, text);
+        setStatus("error");
+        setErrorMessage("Server error from voice assistant.");
+        return;
       }
 
-      const data = (await res.json()) as { reply?: string; error?: string };
+      const data = (await res.json()) as VoiceResult;
 
-      const replyText =
-        data.reply ||
-        data.error ||
-        "I’m here, but something went wrong reading your message.";
+      if (!data.ok) {
+        console.error("Voice API returned error:", data);
+        setStatus("error");
+        setErrorMessage(data.error || "Voice assistant failed.");
+        return;
+      }
 
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: "assistant",
-        text: replyText,
-      };
+      setLastUserText(data.userText ?? null);
+      setLastReplyText(data.replyText ?? null);
+      setErrorMessage(null);
 
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      console.error("Error calling /api/assistant:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-error-${Date.now()}`,
-          role: "assistant",
-          text:
-            "I couldn’t reach the server just now. Please try again in a moment.",
-        },
-      ]);
-    } finally {
-      setIsSending(false);
+      if (data.audioBase64 && data.audioMimeType) {
+        setStatus("playing");
+
+        const src = `data:${data.audioMimeType};base64,${data.audioBase64}`;
+        const audio = new Audio(src);
+
+        audio.onended = () => {
+          setStatus("idle");
+        };
+
+        audio.onerror = (e) => {
+          console.error("Audio playback error:", e);
+          setStatus("error");
+          setErrorMessage("Could not play the assistant audio.");
+        };
+
+        await audio.play();
+      } else {
+        // No audio, just text reply
+        setStatus("idle");
+      }
+    } catch (err: any) {
+      console.error("sendAudioToServer error:", err);
+      setStatus("error");
+      setErrorMessage("Unexpected error talking to the assistant.");
     }
-  };
+  }, []);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
+  const statusLabel = (() => {
+    switch (status) {
+      case "idle":
+        return "Tap and speak";
+      case "recording":
+        return "Listening… tap again to send";
+      case "thinking":
+        return "Thinking…";
+      case "playing":
+        return "Speaking…";
+      case "error":
+        return "Error – try again";
+      default:
+        return "";
     }
-  };
+  })();
 
   return (
-    <motion.div
-      initial={{ y: 300, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 300, opacity: 0 }}
-      transition={{ type: "spring", stiffness: 260, damping: 25 }}
-      className="fixed bottom-20 right-6 w-[360px] max-w-[100vw] bg-white text-black p-4 rounded-2xl shadow-xl border border-gray-200 flex flex-col"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-3">
-        <div>
-          <h3 className="font-bold text-sm">PQV Assistant</h3>
-          <p className="text-[11px] text-gray-500">
-            Early version · Helps route your message to the right place.
-          </p>
-        </div>
-        <button
-          className="text-xs text-gray-500 hover:text-black"
-          onClick={onClose}
-        >
-          Close
-        </button>
+    <div className="flex h-full flex-col gap-4 rounded-2xl bg-slate-950/90 p-4 text-slate-50 shadow-xl ring-1 ring-slate-800">
+      <div className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+          Pilon Qubit AI Concierge
+        </p>
+        <h2 className="text-lg font-semibold">
+          Ask your question out loud. I&lsquo;ll answer with voice.
+        </h2>
+        <p className="text-sm text-slate-300">
+          Ideal for quick questions from founders or investors. I can explain
+          what Pilon Qubit Ventures does, who we back, and how to get in touch.
+        </p>
       </div>
 
-      {/* Messages */}
-      <div
-        ref={scrollRef}
-        className="border rounded-lg h-48 p-2 overflow-y-auto bg-gray-50 text-sm space-y-2"
-      >
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex ${
-              m.role === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs ${
-                m.role === "user"
-                  ? "bg-black text-white rounded-br-none"
-                  : "bg-gray-200 text-black rounded-bl-none"
-              }`}
-            >
-              {m.text}
+      <div className="flex-1 space-y-3 overflow-hidden rounded-xl bg-slate-900/70 p-3">
+        {!lastUserText && !lastReplyText && (
+          <p className="text-sm text-slate-400">
+            Press the microphone, ask your question, then release and wait for
+            the answer. I&apos;ll speak back and keep it short.
+          </p>
+        )}
+
+        {lastUserText && (
+          <div className="rounded-lg bg-slate-800/80 px-3 py-2 text-xs text-slate-100">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              You said
             </div>
+            <div>{lastUserText}</div>
           </div>
-        ))}
-        {isSending && (
-          <div className="flex justify-start">
-            <div className="max-w-[80%] px-3 py-2 rounded-2xl text-xs bg-gray-200 text-gray-700 rounded-bl-none">
-              Thinking…
+        )}
+
+        {lastReplyText && (
+          <div className="rounded-lg bg-cyan-900/40 px-3 py-2 text-xs text-cyan-50">
+            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-cyan-300">
+              PQV Assistant
             </div>
+            <div>{lastReplyText}</div>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="rounded-lg bg-red-900/40 px-3 py-2 text-xs text-red-100">
+            {errorMessage}
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="mt-3 flex gap-2">
-        <input
-          className="flex-1 border rounded-lg px-2 py-2 text-xs"
-          placeholder="Type your message…"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+      <div className="flex items-center justify-between gap-3">
         <button
-          onClick={handleSend}
-          disabled={isSending || !input.trim()}
-          className="px-3 py-2 text-xs bg-black text-white rounded-lg hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed"
+          type="button"
+          onClick={handleMicClick}
+          disabled={isBusy}
+          className={[
+            "flex h-12 flex-1 items-center justify-center gap-2 rounded-full border text-sm font-semibold transition",
+            isRecording
+              ? "border-red-400 bg-red-500/20 text-red-100 shadow-[0_0_0_1px_rgba(248,113,113,0.5)]"
+              : "border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25",
+            isBusy ? "opacity-60" : "",
+          ].join(" ")}
         >
-          Send
+          <span
+            className={[
+              "inline-block h-2 w-2 rounded-full",
+              isRecording ? "bg-red-400 animate-pulse" : "bg-cyan-400",
+            ].join(" ")}
+          />
+          <span>{statusLabel}</span>
         </button>
+
+        <div className="flex flex-col items-end justify-center">
+          <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+            Voice mode
+          </span>
+          <span className="text-[10px] text-slate-500">
+            Uses OpenAI speech models
+          </span>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
