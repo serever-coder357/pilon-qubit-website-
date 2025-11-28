@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge"; // low latency session minting
+export const runtime = "edge";
 
-// GET – for browser testing
+// GET handler for browser testing
 export async function GET() {
   return new Response("POST only. Use POST /api/realtime.", {
     status: 200,
-    headers: { "Content-Type": "text/plain" },
+    headers: {
+      "Content-Type": "text/plain",
+    },
   });
 }
 
-// POST – main realtime API endpoint
+// POST handler to mint an ephemeral realtime session key
 export async function POST(_req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
   const model =
@@ -38,13 +40,14 @@ export async function POST(_req: NextRequest) {
         voice,
         instructions:
           "You are the AI operator assistant for PILON Qubit Ventures. " +
-          "Your job is to understand the user's business and goals, then " +
-          "recommend the best of: AI Marketing Automation, AI Consulting, " +
-          "or Web Development. Keep responses short, practical, and ask " +
-          "for name, email, company, and phone before ending.",
+          "Your job is to understand the user's business and recommend " +
+          "AI Marketing Automation, AI Consulting, or Web Development. " +
+          "Keep answers short and practical. Ask for name/email/company/phone.",
         modalities: ["text", "audio"],
         audio: {
-          output: { format: "aac" },
+          output: {
+            format: "aac",
+          },
         },
       }),
     });
