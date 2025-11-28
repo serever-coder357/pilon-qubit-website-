@@ -3,14 +3,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 /**
- * Simple realtime voice assistant widget using OpenAI Realtime + WebRTC.
- * - Floating button bottom-right
- * - Click to open/close
- * - "Start / Stop conversation" controls
- * - Streams mic audio to OpenAI and plays voice replies
- *
- * NOTE: This is a baseline. Once working, we can refine UI/UX and
- * integrate tightly with your contact route to push captured leads.
+ * VoiceAssistantWidget
+ * - Floating mic button bottom-right
+ * - Opens panel with status + transcript
+ * - Connects to /api/realtime to mint an ephemeral session
+ * - Uses WebRTC + Realtime API for audio in/out
  */
 
 type Status =
@@ -22,7 +19,6 @@ type Status =
   | "error";
 
 const REALTIME_BASE_URL = "https://api.openai.com/v1/realtime";
-// Optional NEXT_PUBLIC env for model override; otherwise we match backend default
 const REALTIME_MODEL =
   process.env.NEXT_PUBLIC_OPENAI_REALTIME_MODEL ??
   "gpt-4o-realtime-preview-2024-12-17";
@@ -38,19 +34,14 @@ export function VoiceAssistantWidget() {
   const micStreamRef = useRef<MediaStream | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
-  // Helper: clean up WebRTC + media
   const cleanup = useCallback(() => {
     try {
-      if (dcRef.current) {
-        dcRef.current.close();
-      }
+      if (dcRef.current) dcRef.current.close();
     } catch {
       // ignore
     }
     try {
-      if (pcRef.current) {
-        pcRef.current.close();
-      }
+      if (pcRef.current) pcRef.current.close();
     } catch {
       // ignore
     }
@@ -70,7 +61,6 @@ export function VoiceAssistantWidget() {
     setStatus("idle");
   }, []);
 
-  // Ensure cleanup on unmount
   useEffect(() => {
     return () => {
       cleanup();
@@ -78,15 +68,13 @@ export function VoiceAssistantWidget() {
   }, [cleanup]);
 
   const startConversation = useCallback(async () => {
-    if (status !== "idle") {
-      return;
-    }
+    if (status !== "idle") return;
 
     setError(null);
     setStatus("requesting-permission");
 
     try {
-      // 1) Get ephemeral key from our Next.js API
+      // 1) Mint ephemeral key from our backend
       const tokenResp = await fetch("/api/realtime", {
         method: "POST",
       });
@@ -99,7 +87,6 @@ export function VoiceAssistantWidget() {
       }
 
       const sessionData = await tokenResp.json();
-
       const ephemeralKey: string | undefined =
         sessionData?.client_secret?.value;
 
@@ -107,7 +94,7 @@ export function VoiceAssistantWidget() {
         throw new Error("No ephemeral key returned from /api/realtime");
       }
 
-      // 2) Setup RTCPeerConnection + audio
+      // 2) Setup WebRTC
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
@@ -124,32 +111,38 @@ export function VoiceAssistantWidget() {
       const ms = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
-
       micStreamRef.current = ms;
       ms.getTracks().forEach((track) => pc.addTrack(track, ms));
 
-      // 4) Data channel for realtime events
+      // 4) Data channel for events
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
 
       dc.addEventListener("open", () => {
-        // When channel is open, we are ready to send events
-        // We immediately send a session.update to confirm modalities and instructions
+        // Sync the same high-conversion script as the backend
         const sessionUpdateEvent = {
           type: "session.update",
           session: {
             instructions:
-              "You are the AI operator assistant for PILON Qubit Ventures, " +
-              "an AI & frontier tech consulting firm in San Antonio, TX. " +
-              "Your job is to quickly understand the user's business and " +
-              "goals, then recommend the best of these: " +
-              "(1) AI Marketing Automation, " +
-              "(2) Frontier AI Consulting, " +
-              "(3) Web Development. " +
-              "Keep replies short and practical. " +
-              "Before the conversation ends, ask for the user's name, email, " +
-              "company, and phone so the team can follow up. " +
-              "Speak in a friendly, operator-style tone.",
+              "You are the AI Operator Assistant for PILON Qubit Ventures.\n\n" +
+              "Primary Goals:\n" +
+              "1) Understand the visitor's business, goals, pain points, and timeline.\n" +
+              "2) Determine whether they need: (a) AI Marketing Automation, (b) AI Consulting & Strategy, " +
+              "or (c) Web Development, or a combination.\n" +
+              "3) Provide short, practical guidance.\n" +
+              "4) Capture lead information with high accuracy.\n\n" +
+              "Rules:\n" +
+              "- Keep responses short and conversational (2–4 sentences).\n" +
+              "- Ask ONE question at a time.\n" +
+              "- Ask clarifying questions before making recommendations.\n" +
+              "- When the visitor describes their situation, follow up with 1 deeper question.\n" +
+              "- Before ending, ALWAYS collect: Full Name, Work Email, Company, Phone Number (optional but preferred), " +
+              "and a short summary of what they want to build.\n\n" +
+              "Final Step:\n" +
+              "After collecting the lead information, say: \"Great, I'll package this for the PILON Qubit Ventures team.\" " +
+              "Then internally summarize the lead as a JSON object with this shape:\n" +
+              "{ \"lead\": { \"name\": \"...\", \"email\": \"...\", \"company\": \"...\", \"phone\": \"...\", \"project\": \"...\" } }\n" +
+              "Speak in a smart, concise, professional tone. No hype.",
             modalities: ["audio", "text"],
           },
         };
@@ -162,10 +155,7 @@ export function VoiceAssistantWidget() {
         try {
           const parsed = JSON.parse(event.data);
 
-          // Debug: log all events in devtools
-          // console.log("[Realtime event]", parsed);
-
-          // Handle transcription events so we can show "what you said"
+          // Handle transcription of user input
           if (
             parsed.type ===
               "conversation.item.input_audio_transcription.completed" &&
@@ -178,7 +168,7 @@ export function VoiceAssistantWidget() {
             );
           }
 
-          // Handle text output deltas when present
+          // Handle assistant text output deltas
           if (parsed.type === "response.output_text.delta") {
             const delta = parsed.delta?.text ?? parsed.delta;
             if (delta) {
@@ -196,11 +186,17 @@ export function VoiceAssistantWidget() {
             setStatus("responding");
           }
 
-          if (parsed.type === "response.completed" || parsed.type === "response.done") {
+          if (
+            parsed.type === "response.completed" ||
+            parsed.type === "response.done"
+          ) {
             setStatus("listening");
           }
+
+          // NOTE: in a future step we will inspect parsed.lead and
+          // auto-send it to /api/contact when present.
         } catch {
-          // Not JSON or unknown; ignore
+          // non-JSON or unknown event
         }
       });
 
@@ -210,7 +206,7 @@ export function VoiceAssistantWidget() {
         setStatus("error");
       });
 
-      // 5) Start SDP negotiation with Realtime API
+      // 5) SDP negotiation
       setStatus("connecting");
 
       const offer = await pc.createOffer();
@@ -252,9 +248,7 @@ export function VoiceAssistantWidget() {
     cleanup();
   }, [cleanup]);
 
-  const toggleOpen = () => {
-    setIsOpen((prev) => !prev);
-  };
+  const toggleOpen = () => setIsOpen((prev) => !prev);
 
   const handlePrimaryClick = async () => {
     if (status === "idle" || status === "error") {
@@ -286,7 +280,6 @@ export function VoiceAssistantWidget() {
     }
   })();
 
-  // Hide entirely on server render
   if (typeof window === "undefined") return null;
 
   return (
@@ -298,7 +291,6 @@ export function VoiceAssistantWidget() {
         className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500 text-white shadow-lg outline-none ring-cyan-300 transition hover:bg-cyan-400 focus-visible:ring-2"
         aria-label="Open AI voice assistant"
       >
-        {/* Simple mic icon */}
         <span className="text-xl font-bold">🎙️</span>
       </button>
 
@@ -308,7 +300,7 @@ export function VoiceAssistantWidget() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-cyan-300">
-                PILON AI Operator
+                PILON AI OPERATOR
               </h2>
               <p className="mt-1 text-xs text-slate-300">
                 Ask about AI marketing, AI consulting, or web dev. We&apos;ll
