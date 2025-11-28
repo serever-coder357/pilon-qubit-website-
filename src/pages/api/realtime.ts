@@ -7,7 +7,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<any | ErrorResponse>,
 ) {
-  // Allow simple GET for browser test
+  // GET: simple browser test
   if (req.method === "GET") {
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     return res.status(200).send("POST only. Use POST /api/realtime.");
@@ -41,6 +41,8 @@ export default async function handler(
       body: JSON.stringify({
         model,
         voice,
+        // Realtime now infers audio from the model/voice; no `audio` param.
+        // We still provide clear instructions + modalities.
         instructions:
           "You are the AI operator assistant for PILON Qubit Ventures. " +
           "Your job is to understand the user's business and goals, then " +
@@ -48,11 +50,6 @@ export default async function handler(
           "Development. Keep responses short and practical. Before ending, " +
           "ask for name, email, company, and phone so the team can follow up.",
         modalities: ["text", "audio"],
-        audio: {
-          output: {
-            format: "aac",
-          },
-        },
       }),
     });
 
