@@ -3,228 +3,130 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-type ContactPayload = {
-  name?: string;
-  email?: string;
-  phone?: string;
-  company?: string;
-  message?: string;
-  source?: string;
-  turnstileToken?: string;
-};
+// Helper: read JSON or form-data safely
+async function parseRequest(req: Request) {
+  const contentType = req.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return await req.json();
+  }
+
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const formData = await req.formData();
+    const obj: Record<string, string> = {};
+    formData.forEach((value, key) => {
+      obj[key] = String(value);
+    });
+    return obj;
+  }
+
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await req.formData();
+    const obj: Record<string, string> = {};
+    formData.forEach((value, key) => {
+      obj[key] = String(value);
+    });
+    return obj;
+  }
+
+  // Fallback: try JSON anyway
+  try {
+    return await req.json();
+  } catch {
+    return {};
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as ContactPayload | null;
+    const body = await parseRequest(req);
 
-    if (!body) {
-      return NextResponse.json(
-        {
-          ok: false,
-          success: false,
-          error: "Invalid request body",
-        },
-        { status: 400 }
-      );
-    }
+    const name = (body.name || body.fullName || "").toString().trim();
+    const email = (body.email || body.from || "").toString().trim();
+    const phone = (body.phone || body.phoneNumber || "").toString().trim();
+    const message = (body.message || body.notes || body.text || "").toString().trim();
+    const source = (body.source || body.origin || "Website contact form").toString().trim();
 
-    const {
-      name,
-      email,
-      phone,
-      company,
-      message,
-      source,
-      turnstileToken,
-    } = body;
-
-    // Basic validation
     if (!name || !email || !message) {
       return NextResponse.json(
         {
           ok: false,
           success: false,
-          error: "Missing required fields: name, email, message",
+          error: "Missing required fields",
+          details: { name: !!name, email: !!email, message: !!message },
         },
         { status: 400 }
       );
     }
-
-    // ---- Cloudflare Turnstile verification (server-side) ----
-    if (!turnstileToken) {
-      return NextResponse.json(
-        {
-          ok: false,
-          success: false,
-          error: "Missing Turnstile token",
-        },
-        { status: 400 }
-      );
-    }
-
-    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
-    if (!turnstileSecret) {
-      console.error("TURNSTILE_SECRET_KEY is not set");
-      return NextResponse.json(
-        {
-          ok: false,
-          success: false,
-          error: "Server configuration error (Turnstile)",
-        },
-        { status: 500 }
-      );
-    }
-
-    const ip =
-      req.headers.get("CF-Connecting-IP") ||
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      undefined;
-
-    const formData = new FormData();
-    formData.append("secret", turnstileSecret);
-    formData.append("response", turnstileToken);
-    if (ip) {
-      formData.append("remoteip", ip);
-    }
-
-    const turnstileResponse = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    const turnstileResult = (await turnstileResponse.json()) as {
-      success: boolean;
-      "error-codes"?: string[];
-      [key: string]: unknown;
-    };
-
-    if (!turnstileResult.success) {
-      console.error("Turnstile verification failed:", turnstileResult);
-      return NextResponse.json(
-        {
-          ok: false,
-          success: false,
-          error: "Turnstile verification failed",
-          details: turnstileResult,
-        },
-        { status: 400 }
-      );
-    }
-
-    // ---- Resend email sending ----
 
     if (!process.env.RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not set");
+      console.error("Missing RESEND_API_KEY env var");
       return NextResponse.json(
         {
           ok: false,
           success: false,
-          error: "Server configuration error (Resend API key)",
+          error: "Server email configuration error",
         },
         { status: 500 }
       );
     }
 
-    // TEMPORARY: use Resend’s verified sender to bypass DNS issues.
-    // LATER: switch this back to "hello@pilonqubitventures.com" after domain verification.
-    const fromAddress = "onboarding@resend.dev";
-
-    const subject = `New website contact from ${name}`;
-    const plainTextLines = [
-      `New contact form submission from pilonqubitventures.com`,
-      ``,
-      `Name: ${name}`,
-      `Email: ${email}`,
-      phone ? `Phone: ${phone}` : "",
-      company ? `Company: ${company}` : "",
-      source ? `Source: ${source}` : "",
-      ``,
-      `Message:`,
-      message,
-    ].filter(Boolean);
+    const subject = `New ${source} lead: ${name}`;
+    const toAddress = "hello@pilonqubitventures.com"; // where you receive leads
+    const fromAddress = "Pilon Qubit Ventures <hello@pilonqubitventures.com>"; // must be a verified domain/sender in Resend
 
     const html = `
-      <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #111827;">
-        <h2 style="font-size: 20px; margin-bottom: 12px;">New contact form submission</h2>
-        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-        ${
-          phone
-            ? `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>`
-            : ""
-        }
-        ${
-          company
-            ? `<p><strong>Company:</strong> ${escapeHtml(company)}</p>`
-            : ""
-        }
-        ${
-          source
-            ? `<p><strong>Source:</strong> ${escapeHtml(source)}</p>`
-            : ""
-        }
-        <hr style="margin: 16px 0;" />
-        <p style="margin-bottom: 4px;"><strong>Message:</strong></p>
-        <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
-      </div>
+      <h2>New website lead from ${source}</h2>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ""}
+      <p><strong>Message:</strong></p>
+      <p>${message.replace(/\n/g, "<br/>")}</p>
     `;
 
-    const emailResult = await resend.emails.send({
+    const text = `
+New website lead from ${source}
+
+Name: ${name}
+Email: ${email}
+${phone ? `Phone: ${phone}\n` : ""}
+
+Message:
+${message}
+`.trim();
+
+    const resendResult = await resend.emails.send({
       from: fromAddress,
-      to: "hello@pilonqubitventures.com",
+      to: [toAddress],
       reply_to: email,
       subject,
-      text: plainTextLines.join("\n"),
       html,
+      text,
     });
 
-    if (emailResult.error) {
-      console.error("Resend send error:", emailResult.error);
+    if ((resendResult as any).error) {
+      console.error("Resend reported an error:", (resendResult as any).error);
       return NextResponse.json(
         {
           ok: false,
           success: false,
           error: "Resend reported an error",
-          details: emailResult.error,
+          details: (resendResult as any).error,
         },
         { status: 500 }
       );
     }
 
-    return NextResponse.json(
-      {
-        ok: true,
-        success: true,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Unexpected /api/contact error:", error);
+    return NextResponse.json({ ok: true, success: true });
+  } catch (err: any) {
+    console.error("Unexpected /api/contact error:", err);
     return NextResponse.json(
       {
         ok: false,
         success: false,
         error: "Unexpected server error",
-        details:
-          error instanceof Error
-            ? { message: error.message, stack: error.stack }
-            : { raw: String(error) },
       },
       { status: 500 }
     );
   }
-}
-
-// Simple HTML escaping to avoid issues if someone injects tags into the form
-function escapeHtml(value?: string) {
-  if (!value) return "";
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }
