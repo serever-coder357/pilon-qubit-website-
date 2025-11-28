@@ -23,73 +23,100 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
   const [lastUserText, setLastUserText] = useState<string | null>(null);
   const [lastReplyText, setLastReplyText] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [liveTranscript, setLiveTranscript] = useState<string>("");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
+  const recognitionRef = useRef<any>(null);
 
   const isRecording = status === "recording";
   const isBusy = status === "thinking" || status === "playing";
 
-  const sendAudioToServer = useCallback(async (blob: Blob) => {
-    try {
-      setStatus("thinking");
-
-      const formData = new FormData();
-      formData.append("audio", blob, "voice.webm");
-
-      const res = await fetch("/api/voice-assistant", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("Voice API HTTP error:", res.status, text);
-        setStatus("error");
-        setErrorMessage("Server error from voice assistant.");
-        return;
+  const stopBrowserRecognition = () => {
+    const recognition = recognitionRef.current;
+    if (recognition) {
+      try {
+        recognition.onresult = null;
+        recognition.onend = null;
+        recognition.onerror = null;
+        recognition.stop();
+      } catch {
+        // ignore
       }
-
-      const data = (await res.json()) as VoiceResult;
-
-      if (!data.ok) {
-        console.error("Voice API returned error:", data);
-        setStatus("error");
-        setErrorMessage(data.error || "Voice assistant failed.");
-        return;
-      }
-
-      setLastUserText(data.userText ?? null);
-      setLastReplyText(data.replyText ?? null);
-      setErrorMessage(null);
-
-      if (data.audioBase64 && data.audioMimeType) {
-        setStatus("playing");
-
-        const src = `data:${data.audioMimeType};base64,${data.audioBase64}`;
-        const audio = new Audio(src);
-
-        audio.onended = () => {
-          setStatus("idle");
-        };
-
-        audio.onerror = (e) => {
-          console.error("Audio playback error:", e);
-          setStatus("error");
-          setErrorMessage("Could not play the assistant audio.");
-        };
-
-        await audio.play();
-      } else {
-        // No audio, just text reply
-        setStatus("idle");
-      }
-    } catch (err: any) {
-      console.error("sendAudioToServer error:", err);
-      setStatus("error");
-      setErrorMessage("Unexpected error talking to the assistant.");
+      recognitionRef.current = null;
     }
-  }, []);
+  };
+
+  const sendAudioToServer = useCallback(
+    async (blob: Blob) => {
+      try {
+        setStatus("thinking");
+
+        const formData = new FormData();
+        formData.append("audio", blob, "voice.webm");
+
+        const res = await fetch("/api/voice-assistant", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("Voice API HTTP error:", res.status, text);
+          setStatus("error");
+          setErrorMessage("Server error from voice assistant.");
+          return;
+        }
+
+        const data = (await res.json()) as VoiceResult;
+
+        if (!data.ok) {
+          console.error("Voice API returned error:", data);
+          setStatus("error");
+          setErrorMessage(data.error || "Voice assistant failed.");
+          return;
+        }
+
+        // Prefer what the user saw live, but fall back to server text.
+        const finalUserText =
+          (liveTranscript && liveTranscript.trim()) ||
+          data.userText ||
+          null;
+
+        setLastUserText(finalUserText);
+        setLastReplyText(data.replyText ?? null);
+        setErrorMessage(null);
+        setLiveTranscript("");
+
+        if (data.audioBase64 && data.audioMimeType) {
+          setStatus("playing");
+
+          const src = `data:${data.audioMimeType};base64,${data.audioBase64}`;
+          const audio = new Audio(src);
+
+          audio.onended = () => {
+            setStatus("idle");
+          };
+
+          audio.onerror = (e) => {
+            console.error("Audio playback error:", e);
+            setStatus("error");
+            setErrorMessage("Could not play the assistant audio.");
+          };
+
+          await audio.play();
+        } else {
+          // No audio, just text reply
+          setStatus("idle");
+        }
+      } catch (err: any) {
+        console.error("sendAudioToServer error:", err);
+        setStatus("error");
+        setErrorMessage("Unexpected error talking to the assistant.");
+      }
+    },
+    [liveTranscript]
+  );
 
   const startRecording = useCallback(async () => {
     try {
@@ -102,7 +129,11 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
       }
 
       setErrorMessage(null);
+      setLiveTranscript("");
+      setLastUserText(null);
+      setLastReplyText(null);
 
+      // Start microphone recording (for the server)
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
 
@@ -126,11 +157,52 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
           setErrorMessage("Something went wrong processing your audio.");
         } finally {
           stream.getTracks().forEach((t) => t.stop());
+          stopBrowserRecognition();
         }
       };
 
       mediaRecorderRef.current = recorder;
       recorder.start();
+
+      // Start browser-side speech recognition for live transcript (best-effort).
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.onresult = (event: any) => {
+          let text = "";
+          for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result && result[0] && result[0].transcript) {
+              text += result[0].transcript + " ";
+            }
+          }
+          setLiveTranscript(text.trim());
+        };
+
+        recognition.onerror = (event: any) => {
+          console.warn("Speech recognition error:", event);
+        };
+
+        recognition.onend = () => {
+          // We let the recorder.onstop finish the flow.
+        };
+
+        try {
+          recognition.start();
+        } catch (err) {
+          console.warn("Speech recognition start failed:", err);
+        }
+      }
+
       setStatus("recording");
     } catch (err: any) {
       console.error("startRecording error:", err);
@@ -144,8 +216,16 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
     if (recorder && recorder.state !== "inactive") {
       recorder.stop();
     }
+    // We mark as thinking while the server processes the audio.
     setStatus("thinking");
-  }, []);
+    // Stop browser recognition immediately so we don't keep updating text.
+    stopBrowserRecognition();
+
+    // If we already have a transcript, show it as "You said" right away.
+    if (liveTranscript && liveTranscript.trim()) {
+      setLastUserText(liveTranscript.trim());
+    }
+  }, [liveTranscript]);
 
   const handleMicClick = useCallback(() => {
     if (isBusy) return;
@@ -174,6 +254,8 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
     }
   })();
 
+  const hasHistory = !!lastUserText || !!lastReplyText;
+
   return (
     <div className="flex h-full flex-col gap-4 rounded-2xl bg-slate-950/90 p-4 text-slate-50 shadow-xl ring-1 ring-slate-800">
       <div className="flex items-start justify-between gap-3">
@@ -185,9 +267,9 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
             Ask your question out loud. I&apos;ll answer with voice.
           </h2>
           <p className="text-sm text-slate-300">
-            Ideal for quick questions from founders or investors. I can explain
-            what Pilon Qubit Ventures does, who we back, and how to get in
-            touch.
+            Ask about Pilon Qubit Ventures, AI consulting, product builds,
+            studio projects, or how to work with us. Short, practical answers
+            for founders, investors, and partners.
           </p>
         </div>
 
@@ -204,11 +286,24 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
       </div>
 
       <div className="flex-1 space-y-3 overflow-hidden rounded-xl bg-slate-900/70 p-3">
-        {!lastUserText && !lastReplyText && (
+        {!hasHistory && !liveTranscript && (
           <p className="text-sm text-slate-400">
-            Press the microphone, ask your question, then release and wait for
-            the answer. I&apos;ll speak back and keep it short.
+            Press the microphone, start talking, and you&apos;ll see your words
+            appear as you speak (in supported browsers). When you stop, I&apos;ll
+            think for a moment and then reply with voice.
           </p>
+        )}
+
+        {liveTranscript && status === "recording" && (
+          <div className="rounded-lg border border-cyan-500/40 bg-slate-900/80 px-3 py-2 text-xs text-slate-100">
+            <div className="mb-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-cyan-300">
+              <span>Listening live</span>
+              <span className="animate-pulse text-[9px] text-cyan-400">
+                Transcribing…
+              </span>
+            </div>
+            <div>{liveTranscript}</div>
+          </div>
         )}
 
         {lastUserText && (
@@ -263,7 +358,7 @@ export default function ChatPanel({ onClose }: ChatPanelProps) {
             Voice mode
           </span>
           <span className="text-[10px] text-slate-500">
-            Uses OpenAI speech models
+            Uses browser speech + OpenAI speech models
           </span>
         </div>
       </div>
