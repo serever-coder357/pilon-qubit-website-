@@ -159,7 +159,8 @@ export async function POST(req: NextRequest) {
       from: fromEmail,
       to: [toEmail],
       subject: `New contact from ${payload.name} (${source})`,
-      replyTo: payload.email, // <-- correct field name
+      // NOTE: using reply_to because that's what your installed Resend SDK expects
+      reply_to: payload.email,
       text: buildPlainTextEmail(payload),
       html: buildHtmlEmail(payload),
     });
