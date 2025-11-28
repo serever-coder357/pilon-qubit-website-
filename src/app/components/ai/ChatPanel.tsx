@@ -9,7 +9,7 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
 
   const sendMessage = () => {
     if (!message.trim()) return;
-    setHistory(prev => [...prev, message]);
+    setHistory((prev) => [...prev, message]);
     setMessage("");
   };
 
