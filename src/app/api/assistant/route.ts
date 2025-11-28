@@ -1,13 +1,26 @@
 import { NextResponse } from "next/server";
 
+type AssistantRequestBody = {
+  message?: string;
+};
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as AssistantRequestBody;
 
-    const userMessage =
-      (body && body.message && String(body.message)) || "No message provided";
+    const userMessage = (body.message || "").toString().trim();
 
-    const reply = `Thanks, I received: "${userMessage}". A smarter PQV AI brain will respond here soon.`;
+    if (!userMessage) {
+      return NextResponse.json(
+        { error: "Missing message" },
+        { status: 400 },
+      );
+    }
+
+    // Placeholder “brain” for now – we’ll replace this with real logic later.
+    const reply =
+      `Got it. You said: "${userMessage}". ` +
+      `Right now I'm a simple router, but soon I'll classify intent (funding, partnership, advisory, etc.) and send a structured lead to your team.`;
 
     return NextResponse.json({ reply });
   } catch (error) {
