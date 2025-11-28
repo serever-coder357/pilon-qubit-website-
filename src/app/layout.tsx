@@ -1,11 +1,17 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
-import "./globals.css";
 
+import "./globals.css";
+import { Inter } from "next/font/google";
+import type { Metadata } from "next";
+import { VoiceAssistantWidget } from "./components/VoiceAssistantWidget";
+
+// FONT (adjust if you’re using something else)
+const inter = Inter({ subsets: ["latin"] });
+
+// SEO METADATA (customize later)
 export const metadata: Metadata = {
-  title: "Pilon Qubit Ventures",
-  description:
-    "Pilon Qubit Ventures — building and scaling AI-native products, web platforms, and growth systems.",
+  title: "PILON Qubit Ventures",
+  description: "AI & Frontier Tech Consulting | San Antonio, TX",
 };
 
 export default function RootLayout({
@@ -15,8 +21,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-black text-white antialiased">
-        <div className="flex min-h-screen flex-col">{children}</div>
+      <body className={inter.className}>
+        {/* Main App Content */}
+        {children}
+
+        {/* GLOBAL VOICE ASSISTANT */}
+        <VoiceAssistantWidget />
       </body>
     </html>
   );
