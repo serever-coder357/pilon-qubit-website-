@@ -40,7 +40,6 @@ export async function POST(req: NextRequest) {
 
     // 1) Voice → text (speech-to-text)
     const transcription = await openai.audio.transcriptions.create({
-      // New Whisper model; text output
       model: "gpt-4o-transcribe",
       // @ts-ignore – OpenAI Node SDK accepts Blob/File here at runtime
       file,
@@ -50,9 +49,8 @@ export async function POST(req: NextRequest) {
     const userText =
       typeof transcription === "string"
         ? transcription
-        : // fallback if SDK returns an object
-          // @ts-ignore
-          transcription.text ?? "";
+        : // @ts-ignore – some SDK shapes expose .text
+          (transcription as any)?.text ?? "";
 
     // 2) Text → reply (chat completion)
     const completion = await openai.chat.completions.create({
@@ -74,18 +72,21 @@ export async function POST(req: NextRequest) {
       max_tokens: 350,
     });
 
-    const rawContent = completion.choices[0]?.message?.content;
+    const rawContent: any = completion.choices[0]?.message?.content;
+    let replyText = "";
 
-    const replyText =
-      typeof rawContent === "string"
-        ? rawContent
-        : Array.isArray(rawContent)
-        ? rawContent
-            .map((part: any) =>
-              typeof part === "string" ? part : part?.text ?? ""
-            )
-            .join(" ")
-        : "";
+    if (typeof rawContent === "string") {
+      replyText = rawContent;
+    } else if (Array.isArray(rawContent)) {
+      replyText = rawContent
+        .map((part: any) => {
+          if (typeof part === "string") return part;
+          if (typeof part?.text === "string") return part.text;
+          if (typeof part?.content === "string") return part.content;
+          return "";
+        })
+        .join(" ");
+    }
 
     // 3) Reply text → audio (text-to-speech)
     const speech = await openai.audio.speech.create({
