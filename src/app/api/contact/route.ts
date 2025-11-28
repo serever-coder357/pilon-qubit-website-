@@ -1,174 +1,197 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-export const runtime = "nodejs";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ---- Types ----
-
-type ContactRequestBody = {
+type ContactPayload = {
   name?: string;
   email?: string;
+  phone?: string;
   company?: string;
-  role?: string;
-  budget?: string;
-  timeline?: string;
   message?: string;
   source?: string;
+  turnstileToken?: string;
 };
 
-// ---- Helpers ----
-
-function jsonError(message: string, status: number, extra?: unknown) {
-  if (extra) {
-    console.error("[CONTACT_API] ERROR:", message, extra);
-  } else {
-    console.error("[CONTACT_API] ERROR:", message);
-  }
-
-  return NextResponse.json(
-    {
-      ok: false,
-      success: false,
-      error: message,
-      details: extra,
-    },
-    { status }
-  );
-}
-
-function sanitizeString(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function buildPlainTextEmail(
-  payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
-    ContactRequestBody
-) {
-  const lines: string[] = [];
-
-  lines.push("New contact from Pilon Qubit Ventures website");
-  lines.push("");
-  lines.push(`Name: ${payload.name}`);
-  lines.push(`Email: ${payload.email}`);
-
-  if (payload.company) lines.push(`Company: ${payload.company}`);
-  if (payload.role) lines.push(`Role: ${payload.role}`);
-  if (payload.budget) lines.push(`Budget: ${payload.budget}`);
-  if (payload.timeline) lines.push(`Timeline: ${payload.timeline}`);
-  if (payload.source) lines.push(`Source: ${payload.source}`);
-
-  lines.push("");
-  lines.push("Message:");
-  lines.push(payload.message);
-
-  return lines.join("\n");
-}
-
-function buildHtmlEmail(
-  payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
-    ContactRequestBody
-) {
-  return `
-    <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #0f172a;">
-      <h2>New contact from Pilon Qubit Ventures website</h2>
-      <p><strong>Name:</strong> ${payload.name}</p>
-      <p><strong>Email:</strong> ${payload.email}</p>
-      ${payload.company ? `<p><strong>Company:</strong> ${payload.company}</p>` : ""}
-      ${payload.role ? `<p><strong>Role:</strong> ${payload.role}</p>` : ""}
-      ${payload.budget ? `<p><strong>Budget:</strong> ${payload.budget}</p>` : ""}
-      ${payload.timeline ? `<p><strong>Timeline:</strong> ${payload.timeline}</p>` : ""}
-      ${payload.source ? `<p><strong>Source:</strong> ${payload.source}</p>` : ""}
-      <hr style="margin: 16px 0;" />
-      <p><strong>Message:</strong></p>
-      <p>${payload.message.replace(/\n/g, "<br />")}</p>
-    </div>
-  `;
-}
-
-// ---- Handler ----
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    let body: unknown;
+    const body = (await req.json()) as ContactPayload | null;
 
-    try {
-      body = await req.json();
-    } catch (err) {
-      return jsonError("Invalid JSON body", 400, (err as any)?.message);
+    if (!body) {
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Invalid request body",
+        },
+        { status: 400 }
+      );
     }
 
-    if (!body || typeof body !== "object") {
-      return jsonError("Request body must be an object", 400);
-    }
-
-    const raw = body as ContactRequestBody;
-
-    const name = sanitizeString(raw.name) ?? "Unknown";
-    const email = sanitizeString(raw.email);
-    const message = sanitizeString(raw.message);
-
-    const company = sanitizeString(raw.company);
-    const role = sanitizeString(raw.role);
-    const budget = sanitizeString(raw.budget);
-    const timeline = sanitizeString(raw.timeline);
-    const source = sanitizeString(raw.source) ?? "website";
-
-    if (!email) {
-      return jsonError("Email is required", 400);
-    }
-
-    if (!message) {
-      return jsonError("Message is required", 400);
-    }
-
-    const payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
-      ContactRequestBody = {
+    const {
       name,
       email,
-      message,
+      phone,
       company,
-      role,
-      budget,
-      timeline,
+      message,
       source,
-    };
+      turnstileToken,
+    } = body;
 
-    const resendApiKey = process.env.RESEND_API_KEY;
-
-    if (!resendApiKey) {
-      return jsonError("RESEND_API_KEY is not set on the server", 500);
+    // Basic validation
+    if (!name || !email || !message) {
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Missing required fields: name, email, message",
+        },
+        { status: 400 }
+      );
     }
 
-    const resend = new Resend(resendApiKey);
+    // ---- Cloudflare Turnstile verification (server-side) ----
+    if (!turnstileToken) {
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Missing Turnstile token",
+        },
+        { status: 400 }
+      );
+    }
 
-    const toEmail =
-      process.env.CONTACT_TO_EMAIL || "hello@pilonqubitventures.com";
-    const fromEmail =
-      process.env.CONTACT_FROM_EMAIL ||
-      "Pilon Qubit Ventures <hello@pilonqubitventures.com>";
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+    if (!turnstileSecret) {
+      console.error("TURNSTILE_SECRET_KEY is not set");
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Server configuration error (Turnstile)",
+        },
+        { status: 500 }
+      );
+    }
 
-    console.log("[CONTACT_API] Sending via Resend", {
-      toEmail,
-      fromEmail,
-      source,
+    const ip =
+      req.headers.get("CF-Connecting-IP") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      undefined;
+
+    const formData = new FormData();
+    formData.append("secret", turnstileSecret);
+    formData.append("response", turnstileToken);
+    if (ip) {
+      formData.append("remoteip", ip);
+    }
+
+    const turnstileResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const turnstileResult = (await turnstileResponse.json()) as {
+      success: boolean;
+      "error-codes"?: string[];
+      [key: string]: unknown;
+    };
+
+    if (!turnstileResult.success) {
+      console.error("Turnstile verification failed:", turnstileResult);
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Turnstile verification failed",
+          details: turnstileResult,
+        },
+        { status: 400 }
+      );
+    }
+
+    // ---- Resend email sending ----
+
+    if (!process.env.RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not set");
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Server configuration error (Resend API key)",
+        },
+        { status: 500 }
+      );
+    }
+
+    // TEMPORARY: use Resend’s verified sender to bypass DNS issues.
+    // LATER: switch this back to "hello@pilonqubitventures.com" after domain verification.
+    const fromAddress = "onboarding@resend.dev";
+
+    const subject = `New website contact from ${name}`;
+    const plainTextLines = [
+      `New contact form submission from pilonqubitventures.com`,
+      ``,
+      `Name: ${name}`,
+      `Email: ${email}`,
+      phone ? `Phone: ${phone}` : "",
+      company ? `Company: ${company}` : "",
+      source ? `Source: ${source}` : "",
+      ``,
+      `Message:`,
+      message,
+    ].filter(Boolean);
+
+    const html = `
+      <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #111827;">
+        <h2 style="font-size: 20px; margin-bottom: 12px;">New contact form submission</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        ${
+          phone
+            ? `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>`
+            : ""
+        }
+        ${
+          company
+            ? `<p><strong>Company:</strong> ${escapeHtml(company)}</p>`
+            : ""
+        }
+        ${
+          source
+            ? `<p><strong>Source:</strong> ${escapeHtml(source)}</p>`
+            : ""
+        }
+        <hr style="margin: 16px 0;" />
+        <p style="margin-bottom: 4px;"><strong>Message:</strong></p>
+        <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
+      </div>
+    `;
+
+    const emailResult = await resend.emails.send({
+      from: fromAddress,
+      to: "hello@pilonqubitventures.com",
+      reply_to: email,
+      subject,
+      text: plainTextLines.join("\n"),
+      html,
     });
 
-    const result = await resend.emails.send({
-      from: fromEmail,
-      to: [toEmail],
-      subject: `New contact from ${payload.name} (${source})`,
-      // NOTE: using reply_to because that's what your installed Resend SDK expects
-      reply_to: payload.email,
-      text: buildPlainTextEmail(payload),
-      html: buildHtmlEmail(payload),
-    });
-
-    console.log("[CONTACT_API] Resend result", result);
-
-    if ((result as any)?.error) {
-      return jsonError("Resend reported an error", 500, (result as any).error);
+    if (emailResult.error) {
+      console.error("Resend send error:", emailResult.error);
+      return NextResponse.json(
+        {
+          ok: false,
+          success: false,
+          error: "Resend reported an error",
+          details: emailResult.error,
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
@@ -179,10 +202,29 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    return jsonError(
-      "Internal Server Error",
-      500,
-      (error as any)?.message ?? String(error)
+    console.error("Unexpected /api/contact error:", error);
+    return NextResponse.json(
+      {
+        ok: false,
+        success: false,
+        error: "Unexpected server error",
+        details:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack }
+            : { raw: String(error) },
+      },
+      { status: 500 }
     );
   }
+}
+
+// Simple HTML escaping to avoid issues if someone injects tags into the form
+function escapeHtml(value?: string) {
+  if (!value) return "";
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
