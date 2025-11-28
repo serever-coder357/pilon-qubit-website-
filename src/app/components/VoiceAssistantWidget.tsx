@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 /**
- * VoiceAssistantWidget – PRODUCTION VERSION
+ * VoiceAssistantWidget – PRODUCTION + LEAD LOGGING
  *
  * - Floating mic button bottom-right
  * - Opens panel with status + transcript
@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  * - Uses WebRTC + Realtime API for audio in/out
  * - Listens to response.audio_transcript.delta for assistant transcript
  * - On stop, sends transcript (or stub) to /api/contact as a lead
+ * - Logs /api/contact response to console and shows error in UI if it fails
  */
 
 type Status =
@@ -75,37 +76,58 @@ export function VoiceAssistantWidget() {
   }, [cleanup]);
 
   // Always send a lead when conversation stops (even if transcript is empty)
-  const sendTranscriptAsLead = useCallback(async (rawText: string) => {
-    if (leadSentRef.current) return;
-    leadSentRef.current = true;
+  const sendTranscriptAsLead = useCallback(
+    async (rawText: string) => {
+      if (leadSentRef.current) return;
+      leadSentRef.current = true;
 
-    const now = new Date().toISOString();
-    const trimmed = rawText.trim();
+      const now = new Date().toISOString();
+      const trimmed = rawText.trim();
 
-    const messageBody =
-      trimmed.length > 0
-        ? `Source: voice-operator\nTimestamp: ${now}\n\nAssistant transcript (what the AI said):\n\n${trimmed}`
-        : `Source: voice-operator\nTimestamp: ${now}\n\nNo text transcript captured, but the visitor used the voice assistant.\nRecommend follow-up to qualify this lead.`;
+      const messageBody =
+        trimmed.length > 0
+          ? `Source: voice-operator\nTimestamp: ${now}\n\nAssistant transcript (what the AI said):\n\n${trimmed}`
+          : `Source: voice-operator\nTimestamp: ${now}\n\nNo text transcript captured, but the visitor used the voice assistant.\nRecommend follow-up to qualify this lead.`;
 
-    try {
-      await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: "Voice Operator Lead",
-          email: "no-reply@pilonqubitventures.com",
-          phone: "",
-          company: "",
-          message: messageBody,
-          source: "voice-operator",
-        }),
-      });
-    } catch (err) {
-      console.error("[VoiceAssistantWidget] Failed to send lead:", err);
-    }
-  }, []);
+      try {
+        const resp = await fetch("/api/contact", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: "Voice Operator Lead",
+            email: "no-reply@pilonqubitventures.com",
+            phone: "",
+            company: "",
+            message: messageBody,
+            source: "voice-operator",
+          }),
+        });
+
+        const respText = await resp.text();
+
+        console.log(
+          "[VoiceAssistantWidget] /api/contact status:",
+          resp.status,
+        );
+        console.log("[VoiceAssistantWidget] /api/contact body:", respText);
+
+        if (!resp.ok) {
+          setError(
+            `Lead email failed (contact API ${resp.status}). Check console/logs.`,
+          );
+        }
+      } catch (err: any) {
+        console.error("[VoiceAssistantWidget] Failed to send lead:", err);
+        setError(
+          err?.message ??
+            "Lead email failed due to a network or server error.",
+        );
+      }
+    },
+    [setError],
+  );
 
   const startConversation = useCallback(async () => {
     if (status !== "idle") return;
@@ -190,9 +212,7 @@ export function VoiceAssistantWidget() {
         try {
           const parsed = JSON.parse(event.data);
 
-          // We saw from your logs that your model uses:
-          //  - response.audio_transcript.delta
-          // for assistant speech transcription.
+          // Assistant speech transcript comes through response.audio_transcript.delta
           if (parsed.type === "response.audio_transcript.delta") {
             const deltaText: string =
               parsed.delta?.text ?? parsed.delta ?? "";
@@ -213,11 +233,8 @@ export function VoiceAssistantWidget() {
           if (parsed.type === "response.started") {
             setStatus("responding");
           }
-
-          // (Optional) You can keep some logging during rollout:
-          // console.log("RT EVENT:", parsed.type, parsed);
         } catch {
-          // non-JSON or unknown event — ignore
+          // ignore non-JSON
         }
       });
 
