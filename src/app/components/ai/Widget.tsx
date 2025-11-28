@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ChatPanel from "./ChatPanel";
 
 export default function Widget() {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   return (
     <>
@@ -14,6 +27,8 @@ export default function Widget() {
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-black text-white shadow-xl flex items-center justify-center hover:bg-neutral-800 transition"
         aria-label="Open PQV Assistant"
+        aria-haspopup="dialog"
+        aria-expanded={open}
       >
         AI
       </motion.button>

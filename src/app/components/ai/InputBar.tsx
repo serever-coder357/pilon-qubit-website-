@@ -20,11 +20,13 @@ export default function InputBar({ onSend }: { onSend: (text: string) => void })
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
+        aria-label="Message the PQV Assistant"
       />
       <button
         type="button"
         onClick={submit}
-        className="px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-neutral-800"
+        className="px-4 py-2 rounded-lg bg-black text-white text-sm font-medium hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed"
+        disabled={!text.trim()}
       >
         Send
       </button>

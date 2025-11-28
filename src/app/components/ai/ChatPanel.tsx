@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MessageBubble from "./MessageBubble";
 import InputBar from "./InputBar";
 
@@ -18,6 +18,7 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
       text: "Hi, I'm the PQV Assistant. Tell me what you're looking for and I'll help.",
     },
   ]);
+  const messagesRef = useRef<HTMLDivElement>(null);
 
   const handleSend = (text: string) => {
     if (!text.trim()) return;
@@ -39,6 +40,15 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
     setMessages((prev) => [...prev, userMessage, aiReply]);
   };
 
+  useEffect(() => {
+    if (!messagesRef.current) return;
+
+    messagesRef.current.scrollTo({
+      top: messagesRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
@@ -58,7 +68,12 @@ export default function ChatPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-neutral-50">
+      <div
+        ref={messagesRef}
+        className="flex-1 overflow-y-auto p-4 space-y-3 bg-neutral-50"
+        role="log"
+        aria-live="polite"
+      >
         {messages.map((m) => (
           <MessageBubble key={m.id} role={m.role} text={m.text} />
         ))}
