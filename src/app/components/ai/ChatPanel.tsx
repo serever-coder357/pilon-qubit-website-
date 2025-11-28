@@ -2,12 +2,7 @@
 
 import React, { useCallback, useRef, useState } from "react";
 
-type Status =
-  | "idle"
-  | "recording"
-  | "thinking"
-  | "playing"
-  | "error";
+type Status = "idle" | "recording" | "thinking" | "playing" | "error";
 
 interface VoiceResult {
   ok: boolean;
@@ -19,7 +14,11 @@ interface VoiceResult {
   details?: string;
 }
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  onClose?: () => void;
+}
+
+export default function ChatPanel({ onClose }: ChatPanelProps) {
   const [status, setStatus] = useState<Status>("idle");
   const [lastUserText, setLastUserText] = useState<string | null>(null);
   const [lastReplyText, setLastReplyText] = useState<string | null>(null);
@@ -30,75 +29,6 @@ export default function ChatPanel() {
 
   const isRecording = status === "recording";
   const isBusy = status === "thinking" || status === "playing";
-
-  const startRecording = useCallback(async () => {
-    try {
-      if (typeof window === "undefined") return;
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setStatus("error");
-        setErrorMessage("Your browser does not support microphone capture.");
-        return;
-      }
-
-      setErrorMessage(null);
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        try {
-          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-          chunksRef.current = [];
-
-          await sendAudioToServer(blob);
-        } catch (err: any) {
-          console.error("Error after recording stop:", err);
-          setStatus("error");
-          setErrorMessage("Something went wrong processing your audio.");
-        } finally {
-          // stop all tracks to release the mic
-          stream.getTracks().forEach((t) => t.stop());
-        }
-      };
-
-      mediaRecorderRef.current = recorder;
-      recorder.start();
-      setStatus("recording");
-    } catch (err: any) {
-      console.error("startRecording error:", err);
-      setStatus("error");
-      setErrorMessage("Could not access your microphone.");
-    }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== "inactive") {
-      recorder.stop();
-    }
-    setStatus("thinking");
-  }, []);
-
-  const handleMicClick = useCallback(() => {
-    if (isBusy) {
-      return;
-    }
-
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  }, [isBusy, isRecording, startRecording, stopRecording]);
 
   const sendAudioToServer = useCallback(async (blob: Blob) => {
     try {
@@ -161,6 +91,72 @@ export default function ChatPanel() {
     }
   }, []);
 
+  const startRecording = useCallback(async () => {
+    try {
+      if (typeof window === "undefined") return;
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus("error");
+        setErrorMessage("Your browser does not support microphone capture.");
+        return;
+      }
+
+      setErrorMessage(null);
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        try {
+          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          chunksRef.current = [];
+
+          await sendAudioToServer(blob);
+        } catch (err: any) {
+          console.error("Error after recording stop:", err);
+          setStatus("error");
+          setErrorMessage("Something went wrong processing your audio.");
+        } finally {
+          stream.getTracks().forEach((t) => t.stop());
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setStatus("recording");
+    } catch (err: any) {
+      console.error("startRecording error:", err);
+      setStatus("error");
+      setErrorMessage("Could not access your microphone.");
+    }
+  }, [sendAudioToServer]);
+
+  const stopRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    }
+    setStatus("thinking");
+  }, []);
+
+  const handleMicClick = useCallback(() => {
+    if (isBusy) return;
+
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  }, [isBusy, isRecording, startRecording, stopRecording]);
+
   const statusLabel = (() => {
     switch (status) {
       case "idle":
@@ -180,17 +176,31 @@ export default function ChatPanel() {
 
   return (
     <div className="flex h-full flex-col gap-4 rounded-2xl bg-slate-950/90 p-4 text-slate-50 shadow-xl ring-1 ring-slate-800">
-      <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-          Pilon Qubit AI Concierge
-        </p>
-        <h2 className="text-lg font-semibold">
-          Ask your question out loud. I&lsquo;ll answer with voice.
-        </h2>
-        <p className="text-sm text-slate-300">
-          Ideal for quick questions from founders or investors. I can explain
-          what Pilon Qubit Ventures does, who we back, and how to get in touch.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
+            Pilon Qubit AI Concierge
+          </p>
+          <h2 className="text-lg font-semibold">
+            Ask your question out loud. I&apos;ll answer with voice.
+          </h2>
+          <p className="text-sm text-slate-300">
+            Ideal for quick questions from founders or investors. I can explain
+            what Pilon Qubit Ventures does, who we back, and how to get in
+            touch.
+          </p>
+        </div>
+
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white"
+            aria-label="Close assistant"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       <div className="flex-1 space-y-3 overflow-hidden rounded-xl bg-slate-900/70 p-3">
