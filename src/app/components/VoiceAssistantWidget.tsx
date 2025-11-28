@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  * - Opens panel with status + transcript
  * - Connects to /api/realtime to mint an ephemeral session
  * - Uses WebRTC + Realtime API for audio in/out
- * - On stop, sends transcript to /api/contact as a lead
+ * - On stop, sends transcript (or at least a stub) to /api/contact as a lead
  */
 
 type Status =
@@ -71,14 +71,18 @@ export function VoiceAssistantWidget() {
     };
   }, [cleanup]);
 
-  // Send transcript to /api/contact as a lead
+  // Always send a lead when conversation stops (even if transcript is empty)
   const sendTranscriptAsLead = useCallback(
-    async (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed) return;
+    async (rawText: string) => {
       if (leadSentRef.current) return;
-
       leadSentRef.current = true;
+
+      const trimmed = rawText.trim();
+      const now = new Date().toISOString();
+
+      const messageBody = trimmed
+        ? `Source: voice-operator\nTimestamp: ${now}\n\nTranscript:\n\n${trimmed}`
+        : `Source: voice-operator\nTimestamp: ${now}\n\nNo transcript text was captured, but the visitor had a voice conversation with the AI operator.\n\nRecommend following up by email or phone to qualify this lead.`;
 
       try {
         await fetch("/api/contact", {
@@ -91,16 +95,13 @@ export function VoiceAssistantWidget() {
             email: "no-reply@pilonqubitventures.com",
             phone: "",
             company: "",
-            message:
-              "Source: voice-operator\n\nFull transcript:\n\n" + trimmed,
+            message: messageBody,
             source: "voice-operator",
           }),
         });
-        // We keep this silent for the user; no extra UI noise.
-        // If you want, we can add a "Lead sent" badge later.
       } catch (err) {
         console.error("[VoiceAssistantWidget] Failed to send lead:", err);
-        // Do not throw; we don't want to break UI if email fails.
+        // We don't surface this to the user; email failure shouldn't break the UX.
       }
     },
     [],
@@ -111,7 +112,7 @@ export function VoiceAssistantWidget() {
 
     setError(null);
     setStatus("requesting-permission");
-    leadSentRef.current = false; // new session, allow sending again
+    leadSentRef.current = false; // new session → allow sending again
     setTranscript(""); // clear previous transcript in UI
 
     try {
@@ -197,7 +198,7 @@ export function VoiceAssistantWidget() {
         try {
           const parsed = JSON.parse(event.data);
 
-          // Handle transcription of user input
+          // Handle transcription of user input (if Realtime emits this event)
           if (
             parsed.type ===
               "conversation.item.input_audio_transcription.completed" &&
@@ -210,7 +211,7 @@ export function VoiceAssistantWidget() {
             );
           }
 
-          // Handle assistant text output deltas
+          // Handle assistant text output deltas (if text is available)
           if (parsed.type === "response.output_text.delta") {
             const delta = parsed.delta?.text ?? parsed.delta;
             if (delta) {
@@ -287,10 +288,8 @@ export function VoiceAssistantWidget() {
     // Capture the current transcript before cleanup resets state
     const currentTranscript = transcript;
     cleanup();
-    // Fire-and-forget lead sending
-    if (currentTranscript.trim().length > 0) {
-      void sendTranscriptAsLead(currentTranscript);
-    }
+    // Fire-and-forget lead sending, even if transcript is empty
+    void sendTranscriptAsLead(currentTranscript);
   }, [cleanup, transcript, sendTranscriptAsLead]);
 
   const toggleOpen = () => setIsOpen((prev) => !prev);
