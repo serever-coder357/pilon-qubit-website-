@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
  * - Opens panel with status + transcript
  * - Connects to /api/realtime to mint an ephemeral session
  * - Uses WebRTC + Realtime API for audio in/out
+ * - On stop, sends transcript to /api/contact as a lead
  */
 
 type Status =
@@ -33,6 +34,9 @@ export function VoiceAssistantWidget() {
   const dcRef = useRef<RTCDataChannel | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+
+  // Prevent sending multiple emails for the same conversation
+  const leadSentRef = useRef(false);
 
   const cleanup = useCallback(() => {
     try {
@@ -67,11 +71,48 @@ export function VoiceAssistantWidget() {
     };
   }, [cleanup]);
 
+  // Send transcript to /api/contact as a lead
+  const sendTranscriptAsLead = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      if (leadSentRef.current) return;
+
+      leadSentRef.current = true;
+
+      try {
+        await fetch("/api/contact", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: "Voice Operator Lead",
+            email: "no-reply@pilonqubitventures.com",
+            phone: "",
+            company: "",
+            message:
+              "Source: voice-operator\n\nFull transcript:\n\n" + trimmed,
+            source: "voice-operator",
+          }),
+        });
+        // We keep this silent for the user; no extra UI noise.
+        // If you want, we can add a "Lead sent" badge later.
+      } catch (err) {
+        console.error("[VoiceAssistantWidget] Failed to send lead:", err);
+        // Do not throw; we don't want to break UI if email fails.
+      }
+    },
+    [],
+  );
+
   const startConversation = useCallback(async () => {
     if (status !== "idle") return;
 
     setError(null);
     setStatus("requesting-permission");
+    leadSentRef.current = false; // new session, allow sending again
+    setTranscript(""); // clear previous transcript in UI
 
     try {
       // 1) Mint ephemeral key from our backend
@@ -143,10 +184,7 @@ export function VoiceAssistantWidget() {
               "\"Great, I'll package this for the PILON Qubit Ventures team so they can follow up with you.\"\n" +
               "- Then give ONE short closing sentence (for example: \"If you have any other questions, you can ask them now.\").\n" +
               "- After that, STOP speaking. Do NOT repeat this message. Remain silent unless the user clearly asks a new question.\n" +
-              "- Internally summarize the lead as a JSON object with this shape:\n" +
-              "{ \"lead\": { \"name\": \"...\", \"email\": \"...\", \"company\": \"...\", \"phone\": \"...\", \"project\": \"...\" } }\n" +
-              "Tone:\n" +
-              "- Smart, concise, professional. No hype.",
+              "- Tone: Smart, concise, professional. No hype.",
             modalities: ["audio", "text"],
           },
         };
@@ -196,9 +234,6 @@ export function VoiceAssistantWidget() {
           ) {
             setStatus("listening");
           }
-
-          // In a future step we will inspect parsed.lead and
-          // auto-send it to /api/contact when present.
         } catch {
           // non-JSON or unknown event
         }
@@ -246,11 +281,17 @@ export function VoiceAssistantWidget() {
       setStatus("error");
       cleanup();
     }
-  }, [cleanup, status]);
+  }, [cleanup, status, sendTranscriptAsLead]);
 
   const stopConversation = useCallback(() => {
+    // Capture the current transcript before cleanup resets state
+    const currentTranscript = transcript;
     cleanup();
-  }, [cleanup]);
+    // Fire-and-forget lead sending
+    if (currentTranscript.trim().length > 0) {
+      void sendTranscriptAsLead(currentTranscript);
+    }
+  }, [cleanup, transcript, sendTranscriptAsLead]);
 
   const toggleOpen = () => setIsOpen((prev) => !prev);
 
