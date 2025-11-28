@@ -18,12 +18,19 @@ type ContactRequestBody = {
 
 // ---- Helpers ----
 
-function jsonError(message: string, status: number) {
+function jsonError(message: string, status: number, extra?: unknown) {
+  if (extra) {
+    console.error("[CONTACT_API] ERROR:", message, extra);
+  } else {
+    console.error("[CONTACT_API] ERROR:", message);
+  }
+
   return NextResponse.json(
     {
       ok: false,
       success: false,
       error: message,
+      details: extra,
     },
     { status }
   );
@@ -35,10 +42,13 @@ function sanitizeString(value: unknown): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
-function buildPlainTextEmail(payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> & ContactRequestBody) {
+function buildPlainTextEmail(
+  payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
+    ContactRequestBody
+) {
   const lines: string[] = [];
 
-  lines.push(`New contact from Pilon Qubit Ventures website`);
+  lines.push("New contact from Pilon Qubit Ventures website");
   lines.push("");
   lines.push(`Name: ${payload.name}`);
   lines.push(`Email: ${payload.email}`);
@@ -56,7 +66,10 @@ function buildPlainTextEmail(payload: Required<Pick<ContactRequestBody, "name" |
   return lines.join("\n");
 }
 
-function buildHtmlEmail(payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> & ContactRequestBody) {
+function buildHtmlEmail(
+  payload: Required<Pick<ContactRequestBody, "name" | "email" | "message">> &
+    ContactRequestBody
+) {
   return `
     <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; color: #0f172a;">
       <h2>New contact from Pilon Qubit Ventures website</h2>
@@ -82,8 +95,8 @@ export async function POST(req: NextRequest) {
 
     try {
       body = await req.json();
-    } catch {
-      return jsonError("Invalid JSON body", 400);
+    } catch (err) {
+      return jsonError("Invalid JSON body", 400, (err as any)?.message);
     }
 
     if (!body || typeof body !== "object") {
@@ -100,7 +113,7 @@ export async function POST(req: NextRequest) {
     const role = sanitizeString(raw.role);
     const budget = sanitizeString(raw.budget);
     const timeline = sanitizeString(raw.timeline);
-    const source = sanitizeString(raw.source);
+    const source = sanitizeString(raw.source) ?? "website";
 
     if (!email) {
       return jsonError("Email is required", 400);
@@ -122,41 +135,40 @@ export async function POST(req: NextRequest) {
       source,
     };
 
-    // --- Send email via Resend ---
-
     const resendApiKey = process.env.RESEND_API_KEY;
 
     if (!resendApiKey) {
-      console.error("Contact API: RESEND_API_KEY is not set. Skipping email send.");
-    } else {
-      const resend = new Resend(resendApiKey);
-
-      const toEmail = process.env.CONTACT_TO_EMAIL || "hello@pilonqubitventures.com";
-      const fromEmail =
-        process.env.CONTACT_FROM_EMAIL || "Pilon Qubit Ventures <hello@pilonqubitventures.com>";
-
-      try {
-        await resend.emails.send({
-          from: fromEmail,
-          to: toEmail,
-          subject: `New contact from ${payload.name}`,
-          reply_to: payload.email,
-          text: buildPlainTextEmail(payload),
-          html: buildHtmlEmail(payload),
-        });
-      } catch (err) {
-        console.error("Contact API: Resend email send failed:", err);
-        // We still continue; we don't want to expose 500s to the user unless everything is broken
-      }
+      return jsonError("RESEND_API_KEY is not set on the server", 500);
     }
 
-    // --- Optional: Airtable or other CRM sync ---
-    // If you already have an Airtable sync somewhere else, you can re-insert it here.
-    // Keep it as "fire and forget" so it doesn't block the user:
-    //
-    // someAsyncSync(payload).catch((err) => console.error("Airtable sync error:", err));
+    const resend = new Resend(resendApiKey);
 
-    // --- Final success response (what the frontend cares about) ---
+    const toEmail =
+      process.env.CONTACT_TO_EMAIL || "hello@pilonqubitventures.com";
+    const fromEmail =
+      process.env.CONTACT_FROM_EMAIL ||
+      "Pilon Qubit Ventures <hello@pilonqubitventures.com>";
+
+    console.log("[CONTACT_API] Sending via Resend", {
+      toEmail,
+      fromEmail,
+      source,
+    });
+
+    const result = await resend.emails.send({
+      from: fromEmail,
+      to: [toEmail],
+      subject: `New contact from ${payload.name} (${source})`,
+      replyTo: payload.email, // <-- correct field name
+      text: buildPlainTextEmail(payload),
+      html: buildHtmlEmail(payload),
+    });
+
+    console.log("[CONTACT_API] Resend result", result);
+
+    if ((result as any)?.error) {
+      return jsonError("Resend reported an error", 500, (result as any).error);
+    }
 
     return NextResponse.json(
       {
@@ -166,15 +178,10 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Contact API: unexpected error", error);
-
-    return NextResponse.json(
-      {
-        ok: false,
-        success: false,
-        error: "Internal Server Error",
-      },
-      { status: 500 }
+    return jsonError(
+      "Internal Server Error",
+      500,
+      (error as any)?.message ?? String(error)
     );
   }
 }
