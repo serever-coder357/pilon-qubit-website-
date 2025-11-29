@@ -21,7 +21,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       id: "assistant-initial",
       role: "assistant",
       content:
-        "Hi, I’m the Pilon Qubit concierge. Ask me anything about websites, marketing systems, or how we can help your business grow.",
+        "Hi, I’m the Pilon Qubit concierge. We usually help in three tracks: (1) websites & funnels, (2) AI marketing automation, and (3) frontier AI consulting. Which of these do you want help with first?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -58,7 +58,7 @@ const RealtimeConciergeWidget: React.FC = () => {
         id: "assistant-initial",
         role: "assistant",
         content:
-          "Hi again, I’m the Pilon Qubit concierge. How can I help with your website, marketing, or growth today?",
+          "Hi again, I’m the Pilon Qubit concierge. Our three main tracks are: (1) websites & funnels, (2) AI marketing automation, and (3) frontier AI consulting. Which one do you want to focus on?",
       },
     ]);
     setInput("");
@@ -216,11 +216,11 @@ const RealtimeConciergeWidget: React.FC = () => {
         </button>
       )}
 
-      {/* OPEN STATE → full panel */}
+      {/* OPEN STATE → full panel, compact height */}
       {isOpen && (
         <section
           aria-label="Pilon Qubit Realtime Concierge"
-          className="fixed bottom-4 right-4 z-[9999] flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
+          className="fixed bottom-4 right-4 z-[9999] flex w-[340px] max-w-[calc(100vw-2rem)] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
         >
           {/* Header */}
           <header className="flex items-center justify-between border-b border-slate-800/80 bg-slate-950/90 px-4 py-3">
@@ -261,8 +261,8 @@ const RealtimeConciergeWidget: React.FC = () => {
             </div>
           </header>
 
-          {/* Conversation area */}
-          <div className="flex h-64 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
+          {/* Conversation area – compact */}
+          <div className="flex max-h-72 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -288,37 +288,39 @@ const RealtimeConciergeWidget: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick actions */}
+          {/* Quick actions – three main tracks */}
           <div className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-2">
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
                 onClick={() =>
-                  handleQuickAction("How can Pilon Qubit help my business?")
+                  handleQuickAction(
+                    "I want help with websites and funnels.",
+                  )
                 }
                 className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
-                How can you help my business?
+                Websites & funnels
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  handleQuickAction("I want help with AI marketing automation.")
+                }
+                className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              >
+                AI marketing automation
               </button>
               <button
                 type="button"
                 onClick={() =>
                   handleQuickAction(
-                    "What does the website build process look like?",
+                    "I want help with frontier AI consulting and custom builds.",
                   )
                 }
                 className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
-                What does the website process look like?
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleQuickAction("How do pricing and retainers work?")
-                }
-                className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-              >
-                How do pricing and retainers work?
+                Frontier AI consulting
               </button>
             </div>
           </div>
@@ -331,7 +333,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about websites, funnels, or growth…"
+                  placeholder="Ask about one of those tracks…"
                   className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   disabled={isStreaming}
                 />
