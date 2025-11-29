@@ -51,6 +51,12 @@ const RealtimeConciergeWidget: React.FC = () => {
     lastInteractionRef.current = Date.now();
   };
 
+  const stopAllVoice = () => {
+    if (typeof window === "undefined") return;
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+  };
+
   const handleOpen = () => {
     recordInteraction();
     setState("open");
@@ -58,11 +64,13 @@ const RealtimeConciergeWidget: React.FC = () => {
 
   const handleMinimize = () => {
     recordInteraction();
+    stopAllVoice();
     setState("minimized");
   };
 
   const handleClose = () => {
     recordInteraction();
+    stopAllVoice();
     setState("closed");
   };
 
@@ -75,6 +83,7 @@ const RealtimeConciergeWidget: React.FC = () => {
   const resetConversation = () => {
     if (isStreaming) return;
     recordInteraction();
+    stopAllVoice();
     setMessages([
       {
         id: "assistant-initial",
@@ -128,10 +137,12 @@ const RealtimeConciergeWidget: React.FC = () => {
         return;
       }
       // click/tap outside
+      stopAllVoice();
       setState("minimized");
     };
 
     const handleScroll = () => {
+      stopAllVoice();
       setState("minimized");
     };
 
@@ -152,6 +163,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       if (isStreaming) return;
       const now = Date.now();
       if (now - lastInteractionRef.current > 45_000) {
+        stopAllVoice();
         setState("minimized");
       }
     }, 5_000);
@@ -298,6 +310,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       setLeadMessage("");
       // Auto-minimize after a moment
       setTimeout(() => {
+        stopAllVoice();
         setState("minimized");
       }, 3000);
     } catch (err) {
@@ -305,6 +318,41 @@ const RealtimeConciergeWidget: React.FC = () => {
       setLeadError("Unexpected error while sending your details.");
       setLeadStatus("error");
     }
+  };
+
+  const playLastAssistantAnswer = () => {
+    recordInteraction();
+    if (typeof window === "undefined") return;
+
+    const lastAssistant = [...messages]
+      .reverse()
+      .find((m) => m.role === "assistant" && m.content.trim().length > 0);
+
+    if (!lastAssistant) {
+      setError("There is no answer to play yet.");
+      return;
+    }
+
+    if (!("speechSynthesis" in window)) {
+      setError("Your browser does not support voice playback.");
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(lastAssistant.content);
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.error("[RealtimeConciergeWidget] voice playback error", err);
+      setError("There was an issue playing the voice response.");
+    }
+  };
+
+  const stopVoicePlayback = () => {
+    recordInteraction();
+    stopAllVoice();
   };
 
   // CLOSED STATE → only bubble
@@ -498,7 +546,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                     Reset conversation
                   </button>
                   <span className="text-[10px] text-slate-500">
-                    Phase 2: live text chat · no voice yet
+                    Phase 2: live text chat · basic voice playback
                   </span>
                 </div>
 
@@ -516,6 +564,24 @@ const RealtimeConciergeWidget: React.FC = () => {
                   >
                     Email hello@pilonqubitventures.com
                   </a>
+                </div>
+
+                {/* Voice controls */}
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={playLastAssistantAnswer}
+                    className="text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                  >
+                    ▶ Play last answer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopVoicePlayback}
+                    className="text-[11px] text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
+                  >
+                    ◼ Stop voice
+                  </button>
                 </div>
 
                 {/* Toggle mini lead form */}
