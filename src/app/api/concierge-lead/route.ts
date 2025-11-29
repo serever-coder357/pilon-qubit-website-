@@ -3,7 +3,9 @@ import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 const TO_EMAIL = "hello@pilonqubitventures.com";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "no-reply@pilonqubitventures.com";
+// Use your real address as the from as well – Resend only cares that the domain is verified
+const FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL || "hello@pilonqubitventures.com";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const lead = body.lead || {};
     const pageContext = body.pageContext || {};
-    const source = body.source || "realtime-concierge";
+    const source = body.source || "realtime-concierge-voice-only";
 
     if (!lead.email) {
       return NextResponse.json(
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
       `Company: ${lead.company || "(not provided)"}`,
       `Budget / Stage: ${lead.budgetRange || "(not provided)"}`,
       "",
-      `Notes:`,
+      "Notes:",
       `${lead.notes || "(none)"}`,
       "",
       `Source: ${source}`,
