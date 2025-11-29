@@ -6,11 +6,10 @@ const resendApiKey = process.env.RESEND_API_KEY;
 // Where you want to RECEIVE the lead
 const TO_EMAIL = "hello@pilonqubitventures.com";
 
-// IMPORTANT: this MUST match your verified Resend domain: email.pilonqubitventures.com
-// Any address that ends with @email.pilonqubitventures.com is valid.
-// You can change the local-part ("concierge") to whatever you want.
-const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "concierge@email.pilonqubitventures.com";
+// IMPORTANT: this MUST be on your verified Resend domain:
+// email.pilonqubitventures.com
+// Do NOT change this unless you add/verify a different Resend domain.
+const FROM_EMAIL = "concierge@email.pilonqubitventures.com";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
