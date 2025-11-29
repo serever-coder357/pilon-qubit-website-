@@ -4,6 +4,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * VoiceAssistantWidget – Realtime AI Operator + Lead capture
+ *
+ * Outer component:
+ *  - Only responsible for waiting until we're on the client (mounted)
+ *  - Avoids hydration mismatches by rendering nothing on the server
+ *
+ * InnerVoiceAssistantWidget:
+ *  - Contains all the realtime / WebRTC / lead capture logic
  */
 
 type Status =
@@ -20,19 +27,21 @@ const REALTIME_MODEL =
   "gpt-4o-realtime-preview-2024-12-17";
 
 export function VoiceAssistantWidget() {
-  // Ensure this widget only renders on the client AFTER mount,
-  // so the server never outputs markup for it (avoids hydration mismatch).
+  // This hook is always called, so it's valid.
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    // Render nothing on the server and during the very first client paint.
-    return null;
-  }
+  // On the server and very first client paint, render nothing.
+  if (!mounted) return null;
 
+  // Once mounted, render the full realtime widget.
+  return <InnerVoiceAssistantWidget />;
+}
+
+function InnerVoiceAssistantWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
