@@ -1,4 +1,3 @@
-// src/app/components/RealtimeConciergeWidget.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -18,13 +17,8 @@ const RealtimeConciergeWidget: React.FC = () => {
     setState("closed");
   };
 
-  // In future phases, this will trigger:
-  // - Mic permission
-  // - Realtime session init
-  // - Transcript + UI streaming updates
+  // Placeholder for future phases (realtime, mic, etc.)
   const handlePrimaryCTA = () => {
-    // Placeholder for Phase 2+:
-    // e.g., startRealtimeSession(), openMic(), etc.
     console.log("[RealtimeConcierge] Primary CTA clicked (no realtime yet).");
   };
 
@@ -33,7 +27,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       <button
         type="button"
         onClick={() => setState("open")}
-        className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-sky-600 text-white shadow-lg shadow-sky-600/40 transition hover:scale-105 hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+        className="fixed bottom-4 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-sky-600 text-white shadow-lg shadow-sky-600/40 transition hover:scale-105 hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
         aria-label="Open Pilon Qubit Concierge"
       >
         <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/90 text-xs font-semibold uppercase tracking-wide">
@@ -45,12 +39,12 @@ const RealtimeConciergeWidget: React.FC = () => {
 
   return (
     <>
-      {/* Floating button (minimized or open) */}
+      {/* Floating button (minimized) */}
       {state === "minimized" && (
         <button
           type="button"
           onClick={() => setState("open")}
-          className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-sky-600 text-white shadow-lg shadow-sky-600/40 transition hover:scale-105 hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          className="fixed bottom-4 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-sky-600 text-white shadow-lg shadow-sky-600/40 transition hover:scale-105 hover:bg-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           aria-label="Open Pilon Qubit Concierge"
         >
           <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/90 text-xs font-semibold uppercase tracking-wide">
@@ -63,7 +57,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       {isOpen && (
         <section
           aria-label="Pilon Qubit Realtime Concierge"
-          className="fixed bottom-4 right-4 z-50 flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
+          className="fixed bottom-4 right-4 z-[9999] flex w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
         >
           {/* Header */}
           <header className="flex items-center justify-between border-b border-slate-800/80 bg-slate-950/90 px-4 py-3">
