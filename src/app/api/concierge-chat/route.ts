@@ -34,6 +34,53 @@ Rules:
 - If you don't know something, say so and suggest a call.
 `;
 
+// Very simple page classification so the model can answer differently.
+function getPageContext(pagePath: string): string {
+  if (!pagePath) return "";
+
+  const path = pagePath.toLowerCase();
+
+  if (path === "/" || path === "/home") {
+    return `
+Current page:
+- Visitor is on the HOME page.
+- Focus on a high-level overview of Pilon Qubit Ventures.
+- Offer to guide them to the right service (web, marketing, AI automation).`;
+  }
+
+  if (path.startsWith("/services") || path.includes("services")) {
+    return `
+Current page:
+- Visitor is on a SERVICES page.
+- Assume they are evaluating what you can build or run for them.
+- Give concrete examples of website, funnel, or AI systems you can deliver.
+- Encourage them to share their industry, current website, and timeline.`;
+  }
+
+  if (path.startsWith("/contact") || path.includes("contact")) {
+    return `
+Current page:
+- Visitor is on the CONTACT page.
+- They are closer to reaching out.
+- Help them clarify what to write in the contact form (goals, budget range, timeline).
+- Encourage them to submit the form or email directly.`;
+  }
+
+  if (path.includes("ventures") || path.includes("capital")) {
+    return `
+Current page:
+- Visitor is on a VENTURES or CAPITAL page.
+- Focus more on venture building, growth, and long-term partnerships.
+- Ask if they are a founder, investor, or operator, and adapt accordingly.`;
+  }
+
+  return `
+Current page:
+- Visitor is on "${pagePath}".
+- Adapt your answers to the most likely intent based on the path.
+- If unsure, ask a quick clarifying question about what they are looking for.`;
+}
+
 export async function POST(req: NextRequest): Promise<Response> {
   try {
     if (!process.env.OPENAI_API_KEY) {
@@ -51,13 +98,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       return new Response("Invalid messages payload", { status: 400 });
     }
 
-    const pageContextSnippet = pagePath
-      ? `
-Current page context:
-- The visitor is on: "${pagePath}".
-- Adapt your answers to that page (e.g. if it's a services, pricing, or contact page).`
-      : "";
-
+    const pageContextSnippet = getPageContext(pagePath);
     const systemPrompt = BASE_SYSTEM_PROMPT + pageContextSnippet;
 
     const response = await openai.chat.completions.create({
