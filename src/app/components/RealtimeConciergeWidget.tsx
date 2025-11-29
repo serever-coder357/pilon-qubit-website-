@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { usePathname } from "next/navigation";
 import { useRealtimeVoice, RealtimeVoiceToggle } from "./RealtimeVoiceClient";
 
@@ -58,15 +64,19 @@ export default function RealtimeConciergeWidget() {
     [pathname],
   );
 
-  const { status: voiceStatus, error: voiceError, start: startVoice, stop: stopVoice } =
-    useRealtimeVoice({
-      onLog: (msg) => {
-        if (process.env.NODE_ENV !== "production") {
-          // eslint-disable-next-line no-console
-          console.debug("[ConciergeVoice]", msg);
-        }
-      },
-    });
+  const {
+    status: voiceStatus,
+    error: voiceError,
+    start: startVoice,
+    stop: stopVoice,
+  } = useRealtimeVoice({
+    onLog: (msg) => {
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.debug("[ConciergeVoice]", msg);
+      }
+    },
+  });
 
   /**
    * If voice hits an error while in voice mode, fall back to text mode.
@@ -194,7 +204,7 @@ export default function RealtimeConciergeWidget() {
   );
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    (e: KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         if (mode === "text") {
@@ -353,7 +363,7 @@ export default function RealtimeConciergeWidget() {
                   placeholder={
                     isVoiceLive
                       ? "Or type here while we talk…"
-                      : "Example: “Are we a good fit if we’re a SaaS startup raising a seed round?”"
+                      : 'Example: “Are we a good fit if we’re a SaaS startup raising a seed round?”'
                   }
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
@@ -367,9 +377,7 @@ export default function RealtimeConciergeWidget() {
                   <button
                     type="button"
                     onClick={() => void sendMessage()}
-                    disabled={
-                      !userInput.trim() || status === "sending"
-                    }
+                    disabled={!userInput.trim() || status === "sending"}
                     className="rounded-full bg-slate-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Send
