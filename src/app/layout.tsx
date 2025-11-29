@@ -1,11 +1,13 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
 
-import VoiceAssistantWidget from "./components/VoiceAssistantWidget";
+import AdvancedVoiceAssistant from "./components/AdvancedVoiceAssistant";
 
 export const metadata: Metadata = {
   title: "PILON Qubit Ventures",
-  description: "PILON Qubit Ventures official website",
+  description:
+    "PILON Qubit Ventures – AI-driven web, growth, and automation studio for ambitious SMBs and founders.",
 };
 
 export default function RootLayout({
@@ -17,20 +19,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-
-        {/* Fixed voice AI assistant in bottom-right */}
-        <div
-          style={{
-            position: "fixed",
-            right: "1.5rem",
-            bottom: "1.5rem",
-            width: "360px",
-            maxWidth: "90vw",
-            zIndex: 40,
-          }}
-        >
-          <VoiceAssistantWidget />
-        </div>
+        {/* Advanced AI voice assistant fixed in bottom-right */}
+        <AdvancedVoiceAssistant />
       </body>
     </html>
   );
