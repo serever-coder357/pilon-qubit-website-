@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 type ConciergeState = "closed" | "minimized" | "open";
 
@@ -306,7 +307,7 @@ const RealtimeConciergeWidget: React.FC = () => {
             </div>
           </div>
 
-          {/* Input + controls */}
+          {/* Input + controls + hard CTAs */}
           <footer className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-3">
             <form onSubmit={handleSend} className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
@@ -325,31 +326,45 @@ const RealtimeConciergeWidget: React.FC = () => {
                 >
                   {isStreaming ? "Thinking…" : "Send"}
                 </button>
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  onClick={resetConversation}
-                  className="text-[11px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
-                  disabled={isStreaming}
+                  onClick={stopStreaming}
+                  disabled={!isStreaming}
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-200 shadow-sm transition hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Reset conversation
+                  Stop
                 </button>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  {isStreaming && (
-                    <button
-                      type="button"
-                      onClick={stopStreaming}
-                      className="text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
-                    >
-                      Stop
-                    </button>
-                  )}
+              <div className="flex flex-col gap-1 text-[11px] text-slate-500">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={resetConversation}
+                    className="text-[11px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+                    disabled={isStreaming}
+                  >
+                    Reset conversation
+                  </button>
                   <span className="text-[10px] text-slate-500">
                     Phase 2: live text chat · no voice yet
                   </span>
+                </div>
+
+                {/* Hard CTAs: always clickable, independent of model text */}
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <Link
+                    href="/contact"
+                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-sky-600/70 bg-sky-600/10 px-2 py-1.5 text-[11px] font-semibold text-sky-200 shadow-sm transition hover:bg-sky-600/20 hover:text-sky-50"
+                  >
+                    Go to contact page
+                  </Link>
+                  <a
+                    href="mailto:hello@pilonqubitventures.com"
+                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-[11px] font-medium text-slate-200 shadow-sm transition hover:bg-slate-800 hover:text-white"
+                  >
+                    Email hello@pilonqubitventures.com
+                  </a>
                 </div>
               </div>
             </form>
