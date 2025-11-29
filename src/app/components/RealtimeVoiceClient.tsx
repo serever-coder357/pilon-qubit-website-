@@ -17,9 +17,6 @@ type RealtimeSessionTokenResponse = {
 };
 
 type UseRealtimeVoiceOptions = {
-  /**
-   * Optional: extra logging hook for the parent widget.
-   */
   onLog?: (msg: string) => void;
 };
 
@@ -43,18 +40,12 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
     [options],
   );
 
-  /**
-   * Cleanly tear down WebRTC + mic tracks.
-   */
   const hardStop = useCallback(() => {
     log("Stopping realtime voice session");
-
     setStatus("stopping");
 
     try {
-      if (dataChannelRef.current) {
-        dataChannelRef.current.close();
-      }
+      if (dataChannelRef.current) dataChannelRef.current.close();
     } catch {
       // ignore
     }
@@ -92,9 +83,6 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
     setStatus("idle");
   }, [log]);
 
-  /**
-   * Start a new realtime voice session using WebRTC + Realtime API.
-   */
   const start = useCallback(async () => {
     if (
       status === "connecting" ||
@@ -128,7 +116,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       micStreamRef.current = micStream;
       setStatus("requesting-token");
 
-      // 2) Get ephemeral client_secret from our backend
+      // 2) Get ephemeral client_secret from backend
       log("Requesting realtime session client_secret...");
       const tokenRes = await fetch("/api/realtime-session", {
         method: "POST",
@@ -153,17 +141,16 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       log("Creating RTCPeerConnection...");
 
       const pc = new RTCPeerConnection({
-        // Use simple STUN; TURN etc can be added if needed later.
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
       pcRef.current = pc;
 
-      // 4) Outbound (mic) tracks → peer connection
+      // 4) Outbound mic tracks
       micStream.getTracks().forEach((track) => {
         pc.addTrack(track, micStream);
       });
 
-      // 5) Inbound audio → hidden <audio> element
+      // 5) Inbound audio element
       if (!audioElementRef.current) {
         const audioEl = new Audio();
         audioEl.autoplay = true;
@@ -177,23 +164,17 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
           audioElementRef.current.srcObject = remoteStream;
           audioElementRef.current
             .play()
-            .then(() => {
-              log("Remote audio playback started");
-            })
-            .catch((err) => {
-              log(`Audio playback error: ${String(err)}`);
-            });
+            .then(() => log("Remote audio playback started"))
+            .catch((err) => log(`Audio playback error: ${String(err)}`));
         }
       };
 
-      // 6) Optional: DataChannel for debugging / future tool calls
+      // 6) DataChannel (optional)
       const dc = pc.createDataChannel("oai-events");
       dataChannelRef.current = dc;
 
       dc.onopen = () => {
         log("DataChannel opened");
-        // We *could* send events here (response.create, etc).
-        // For now, we rely on the backend session config for instructions.
       };
 
       dc.onmessage = (event) => {
@@ -206,7 +187,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         log(`DataChannel error: ${JSON.stringify(event)}`);
       };
 
-      // 7) WebRTC offer/answer with OpenAI Realtime endpoint
+      // 7) WebRTC offer/answer with OpenAI Realtime
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
@@ -214,7 +195,6 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       if (model) {
         url.searchParams.set("model", model);
       }
-      url.searchParams.set("client_secret", client_secret);
 
       log("Sending SDP offer to OpenAI Realtime API...");
       const sdpRes = await fetch(url.toString(), {
@@ -222,6 +202,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         headers: {
           "Content-Type": "application/sdp",
           "OpenAI-Beta": "realtime=v1",
+          Authorization: `Bearer ${client_secret}`,
         },
         body: offer.sdp ?? "",
       });
@@ -247,21 +228,14 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       log(`Error starting realtime voice: ${message}`);
       setError(message);
       setStatus("error");
-      // Cleanup partial state
       hardStop();
     }
   }, [hardStop, log, status]);
 
-  /**
-   * Stop current realtime session (if any).
-   */
   const stop = useCallback(() => {
     hardStop();
   }, [hardStop]);
 
-  /**
-   * Cleanup on component unmount.
-   */
   useEffect(() => {
     return () => {
       hardStop();
@@ -283,9 +257,6 @@ export type RealtimeVoiceToggleProps = {
   onStop: () => void;
 };
 
-/**
- * Small, generic controls block that can be reused by the concierge widget.
- */
 export function RealtimeVoiceToggle(props: RealtimeVoiceToggleProps) {
   const { status, error, onStart, onStop } = props;
 
