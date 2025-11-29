@@ -6,9 +6,8 @@ const resendApiKey = process.env.RESEND_API_KEY;
 // Where you receive the lead
 const TO_EMAIL = "hello@pilonqubitventures.com";
 
-// TEMP: use Resend's onboarding sender to avoid domain verification issues.
-// After it's working, change this to "hello@pilonqubitventures.com"
-// AND make sure that domain is verified in Resend.
+// Safer default: Resend onboarding sender. Change to your domain sender
+// AFTER your domain is verified in Resend.
 const FROM_EMAIL =
   process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
@@ -79,7 +78,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
-      // Log full error details back to client so we can see exactly what Resend is complaining about
       return NextResponse.json(
         { ok: false, error: "Resend reported an error", details: error },
         { status: 502 },
