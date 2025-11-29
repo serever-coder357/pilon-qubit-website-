@@ -5,16 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export type VoiceStatus =
   | "idle"
   | "requesting-mic"
-  | "requesting-token"
   | "connecting"
   | "live"
   | "stopping"
   | "error";
-
-type RealtimeSessionTokenResponse = {
-  client_secret: string;
-  model?: string;
-};
 
 type UseRealtimeVoiceOptions = {
   onLog?: (msg: string) => void;
@@ -84,12 +78,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
   }, [log]);
 
   const start = useCallback(async () => {
-    if (
-      status === "connecting" ||
-      status === "live" ||
-      status === "requesting-mic" ||
-      status === "requesting-token"
-    ) {
+    if (status !== "idle" && status !== "error") {
       log("Start called but session already in progress");
       return;
     }
@@ -114,29 +103,8 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         throw new Error("Could not access microphone.");
       }
       micStreamRef.current = micStream;
-      setStatus("requesting-token");
 
-      // 2) Get ephemeral client_secret from backend
-      log("Requesting realtime session client_secret...");
-      const tokenRes = await fetch("/api/realtime-session", {
-        method: "POST",
-      });
-
-      if (!tokenRes.ok) {
-        const txt = await tokenRes.text();
-        throw new Error(
-          `Failed to get realtime session token (${tokenRes.status}): ${txt}`,
-        );
-      }
-
-      const tokenJson = (await tokenRes.json()) as RealtimeSessionTokenResponse;
-      if (!tokenJson.client_secret) {
-        throw new Error("Backend did not return client_secret.");
-      }
-
-      const { client_secret, model } = tokenJson;
-
-      // 3) Create RTCPeerConnection
+      // 2) Create RTCPeerConnection
       setStatus("connecting");
       log("Creating RTCPeerConnection...");
 
@@ -145,12 +113,12 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       });
       pcRef.current = pc;
 
-      // 4) Outbound mic tracks
+      // 3) Outbound mic tracks
       micStream.getTracks().forEach((track) => {
         pc.addTrack(track, micStream);
       });
 
-      // 5) Inbound audio element
+      // 4) Inbound audio element
       if (!audioElementRef.current) {
         const audioEl = new Audio();
         audioEl.autoplay = true;
@@ -169,7 +137,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         }
       };
 
-      // 6) DataChannel (optional)
+      // 5) DataChannel (optional)
       const dc = pc.createDataChannel("oai-events");
       dataChannelRef.current = dc;
 
@@ -187,26 +155,21 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         log(`DataChannel error: ${JSON.stringify(event)}`);
       };
 
-      // 7) WebRTC offer/answer with OpenAI Realtime (GA: /v1/realtime/calls)
+      // 6) WebRTC offer/answer via our unified backend endpoint
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const url = new URL("https://api.openai.com/v1/realtime/calls");
-      if (model) {
-        url.searchParams.set("model", model);
-      } else {
-        url.searchParams.set("model", "gpt-realtime");
+      if (!offer.sdp) {
+        throw new Error("Failed to create SDP offer");
       }
 
-      log("Sending SDP offer to OpenAI Realtime API...");
-      const sdpRes = await fetch(url.toString(), {
+      log("Sending SDP offer to /api/realtime-session...");
+      const sdpRes = await fetch("/api/realtime-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/sdp",
-          "OpenAI-Beta": "realtime=v1",
-          Authorization: `Bearer ${client_secret}`,
         },
-        body: offer.sdp ?? "",
+        body: offer.sdp,
       });
 
       if (!sdpRes.ok) {
@@ -264,10 +227,7 @@ export function RealtimeVoiceToggle(props: RealtimeVoiceToggleProps) {
 
   const isLive = status === "live";
   const isBusy =
-    status === "requesting-mic" ||
-    status === "requesting-token" ||
-    status === "connecting" ||
-    status === "stopping";
+    status === "requesting-mic" || status === "connecting" || status === "stopping";
 
   return (
     <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800">
