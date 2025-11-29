@@ -1,122 +1,166 @@
 // src/app/api/voice-assistant/route.ts
-import { NextRequest, NextResponse } from "next/server";
+
 import OpenAI from "openai";
 
-export const runtime = "nodejs";
-
+// Ensure this env var is set in Vercel
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(req: NextRequest) {
+export const runtime = "nodejs";
+
+type HistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type VoiceResponse =
+  | {
+      ok: true;
+      userText: string;
+      replyText: string;
+      audioBase64: string;
+      audioMimeType: string;
+    }
+  | {
+      ok: false;
+      error: string;
+      details?: string;
+    };
+
+export async function POST(req: Request): Promise<Response> {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { ok: false, error: "Missing OPENAI_API_KEY on the server." },
-        { status: 500 }
-      );
-    }
-
-    const contentType = req.headers.get("content-type") || "";
-    if (!contentType.toLowerCase().includes("multipart/form-data")) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Expected multipart/form-data with an 'audio' file field.",
-        },
-        { status: 400 }
-      );
-    }
-
     const formData = await req.formData();
-    const file = formData.get("audio");
+    const audioFile = formData.get("audio");
+    const historyJson = formData.get("history");
 
-    if (!file || !(file instanceof Blob)) {
-      return NextResponse.json(
-        { ok: false, error: "No audio file found in 'audio' field." },
-        { status: 400 }
-      );
+    if (!audioFile || !(audioFile instanceof Blob)) {
+      const body: VoiceResponse = {
+        ok: false,
+        error: "NO_AUDIO",
+        details: "Missing audio file in form-data under key 'audio'.",
+      };
+      return new Response(JSON.stringify(body), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // 1) Voice → text (speech-to-text)
+    let history: HistoryMessage[] = [];
+    if (typeof historyJson === "string" && historyJson.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(historyJson) as HistoryMessage[];
+        // keep only the last few turns to avoid context bloat
+        history = parsed.slice(-6);
+      } catch (err) {
+        console.error("Failed to parse history JSON:", err);
+      }
+    }
+
+    // 1) Transcribe user audio → text
     const transcription = await openai.audio.transcriptions.create({
-      model: "gpt-4o-transcribe",
-      // @ts-ignore – OpenAI Node SDK accepts Blob/File here at runtime
-      file,
-      response_format: "text",
+      file: audioFile as any, // File/Blob is accepted by the SDK in app routes
+      model: "whisper-1", // if you prefer, switch to a newer transcribe model per your account docs
+      temperature: 0.2,
     });
 
     const userText =
-      typeof transcription === "string"
-        ? transcription
-        : // @ts-ignore – some SDK shapes expose .text
-          (transcription as any)?.text ?? "";
+      typeof transcription.text === "string" && transcription.text.trim().length
+        ? transcription.text.trim()
+        : "";
 
-    // 2) Text → reply (chat completion)
+    if (!userText) {
+      const body: VoiceResponse = {
+        ok: false,
+        error: "EMPTY_TRANSCRIPT",
+        details: "The audio was received but no speech could be transcribed.",
+      };
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // 2) Get assistant reply with context
+    const messages: HistoryMessage[] = history.concat({
+      role: "user",
+      content: userText,
+    });
+
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-4o-mini",
+      temperature: 0.6,
+      max_tokens: 400,
       messages: [
         {
           role: "system",
           content:
-            "You are the Pilon Qubit Ventures AI voice concierge. " +
-            "You speak clearly and briefly, in a professional but friendly tone. " +
-            "You can answer questions from founders and investors, explain Pilon Qubit Ventures, " +
-            "and suggest visiting the contact section or booking a call when it makes sense.",
+            [
+              "You are the advanced AI concierge for PILON Qubit Ventures.",
+              "You help small and medium businesses with:",
+              "- Full-stack web development and modern frontends (Next.js, React).",
+              "- Marketing strategy, funnels, automation, and analytics.",
+              "- AI-powered workflows, lead capture, and growth experiments.",
+              "",
+              "Guidelines:",
+              "- Speak clearly and practically, as a senior consultant.",
+              "- Ask clarifying questions when needed, but keep answers concise.",
+              "- Suggest specific next steps: audits, quick wins, experiments.",
+              "- You may recommend that users share their name and email so the team can follow up.",
+            ].join("\n"),
         },
-        {
-          role: "user",
-          content: userText || "Hello, I have a question about Pilon Qubit Ventures.",
-        },
+        ...messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
       ],
-      max_tokens: 350,
     });
 
-    const rawContent: any = completion.choices[0]?.message?.content;
-    let replyText = "";
+    const replyText =
+      completion.choices[0]?.message?.content?.trim() ||
+      "I had trouble generating a response. Please ask again in a different way.";
 
-    if (typeof rawContent === "string") {
-      replyText = rawContent;
-    } else if (Array.isArray(rawContent)) {
-      replyText = rawContent
-        .map((part: any) => {
-          if (typeof part === "string") return part;
-          if (typeof part?.text === "string") return part.text;
-          if (typeof part?.content === "string") return part.content;
-          return "";
-        })
-        .join(" ");
-    }
-
-    // 3) Reply text → audio (text-to-speech)
-    const speech = await openai.audio.speech.create({
+    // 3) Turn reply into speech
+    const tts = await openai.audio.speech.create({
+      // If this model name does not work on your account,
+      // use "tts-1" or whatever TTS model is in your OpenAI dashboard docs.
       model: "gpt-4o-mini-tts",
       voice: "alloy",
-      input:
-        replyText ||
-        "Thanks for reaching out to Pilon Qubit Ventures. How can we help you today?",
+      input: replyText,
+      format: "mp3",
     });
 
-    const audioArrayBuffer = await speech.arrayBuffer();
-    const audioBase64 = Buffer.from(audioArrayBuffer).toString("base64");
+    const audioBuffer = Buffer.from(await tts.arrayBuffer());
+    const audioBase64 = audioBuffer.toString("base64");
+    const audioMimeType = "audio/mpeg";
 
-    return NextResponse.json({
+    const body: VoiceResponse = {
       ok: true,
       userText,
       replyText,
       audioBase64,
-      audioMimeType: "audio/mpeg",
-    });
-  } catch (error: any) {
-    console.error("Voice assistant error:", error);
+      audioMimeType,
+    };
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "Voice assistant failed on the server.",
-        details: error?.message ?? String(error),
-      },
-      { status: 500 }
-    );
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    console.error("/api/voice-assistant fatal error:", err);
+
+    const body: VoiceResponse = {
+      ok: false,
+      error: "SERVER_ERROR",
+      details:
+        typeof err?.message === "string"
+          ? err.message
+          : "Unexpected error in voice assistant route.",
+    };
+
+    return new Response(JSON.stringify(body), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
