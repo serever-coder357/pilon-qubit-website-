@@ -31,28 +31,39 @@ const RealtimeConciergeWidget: React.FC = () => {
   const abortRef = useRef<AbortController | null>(null);
   const pathname = usePathname();
   const [sectionHint, setSectionHint] = useState<string>("");
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const lastInteractionRef = useRef<number>(Date.now());
 
   const isOpen = state === "open";
 
+  const recordInteraction = () => {
+    lastInteractionRef.current = Date.now();
+  };
+
   const handleOpen = () => {
+    recordInteraction();
     setState("open");
   };
 
   const handleMinimize = () => {
+    recordInteraction();
     setState("minimized");
   };
 
   const handleClose = () => {
+    recordInteraction();
     setState("closed");
   };
 
   const handleQuickAction = (text: string) => {
     if (isStreaming) return;
+    recordInteraction();
     setInput(text);
   };
 
   const resetConversation = () => {
     if (isStreaming) return;
+    recordInteraction();
     setMessages([
       {
         id: "assistant-initial",
@@ -70,6 +81,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       abortRef.current.abort();
       abortRef.current = null;
     }
+    recordInteraction();
     setIsStreaming(false);
   };
 
@@ -93,9 +105,56 @@ const RealtimeConciergeWidget: React.FC = () => {
     messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, isOpen]);
 
+  // Auto-minimize on outside click/tap and scroll
+  useEffect(() => {
+    if (state !== "open") return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!panelRef.current) return;
+      const target = event.target as Node | null;
+      if (target && panelRef.current.contains(target)) {
+        // Click inside panel → interaction, do not minimize
+        recordInteraction();
+        return;
+      }
+      // Click/tap outside → minimize
+      setState("minimized");
+    };
+
+    const handleScroll = () => {
+      // Any page scroll while open → minimize
+      setState("minimized");
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [state]);
+
+  // Auto-minimize on inactivity (~45s) when open and not streaming
+  useEffect(() => {
+    if (state !== "open") return;
+
+    const interval = setInterval(() => {
+      if (isStreaming) return;
+      const now = Date.now();
+      if (now - lastInteractionRef.current > 45_000) {
+        setState("minimized");
+      }
+    }, 5_000);
+
+    return () => clearInterval(interval);
+  }, [state, isStreaming]);
+
   const handleSend = async (event?: React.FormEvent) => {
     if (event) event.preventDefault();
     if (!input.trim() || isStreaming) return;
+
+    recordInteraction();
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -216,10 +275,11 @@ const RealtimeConciergeWidget: React.FC = () => {
         </button>
       )}
 
-      {/* OPEN STATE → full panel, compact height */}
+      {/* OPEN STATE → full panel, compact height, auto-minimized on outside actions */}
       {isOpen && (
         <section
           aria-label="Pilon Qubit Realtime Concierge"
+          ref={panelRef}
           className="fixed bottom-4 right-4 z-[9999] flex w-[340px] max-w-[calc(100vw-2rem)] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
         >
           {/* Header */}
@@ -327,12 +387,21 @@ const RealtimeConciergeWidget: React.FC = () => {
 
           {/* Input + controls + hard CTAs */}
           <footer className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-3">
-            <form onSubmit={handleSend} className="flex flex-col gap-2">
+            <form
+              onSubmit={(e) => {
+                recordInteraction();
+                void handleSend(e);
+              }}
+              className="flex flex-col gap-2"
+            >
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e) => {
+                    recordInteraction();
+                    setInput(e.target.value);
+                  }}
                   placeholder="Ask about one of those tracks…"
                   className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   disabled={isStreaming}
