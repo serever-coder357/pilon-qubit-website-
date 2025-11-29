@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
+
+// Where you receive the lead
 const TO_EMAIL = "hello@pilonqubitventures.com";
-// Use your real address as the from as well – Resend only cares that the domain is verified
+
+// TEMP: use Resend's onboarding sender to avoid domain verification issues.
+// After it's working, change this to "hello@pilonqubitventures.com"
+// AND make sure that domain is verified in Resend.
 const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "hello@pilonqubitventures.com";
+  process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -74,6 +79,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
+      // Log full error details back to client so we can see exactly what Resend is complaining about
       return NextResponse.json(
         { ok: false, error: "Resend reported an error", details: error },
         { status: 502 },
