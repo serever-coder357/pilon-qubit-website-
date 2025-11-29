@@ -17,9 +17,13 @@ const RealtimeConciergeWidget: React.FC = () => {
     setState("closed");
   };
 
-  // Placeholder for future phases (realtime, mic, etc.)
+  // Placeholder for future phases (realtime voice + lead capture)
   const handlePrimaryCTA = () => {
     console.log("[RealtimeConcierge] Primary CTA clicked (no realtime yet).");
+  };
+
+  const handleQuickAction = (label: string) => {
+    console.log(`[RealtimeConcierge] Quick action clicked: ${label}`);
   };
 
   if (state === "closed") {
@@ -70,14 +74,14 @@ const RealtimeConciergeWidget: React.FC = () => {
                   Pilon Qubit Concierge
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  Realtime assistant shell · Phase 1
+                  Smart assistant for your growth questions
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
               <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
-                Alpha
+                Preview
               </span>
               <button
                 type="button"
@@ -101,30 +105,54 @@ const RealtimeConciergeWidget: React.FC = () => {
           {/* Body */}
           <div className="flex flex-col gap-3 px-4 py-3 text-sm">
             <p className="text-slate-200">
-              This is your future realtime concierge. In this phase it&apos;s a
-              safe, non-realtime shell — no mic, no streaming, no backend
-              dependency.
+              I&apos;m your AI concierge for Pilon Qubit Ventures. Soon you&apos;ll
+              be able to talk to me in realtime about strategy, marketing, and
+              web builds. For now, this is a preview of the experience.
             </p>
 
             <div className="rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-xs text-slate-300">
               <p className="font-semibold text-slate-100">
-                What it will do soon:
+                Ask me about, for example:
               </p>
-              <ul className="mt-1 list-disc space-y-1 pl-4">
-                <li>Talk to visitors in realtime (voice + text).</li>
-                <li>Understand page context and your offers.</li>
-                <li>Capture qualified leads to your email / CRM.</li>
-              </ul>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleQuickAction("How Pilon Qubit can help my business")
+                  }
+                  className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  How can you help my business?
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleQuickAction("Timeline and process for a new website")
+                  }
+                  className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  What does the website process look like?
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleQuickAction("Pricing and engagement models")
+                  }
+                  className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  How do pricing and retainers work?
+                </button>
+              </div>
             </div>
 
             <div className="rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2.5 text-xs text-slate-300">
               <p className="font-semibold text-slate-100">
-                Phase 1 (current):
+                What&apos;s coming next:
               </p>
               <ul className="mt-1 list-disc space-y-1 pl-4">
-                <li>UI shell and UX anchor point.</li>
-                <li>No external services required.</li>
-                <li>Safe to ship to production now.</li>
+                <li>Realtime voice conversations with visitors.</li>
+                <li>Page-aware answers (knows which service they are reading).</li>
+                <li>Instant lead capture to your email / CRM.</li>
               </ul>
             </div>
           </div>
@@ -138,12 +166,12 @@ const RealtimeConciergeWidget: React.FC = () => {
                 className="inline-flex w-full items-center justify-center rounded-xl bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-md shadow-sky-600/40 transition hover:bg-sky-500 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400 disabled:shadow-none"
                 disabled
               >
-                Realtime voice coming in Phase 2
+                Realtime voice is in development
               </button>
               <p className="text-[11px] leading-snug text-slate-400">
-                Deployed as a feature-flagged shell so we can safely wire in
-                realtime voice + lead capture later without touching the rest of
-                your site.
+                This preview is safe and static: no mic, no background calls,
+                and no data is sent anywhere yet. Next step is wiring this into
+                realtime voice and lead capture.
               </p>
             </div>
           </footer>
