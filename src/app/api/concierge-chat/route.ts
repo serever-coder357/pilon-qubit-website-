@@ -34,51 +34,70 @@ Rules:
 - If you don't know something, say so and suggest a call.
 `;
 
-// Very simple page classification so the model can answer differently.
-function getPageContext(pagePath: string): string {
-  if (!pagePath) return "";
+// Use both the pathname and the section/hash (e.g. "#contact")
+// to give strong, explicit context to the model.
+function getPageContext(pagePath: string, pageSection: string): string {
+  const path = (pagePath || "").toLowerCase();
+  const section = (pageSection || "").toLowerCase();
 
-  const path = pagePath.toLowerCase();
+  const isHome = path === "/" || path === "/home";
+  const isServices =
+    path.startsWith("/services") ||
+    path.includes("services") ||
+    section.includes("services");
+  const isContact =
+    path.startsWith("/contact") ||
+    path.includes("contact") ||
+    section.includes("contact");
+  const isVentures =
+    path.includes("ventures") ||
+    path.includes("capital") ||
+    section.includes("ventures") ||
+    section.includes("capital");
 
-  if (path === "/" || path === "/home") {
+  if (isHome && !isServices && !isContact && !isVentures) {
     return `
-Current page:
-- Visitor is on the HOME page.
+Current context:
+- Visitor is on the HOME section.
 - Focus on a high-level overview of Pilon Qubit Ventures.
-- Offer to guide them to the right service (web, marketing, AI automation).`;
+- Offer to guide them to the right service (web, marketing, AI automation).
+- You do NOT need to dive deep into implementation details unless they ask.`;
   }
 
-  if (path.startsWith("/services") || path.includes("services")) {
+  if (isServices) {
     return `
-Current page:
-- Visitor is on a SERVICES page.
+Current context:
+- Visitor is in a SERVICES section.
 - Assume they are evaluating what you can build or run for them.
 - Give concrete examples of website, funnel, or AI systems you can deliver.
-- Encourage them to share their industry, current website, and timeline.`;
+- Ask about their business, current website, goals, and timeline.
+- Start your answer by acknowledging that they are on a services-focused section (e.g. "Since you're looking at our services...").`;
   }
 
-  if (path.startsWith("/contact") || path.includes("contact")) {
+  if (isContact) {
     return `
-Current page:
-- Visitor is on the CONTACT page.
+Current context:
+- Visitor is in a CONTACT section (or very close to contacting you).
 - They are closer to reaching out.
-- Help them clarify what to write in the contact form (goals, budget range, timeline).
-- Encourage them to submit the form or email directly.`;
+- Help them clarify what to write in the contact form (goals, current situation, budget range, timeline).
+- Encourage them to submit the form or email directly.
+- Start your answer by acknowledging that they are on the contact section (e.g. "Since you're already on our contact section...").`;
   }
 
-  if (path.includes("ventures") || path.includes("capital")) {
+  if (isVentures) {
     return `
-Current page:
-- Visitor is on a VENTURES or CAPITAL page.
+Current context:
+- Visitor is on a VENTURES or CAPITAL section.
 - Focus more on venture building, growth, and long-term partnerships.
-- Ask if they are a founder, investor, or operator, and adapt accordingly.`;
+- Ask if they are a founder, investor, or operator, and adapt accordingly.
+- Start your answer by referencing that they are viewing the ventures/capital part of Pilon Qubit.`;
   }
 
   return `
-Current page:
-- Visitor is on "${pagePath}".
-- Adapt your answers to the most likely intent based on the path.
-- If unsure, ask a quick clarifying question about what they are looking for.`;
+Current context:
+- Visitor is on path "${pagePath}" and section "${pageSection}".
+- Infer what they might be looking for from this context.
+- If you're unsure, ask a quick clarifying question before giving a detailed answer.`;
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -93,12 +112,14 @@ export async function POST(req: NextRequest): Promise<Response> {
       []) as { role: "user" | "assistant"; content: string }[];
 
     const pagePath = typeof body?.pagePath === "string" ? body.pagePath : "";
+    const pageSection =
+      typeof body?.pageSection === "string" ? body.pageSection : "";
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response("Invalid messages payload", { status: 400 });
     }
 
-    const pageContextSnippet = getPageContext(pagePath);
+    const pageContextSnippet = getPageContext(pagePath, pageSection);
     const systemPrompt = BASE_SYSTEM_PROMPT + pageContextSnippet;
 
     const response = await openai.chat.completions.create({
