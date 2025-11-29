@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const DEFAULT_REALTIME_MODEL =
-  process.env.OPENAI_REALTIME_MODEL || "gpt-4o-realtime-preview";
+  process.env.OPENAI_REALTIME_MODEL || "gpt-realtime";
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -18,11 +18,12 @@ export async function POST(req: NextRequest) {
     try {
       body = (await req.json()) as { model?: string };
     } catch {
-      // Optional JSON, ignore
+      // Optional JSON body; ignore if empty
     }
 
     const model = body.model || DEFAULT_REALTIME_MODEL;
 
+    // Use OpenAI Realtime client_secrets to mint an ephemeral key (ek_...).
     const clientSecretRes = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
       {
@@ -33,15 +34,11 @@ export async function POST(req: NextRequest) {
           "OpenAI-Beta": "realtime=v1",
         },
         body: JSON.stringify({
-          expires_after: {
-            anchor: "created_at",
-            seconds: 600,
-          },
           session: {
             type: "realtime",
             model,
             instructions:
-              "You are the Pilon Qubit Ventures voice concierge. Speak clearly, be concise, and focus on qualifying founders and operators. Ask focused questions and, when appropriate, suggest they leave their details in the form below for follow-up.",
+              "You are the Pilon Qubit Ventures voice concierge. Speak clearly, stay concise, and focus on qualifying founders and operators. Ask focused questions about what they are building and what support they need. When appropriate, invite them to leave their contact details in the form below for follow-up.",
           },
         }),
       },
@@ -59,15 +56,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const json: any = await clientSecretRes.json();
+    const json = (await clientSecretRes.json()) as {
+      value?: string;
+      session?: { model?: string };
+      [key: string]: unknown;
+    };
 
-    const clientSecret: string | undefined = json?.value;
-    const sessionModel: string | undefined = json?.session?.model;
+    const clientSecret = json.value;
+    const sessionModel = json.session?.model;
 
     if (!clientSecret) {
       return NextResponse.json(
         {
-          error: "Missing client_secret in OpenAI response",
+          error: "Missing client_secret value in OpenAI response",
           raw: json,
         },
         { status: 500 },
