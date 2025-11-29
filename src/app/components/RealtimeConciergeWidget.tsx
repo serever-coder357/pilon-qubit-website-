@@ -59,7 +59,9 @@ export default function RealtimeConciergeWidget() {
     setIsOpen((prev) => !prev);
   }, []);
 
-  // Aggressive auto-minimize: close as soon as user scrolls down a bit
+  // Option A: aggressive auto-minimize.
+  // As soon as the user scrolls the page a bit, close the widget so it never
+  // sits over the content for long.
   useEffect(() => {
     function onScroll() {
       if (isOpen && window.scrollY > 50) {
@@ -147,22 +149,10 @@ export default function RealtimeConciergeWidget() {
             </div>
           </div>
 
-          {/* Body with internal scroll */}
+          {/* Body with internal scroll (Start Voice at the very top section) */}
           <div className="flex max-h-[52vh] flex-col overflow-y-auto bg-slate-50/60">
-            {/* Voice section */}
+            {/* Voice controls at the very top (no scroll needed) */}
             <div className="px-4 pt-3 pb-2 text-sm text-slate-800">
-              <p className="mb-1 text-xs text-slate-600">
-                Tap start and speak naturally. I will answer in realtime and
-                help you understand if Pilon Qubit Ventures is a fit.
-              </p>
-              <ul className="mb-2 list-disc pl-4 text-[11px] text-slate-500">
-                <li>Clarify what you are building.</li>
-                <li>Discuss stage, capital, and support you need.</li>
-                <li>
-                  When you are ready, leave your details so we can follow up.
-                </li>
-              </ul>
-
               <RealtimeVoiceToggle
                 status={voiceStatus}
                 error={voiceError}
@@ -173,6 +163,18 @@ export default function RealtimeConciergeWidget() {
                   stopVoice();
                 }}
               />
+
+              <p className="mt-3 mb-1 text-xs text-slate-600">
+                Tap start and speak naturally. I will answer in realtime and
+                help you understand if Pilon Qubit Ventures is a fit.
+              </p>
+              <ul className="mb-2 list-disc pl-4 text-[11px] text-slate-500">
+                <li>Clarify what you are building.</li>
+                <li>Discuss stage, capital, and support you need.</li>
+                <li>
+                  When you are ready, leave your details so we can follow up.
+                </li>
+              </ul>
             </div>
 
             {/* Lead capture mini-form */}
