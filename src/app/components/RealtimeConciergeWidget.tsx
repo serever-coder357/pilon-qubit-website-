@@ -45,6 +45,10 @@ const RealtimeConciergeWidget: React.FC = () => {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastInteractionRef = useRef<number>(Date.now());
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+
   const isOpen = state === "open";
 
   const recordInteraction = () => {
@@ -52,9 +56,12 @@ const RealtimeConciergeWidget: React.FC = () => {
   };
 
   const stopAllVoice = () => {
-    if (typeof window === "undefined") return;
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    setIsVoicePlaying(false);
   };
 
   const handleOpen = () => {
@@ -318,9 +325,8 @@ const RealtimeConciergeWidget: React.FC = () => {
     }
   };
 
-  const playLastAssistantAnswer = () => {
+  const playLastAssistantAnswer = async () => {
     recordInteraction();
-    if (typeof window === "undefined") return;
 
     const lastAssistant = [...messages]
       .reverse()
@@ -331,40 +337,51 @@ const RealtimeConciergeWidget: React.FC = () => {
       return;
     }
 
-    if (!("speechSynthesis" in window)) {
-      setError("Your browser does not support voice playback.");
-      return;
-    }
-
     try {
-      const synth = window.speechSynthesis;
-      synth.cancel();
+      setIsVoiceLoading(true);
+      setError(null);
+      stopAllVoice();
 
-      const utterance = new SpeechSynthesisUtterance(lastAssistant.content);
+      const res = await fetch("/api/concierge-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: lastAssistant.content }),
+      });
 
-      // Try to pick a more natural English voice if available
-      const voices = synth.getVoices();
-      const preferred =
-        voices.find(
-          (v) =>
-            v.lang.toLowerCase().startsWith("en") &&
-            /natural|neural|google|microsoft/i.test(v.name),
-        ) ||
-        voices.find((v) => v.lang.toLowerCase().startsWith("en")) ||
-        voices[0];
-
-      if (preferred) {
-        utterance.voice = preferred;
+      if (!res.ok) {
+        throw new Error(`TTS request failed: ${res.status}`);
       }
 
-      // Slightly slower / smoother speech
-      utterance.rate = 0.95;
-      utterance.pitch = 1.02;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
 
-      synth.speak(utterance);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsVoicePlaying(false);
+        URL.revokeObjectURL(url);
+      };
+
+      audio.onerror = () => {
+        setIsVoicePlaying(false);
+        URL.revokeObjectURL(url);
+        setError("There was an issue playing the voice response.");
+      };
+
+      await audio.play();
+      setIsVoicePlaying(true);
     } catch (err) {
       console.error("[RealtimeConciergeWidget] voice playback error", err);
-      setError("There was an issue playing the voice response.");
+      setError("There was an issue generating or playing the voice response.");
+      setIsVoicePlaying(false);
+    } finally {
+      setIsVoiceLoading(false);
     }
   };
 
@@ -429,7 +446,7 @@ const RealtimeConciergeWidget: React.FC = () => {
 
             <div className="flex items-center gap-1">
               <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
-                Text + basic voice
+                Text + neural voice
               </span>
               <button
                 type="button"
@@ -564,7 +581,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                     Reset conversation
                   </button>
                   <span className="text-[10px] text-slate-500">
-                    Phase 2: text chat · browser voice
+                    Phase 3: text chat + AI voice (generated)
                   </span>
                 </div>
 
@@ -589,18 +606,28 @@ const RealtimeConciergeWidget: React.FC = () => {
                   <button
                     type="button"
                     onClick={playLastAssistantAnswer}
-                    className="text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                    disabled={isVoiceLoading}
+                    className="text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline disabled:cursor-not-allowed disabled:text-slate-500"
                   >
-                    ▶ Play last answer
+                    {isVoiceLoading
+                      ? "Generating voice…"
+                      : isVoicePlaying
+                      ? "▶ Replay last answer"
+                      : "▶ Play last answer"}
                   </button>
                   <button
                     type="button"
                     onClick={stopVoicePlayback}
-                    className="text-[11px] text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
+                    disabled={!isVoicePlaying && !isVoiceLoading}
+                    className="text-[11px] text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline disabled:cursor-not-allowed disabled:text-slate-600"
                   >
                     ◼ Stop voice
                   </button>
                 </div>
+
+                <p className="mt-0.5 text-[9px] text-slate-500">
+                  Voice is AI-generated, not a human recording.
+                </p>
 
                 {/* Toggle mini lead form */}
                 <button
