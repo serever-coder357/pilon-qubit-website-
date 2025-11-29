@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
 
     const model = body.model || DEFAULT_REALTIME_MODEL;
 
-    // Official endpoint for creating a realtime client_secret
     const clientSecretRes = await fetch(
       "https://api.openai.com/v1/realtime/client_secrets",
       {
@@ -31,6 +30,7 @@ export async function POST(req: NextRequest) {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
+          "OpenAI-Beta": "realtime=v1",
         },
         body: JSON.stringify({
           expires_after: {
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "OpenAI realtime client_secret request failed",
+          status: clientSecretRes.status,
           details: txt,
         },
         { status: 500 },
