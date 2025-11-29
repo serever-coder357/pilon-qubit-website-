@@ -14,74 +14,62 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    let body: { model?: string } = {};
-    try {
-      body = (await req.json()) as { model?: string };
-    } catch {
-      // Optional JSON body; ignore if empty
+    // SDP offer sent from the browser
+    const offerSdp = await req.text();
+    if (!offerSdp) {
+      return NextResponse.json(
+        { error: "Missing SDP offer in request body" },
+        { status: 400 },
+      );
     }
 
-    const model = body.model || DEFAULT_REALTIME_MODEL;
-
-    // Use OpenAI Realtime client_secrets to mint an ephemeral key (ek_...).
-    const clientSecretRes = await fetch(
-      "https://api.openai.com/v1/realtime/client_secrets",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "OpenAI-Beta": "realtime=v1",
+    const sessionConfig = JSON.stringify({
+      type: "realtime",
+      model: DEFAULT_REALTIME_MODEL,
+      instructions:
+        "You are the Pilon Qubit Ventures voice concierge. Speak clearly, stay concise, and focus on qualifying founders and operators. Ask focused questions about what they are building, stage, and what support they need. When appropriate, invite them to leave their details in the form below so we can follow up.",
+      audio: {
+        output: {
+          voice: "marin",
         },
-        body: JSON.stringify({
-          session: {
-            type: "realtime",
-            model,
-            instructions:
-              "You are the Pilon Qubit Ventures voice concierge. Speak clearly, stay concise, and focus on qualifying founders and operators. Ask focused questions about what they are building and what support they need. When appropriate, invite them to leave their contact details in the form below for follow-up.",
-          },
-        }),
       },
-    );
+    });
 
-    if (!clientSecretRes.ok) {
-      const txt = await clientSecretRes.text();
-      return NextResponse.json(
-        {
-          error: "OpenAI realtime client_secret request failed",
-          status: clientSecretRes.status,
+    const fd = new FormData();
+    fd.set("sdp", offerSdp);
+    fd.set("session", sessionConfig);
+
+    const r = await fetch("https://api.openai.com/v1/realtime/calls", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "OpenAI-Beta": "realtime=v1",
+      },
+      body: fd,
+    });
+
+    if (!r.ok) {
+      const txt = await r.text();
+      return new NextResponse(
+        JSON.stringify({
+          error: "OpenAI /v1/realtime/calls request failed",
+          status: r.status,
           details: txt,
-        },
-        { status: 500 },
-      );
-    }
-
-    const json = (await clientSecretRes.json()) as {
-      value?: string;
-      session?: { model?: string };
-      [key: string]: unknown;
-    };
-
-    const clientSecret = json.value;
-    const sessionModel = json.session?.model;
-
-    if (!clientSecret) {
-      return NextResponse.json(
+        }),
         {
-          error: "Missing client_secret value in OpenAI response",
-          raw: json,
+          status: 500,
+          headers: { "Content-Type": "application/json" },
         },
-        { status: 500 },
       );
     }
 
-    return NextResponse.json(
-      {
-        client_secret: clientSecret,
-        model: sessionModel || model,
-      },
-      { status: 200 },
-    );
+    const answerSdp = await r.text();
+
+    // Return SDP answer directly to the browser
+    return new NextResponse(answerSdp, {
+      status: 200,
+      headers: { "Content-Type": "application/sdp" },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
