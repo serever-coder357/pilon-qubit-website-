@@ -18,14 +18,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const json = await req.json().catch(() => null) as {
-      name?: string;
-      email?: string;
-      company?: string;
-      message?: string;
-      pagePath?: string;
-      pageSection?: string;
-    } | null;
+    const json = (await req.json().catch(() => null)) as
+      | {
+          name?: string;
+          email?: string;
+          company?: string;
+          message?: string;
+          pagePath?: string;
+          pageSection?: string;
+        }
+      | null;
 
     if (!json) {
       return NextResponse.json(
@@ -75,7 +77,8 @@ export async function POST(req: NextRequest) {
       from: "Pilon Qubit Concierge <hello@pilonqubitventures.com>",
       to: [to],
       subject,
-      replyTo: email,
+      // NOTE: property name must be "reply_to", not "replyTo"
+      reply_to: email,
       text: textBody,
     });
 
