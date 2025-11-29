@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || "gpt-4o-realtime-preview";
+const DEFAULT_REALTIME_MODEL =
+  process.env.OPENAI_REALTIME_MODEL || "gpt-4o-realtime-preview";
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -17,43 +18,56 @@ export async function POST(req: NextRequest) {
     try {
       body = (await req.json()) as { model?: string };
     } catch {
-      // optional body, ignore parse errors
+      // Optional JSON, ignore
     }
 
-    const model = body.model || REALTIME_MODEL;
+    const model = body.model || DEFAULT_REALTIME_MODEL;
 
-    const sessionRes = await fetch("https://api.openai.com/v1/realtime/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    // Official endpoint for creating a realtime client_secret
+    const clientSecretRes = await fetch(
+      "https://api.openai.com/v1/realtime/client_secrets",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          expires_after: {
+            anchor: "created_at",
+            seconds: 600,
+          },
+          session: {
+            type: "realtime",
+            model,
+            instructions:
+              "You are the Pilon Qubit Ventures voice concierge. Speak clearly, be concise, and focus on qualifying founders and operators. Ask focused questions and, when appropriate, suggest they leave their details in the form below for follow-up.",
+          },
+        }),
       },
-      body: JSON.stringify({
-        model,
-        // You can tune these later for more sales/lead-capture behavior
-        instructions:
-          "You are the Pilon Qubit Ventures voice concierge. Speak clearly and briefly. Ask focused questions to qualify the visitor and, when appropriate, invite them to leave their contact details in the form below.",
-      }),
-    });
+    );
 
-    if (!sessionRes.ok) {
-      const txt = await sessionRes.text();
+    if (!clientSecretRes.ok) {
+      const txt = await clientSecretRes.text();
       return NextResponse.json(
-        { error: "OpenAI realtime session request failed", details: txt },
+        {
+          error: "OpenAI realtime client_secret request failed",
+          details: txt,
+        },
         { status: 500 },
       );
     }
 
-    const sessionJson: any = await sessionRes.json();
+    const json: any = await clientSecretRes.json();
 
-    const clientSecret =
-      sessionJson?.client_secret?.value ?? sessionJson?.client_secret ?? null;
+    const clientSecret: string | undefined = json?.value;
+    const sessionModel: string | undefined = json?.session?.model;
 
     if (!clientSecret) {
       return NextResponse.json(
         {
-          error: "Realtime session response did not include client_secret",
-          raw: sessionJson,
+          error: "Missing client_secret in OpenAI response",
+          raw: json,
         },
         { status: 500 },
       );
@@ -62,7 +76,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         client_secret: clientSecret,
-        model: sessionJson.model || model,
+        model: sessionModel || model,
       },
       { status: 200 },
     );
@@ -76,6 +90,5 @@ export async function POST(req: NextRequest) {
 }
 
 export function GET() {
-  // Make GET explicitly not allowed, so the client must use POST
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
