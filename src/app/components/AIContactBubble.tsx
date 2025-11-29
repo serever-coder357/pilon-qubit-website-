@@ -9,7 +9,7 @@ export default function AIContactBubble() {
   const [state, setState] = useState<BubbleState>("idle");
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
   async function handleSubmit(e: FormEvent) {
@@ -55,6 +55,7 @@ export default function AIContactBubble() {
 
   return (
     <>
+      {/* Floating bubble button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -77,6 +78,7 @@ export default function AIContactBubble() {
         </span>
       </button>
 
+      {/* Panel */}
       {isOpen && (
         <div
           className="
