@@ -59,10 +59,10 @@ export default function RealtimeConciergeWidget() {
     setIsOpen((prev) => !prev);
   }, []);
 
-  // Auto-minimize when user scrolls down so it doesn't block content
+  // Aggressive auto-minimize: close as soon as user scrolls down a bit
   useEffect(() => {
     function onScroll() {
-      if (window.scrollY > 600 && isOpen) {
+      if (isOpen && window.scrollY > 50) {
         setIsOpen(false);
       }
     }
@@ -147,7 +147,7 @@ export default function RealtimeConciergeWidget() {
             </div>
           </div>
 
-          {/* Body with internal scroll so bottom is visible */}
+          {/* Body with internal scroll */}
           <div className="flex max-h-[52vh] flex-col overflow-y-auto bg-slate-50/60">
             {/* Voice section */}
             <div className="px-4 pt-3 pb-2 text-sm text-slate-800">
