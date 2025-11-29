@@ -19,7 +19,8 @@ interface VoiceResult {
   details?: string;
 }
 
-export default function VoiceAssistantWidget() {
+// NOTE: named export + default export so `layout.tsx` works.
+export function VoiceAssistantWidget() {
   const [status, setStatus] = useState<Status>("idle");
   const [lastUserText, setLastUserText] = useState<string | null>(null);
   const [lastReplyText, setLastReplyText] = useState<string | null>(null);
@@ -403,3 +404,6 @@ export default function VoiceAssistantWidget() {
     </div>
   );
 }
+
+// Keep default export as well, in case anything else imports it that way.
+export default VoiceAssistantWidget;
