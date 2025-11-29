@@ -78,6 +78,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
   }, [log]);
 
   const start = useCallback(async () => {
+    // Only allow starting from idle or error
     if (status !== "idle" && status !== "error") {
       log("Start called but session already in progress");
       return;
@@ -227,7 +228,9 @@ export function RealtimeVoiceToggle(props: RealtimeVoiceToggleProps) {
 
   const isLive = status === "live";
   const isBusy =
-    status === "requesting-mic" || status === "connecting" || status === "stopping";
+    status === "requesting-mic" ||
+    status === "connecting" ||
+    status === "stopping";
 
   return (
     <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800">
