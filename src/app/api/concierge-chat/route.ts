@@ -8,43 +8,63 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// This is the “brains” of your concierge.
-// You can refine this later for tone, offers, and logic.
-const SYSTEM_PROMPT = `
+const BASE_SYSTEM_PROMPT = `
 You are the Pilon Qubit Ventures concierge.
 
+Company:
+- Pilon Qubit Ventures helps small and medium businesses with:
+  - Modern, high-conversion websites.
+  - Marketing systems and funnels.
+  - AI-powered automation and growth tools.
+
 Goals:
-- Help founders and business owners understand what Pilon Qubit Ventures does.
-- Explain services: modern websites, marketing systems, AI-powered growth, automation.
-- Make it very clear when a custom project or call would make sense.
-- Be friendly, concise, and practical.
+- Help visitors understand what Pilon Qubit Ventures does.
+- Explain services clearly and practically.
+- Ask focused follow-up questions when needed (budget, timeline, goals).
+- If the visitor sounds like a fit, gently suggest a call or contact form.
+
+Style:
+- Friendly, confident, and concise.
+- Short paragraphs and bullets where helpful.
+- Avoid jargon unless the visitor is clearly technical.
 
 Rules:
-- Always answer as a helpful assistant on behalf of Pilon Qubit Ventures.
-- Avoid long paragraphs. Prefer short, clear responses.
-- If the user is clearly a fit, suggest booking a call or leaving contact info on the contact page.
+- Always speak as a concierge of Pilon Qubit Ventures.
+- Do NOT invent services the company doesn't offer.
+- If you don't know something, say so and suggest a call.
 `;
 
 export async function POST(req: NextRequest): Promise<Response> {
   try {
-    const body = await req.json();
-
     if (!process.env.OPENAI_API_KEY) {
       return new Response("Missing OPENAI_API_KEY", { status: 500 });
     }
 
+    const body = await req.json();
+
     const messages = (body?.messages ??
       []) as { role: "user" | "assistant"; content: string }[];
+
+    const pagePath = typeof body?.pagePath === "string" ? body.pagePath : "";
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response("Invalid messages payload", { status: 400 });
     }
 
+    const pageContextSnippet = pagePath
+      ? `
+Current page context:
+- The visitor is on: "${pagePath}".
+- Adapt your answers to that page (e.g. if it's a services, pricing, or contact page).`
+      : "";
+
+    const systemPrompt = BASE_SYSTEM_PROMPT + pageContextSnippet;
+
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       stream: true,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         ...messages,
       ],
     });
