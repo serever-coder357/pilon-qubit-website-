@@ -167,7 +167,6 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       if (!audioElementRef.current) {
         const audioEl = new Audio();
         audioEl.autoplay = true;
-        // playsInline is not on HTMLAudioElement type in your TS lib; we can live without it.
         audioElementRef.current = audioEl;
       }
 
@@ -198,7 +197,6 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       };
 
       dc.onmessage = (event) => {
-        // Only log for now; we keep it quiet in production.
         if (process.env.NODE_ENV !== "production") {
           log(`DataChannel message: ${event.data}`);
         }
@@ -223,6 +221,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         method: "POST",
         headers: {
           "Content-Type": "application/sdp",
+          "OpenAI-Beta": "realtime=v1",
         },
         body: offer.sdp ?? "",
       });
@@ -310,7 +309,7 @@ export function RealtimeVoiceToggle(props: RealtimeVoiceToggleProps) {
           </span>
           <span className="text-[11px] text-slate-500">
             {isLive
-              ? "Speak naturally. Tap Stop to return to text chat."
+              ? "Speak naturally. Tap Stop to return to idle."
               : "Start live voice for realtime conversation."}
           </span>
         </div>
@@ -337,7 +336,7 @@ export function RealtimeVoiceToggle(props: RealtimeVoiceToggleProps) {
       </div>
       {error && (
         <p className="mt-1 text-[11px] text-rose-600">
-          Voice error: {error}. Falling back to text.
+          Voice error: {error}. Falling back to idle.
         </p>
       )}
     </div>
