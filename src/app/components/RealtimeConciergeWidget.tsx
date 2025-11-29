@@ -136,7 +136,6 @@ const RealtimeConciergeWidget: React.FC = () => {
         recordInteraction();
         return;
       }
-      // click/tap outside
       stopAllVoice();
       setState("minimized");
     };
@@ -308,7 +307,6 @@ const RealtimeConciergeWidget: React.FC = () => {
       setLeadStatus("success");
       setLeadError(null);
       setLeadMessage("");
-      // Auto-minimize after a moment
       setTimeout(() => {
         stopAllVoice();
         setState("minimized");
@@ -339,11 +337,31 @@ const RealtimeConciergeWidget: React.FC = () => {
     }
 
     try {
-      window.speechSynthesis.cancel();
+      const synth = window.speechSynthesis;
+      synth.cancel();
+
       const utterance = new SpeechSynthesisUtterance(lastAssistant.content);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
+
+      // Try to pick a more natural English voice if available
+      const voices = synth.getVoices();
+      const preferred =
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase().startsWith("en") &&
+            /natural|neural|google|microsoft/i.test(v.name),
+        ) ||
+        voices.find((v) => v.lang.toLowerCase().startsWith("en")) ||
+        voices[0];
+
+      if (preferred) {
+        utterance.voice = preferred;
+      }
+
+      // Slightly slower / smoother speech
+      utterance.rate = 0.95;
+      utterance.pitch = 1.02;
+
+      synth.speak(utterance);
     } catch (err) {
       console.error("[RealtimeConciergeWidget] voice playback error", err);
       setError("There was an issue playing the voice response.");
@@ -391,7 +409,7 @@ const RealtimeConciergeWidget: React.FC = () => {
         <section
           aria-label="Pilon Qubit Realtime Concierge"
           ref={panelRef}
-          className="fixed bottom-4 right-4 z-[9999] flex w-[340px] max-w-[calc(100vw-2rem)] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
+          className="fixed bottom-4 right-4 z-[9999] flex w-[340px] max-w-[calc(100vw-2rem)] max-h-[80vh] flex-col overflow-y-auto rounded-2xl border border-slate-800/80 bg-slate-950/95 text-slate-50 shadow-2xl shadow-slate-950/80 backdrop-blur-md"
         >
           {/* Header */}
           <header className="flex items-center justify-between border-b border-slate-800/80 bg-slate-950/90 px-4 py-3">
@@ -411,7 +429,7 @@ const RealtimeConciergeWidget: React.FC = () => {
 
             <div className="flex items-center gap-1">
               <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-300">
-                Text · Phase 2
+                Text + basic voice
               </span>
               <button
                 type="button"
@@ -433,7 +451,7 @@ const RealtimeConciergeWidget: React.FC = () => {
           </header>
 
           {/* Messages */}
-          <div className="flex max-h-60 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
+          <div className="flex max-h-48 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -546,7 +564,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                     Reset conversation
                   </button>
                   <span className="text-[10px] text-slate-500">
-                    Phase 2: live text chat · basic voice playback
+                    Phase 2: text chat · browser voice
                   </span>
                 </div>
 
