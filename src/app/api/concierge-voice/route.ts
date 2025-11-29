@@ -33,7 +33,6 @@ export async function POST(req: NextRequest): Promise<Response> {
       model: "gpt-4o-mini-tts",
       voice: "coral",
       input: text,
-      format: "mp3",
       instructions:
         "Speak in a clear, warm, professional tone suitable for a sales consultant, not too fast.",
     });
