@@ -30,6 +30,7 @@ const RealtimeConciergeWidget: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const pathname = usePathname();
+  const [sectionHint, setSectionHint] = useState<string>("");
 
   const isOpen = state === "open";
 
@@ -72,6 +73,20 @@ const RealtimeConciergeWidget: React.FC = () => {
     setIsStreaming(false);
   };
 
+  // Track the current #section from URL hash (e.g. #services, #contact)
+  useEffect(() => {
+    const updateSection = () => {
+      if (typeof window === "undefined") return;
+      setSectionHint(window.location.hash || "");
+    };
+
+    updateSection();
+    window.addEventListener("hashchange", updateSection);
+    return () => {
+      window.removeEventListener("hashchange", updateSection);
+    };
+  }, []);
+
   // Auto-scroll to latest message
   useEffect(() => {
     if (!messagesEndRef.current) return;
@@ -113,6 +128,7 @@ const RealtimeConciergeWidget: React.FC = () => {
           content: m.content,
         }))],
         pagePath: pathname || "/",
+        pageSection: sectionHint || "",
       };
 
       const response = await fetch("/api/concierge-chat", {
@@ -354,10 +370,10 @@ const RealtimeConciergeWidget: React.FC = () => {
                 {/* Hard CTAs: always clickable, independent of model text */}
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <Link
-                    href="/contact"
+                    href="/#contact"
                     className="inline-flex flex-1 items-center justify-center rounded-lg border border-sky-600/70 bg-sky-600/10 px-2 py-1.5 text-[11px] font-semibold text-sky-200 shadow-sm transition hover:bg-sky-600/20 hover:text-sky-50"
                   >
-                    Go to contact page
+                    Go to contact section
                   </Link>
                   <a
                     href="mailto:hello@pilonqubitventures.com"
