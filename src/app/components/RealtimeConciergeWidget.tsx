@@ -96,7 +96,7 @@ const RealtimeConciergeWidget: React.FC = () => {
     setIsStreaming(false);
   };
 
-  // Track the current #section from URL hash (e.g. #services, #contact)
+  // Track current #section (e.g. #services, #contact)
   useEffect(() => {
     const updateSection = () => {
       if (typeof window === "undefined") return;
@@ -110,7 +110,7 @@ const RealtimeConciergeWidget: React.FC = () => {
     };
   }, []);
 
-  // Auto-scroll to latest message
+  // Auto-scroll to last message
   useEffect(() => {
     if (!messagesEndRef.current) return;
     messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -124,16 +124,14 @@ const RealtimeConciergeWidget: React.FC = () => {
       if (!panelRef.current) return;
       const target = event.target as Node | null;
       if (target && panelRef.current.contains(target)) {
-        // Click inside panel → interaction, do not minimize
         recordInteraction();
         return;
       }
-      // Click/tap outside → minimize
+      // click/tap outside
       setState("minimized");
     };
 
     const handleScroll = () => {
-      // Any page scroll while open → minimize
       setState("minimized");
     };
 
@@ -237,13 +235,11 @@ const RealtimeConciergeWidget: React.FC = () => {
     } catch (err: any) {
       if (err?.name === "AbortError") {
         console.warn("[RealtimeConciergeWidget] streaming aborted by user");
-        // Keep whatever content was already streamed.
       } else {
         console.error("[RealtimeConciergeWidget] send error", err);
         setError(
           "I had trouble reaching the concierge service. Please try again in a moment.",
         );
-        // If we failed before any content, remove the empty assistant bubble.
         setMessages((prev) =>
           prev.filter((m) => m.id !== assistantMessageId || m.content !== ""),
         );
@@ -300,7 +296,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       setLeadStatus("success");
       setLeadError(null);
       setLeadMessage("");
-      // Auto-minimize after a moment to get out of the way
+      // Auto-minimize after a moment
       setTimeout(() => {
         setState("minimized");
       }, 3000);
@@ -327,9 +323,9 @@ const RealtimeConciergeWidget: React.FC = () => {
     );
   }
 
+  // MINIMIZED + OPEN STATES
   return (
     <>
-      {/* MINIMIZED STATE → bubble only */}
       {state === "minimized" && (
         <button
           type="button"
@@ -343,7 +339,6 @@ const RealtimeConciergeWidget: React.FC = () => {
         </button>
       )}
 
-      {/* OPEN STATE → full panel, compact height, auto-minimized on outside actions */}
       {isOpen && (
         <section
           aria-label="Pilon Qubit Realtime Concierge"
@@ -389,7 +384,7 @@ const RealtimeConciergeWidget: React.FC = () => {
             </div>
           </header>
 
-          {/* Conversation area – compact */}
+          {/* Messages */}
           <div className="flex max-h-60 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
             {messages.map((m) => (
               <div
@@ -416,15 +411,13 @@ const RealtimeConciergeWidget: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick actions – three main tracks */}
+          {/* Quick actions */}
           <div className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-2">
             <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
                 onClick={() =>
-                  handleQuickAction(
-                    "I want help with websites and funnels.",
-                  )
+                  handleQuickAction("I want help with websites and funnels.")
                 }
                 className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
@@ -455,7 +448,7 @@ const RealtimeConciergeWidget: React.FC = () => {
             </div>
           </div>
 
-          {/* Input + controls + hard CTAs + mini lead form */}
+          {/* Input + CTAs + mini lead form */}
           <footer className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-3">
             {/* Chat input */}
             <form
@@ -495,4 +488,149 @@ const RealtimeConciergeWidget: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1 text-[11px] text-slate-500">
-                <div className="flex items耐
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={resetConversation}
+                    className="text-[11px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+                    disabled={isStreaming}
+                  >
+                    Reset conversation
+                  </button>
+                  <span className="text-[10px] text-slate-500">
+                    Phase 2: live text chat · no voice yet
+                  </span>
+                </div>
+
+                {/* Hard CTAs */}
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <Link
+                    href="/#contact"
+                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-sky-600/70 bg-sky-600/10 px-2 py-1.5 text-[11px] font-semibold text-sky-200 shadow-sm transition hover:bg-sky-600/20 hover:text-sky-50"
+                  >
+                    Go to contact section
+                  </Link>
+                  <a
+                    href="mailto:hello@pilonqubitventures.com"
+                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-[11px] font-medium text-slate-200 shadow-sm transition hover:bg-slate-800 hover:text-white"
+                  >
+                    Email hello@pilonqubitventures.com
+                  </a>
+                </div>
+
+                {/* Toggle mini lead form */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    recordInteraction();
+                    setShowLeadForm((prev) => !prev);
+                  }}
+                  className="mt-1 text-left text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                >
+                  {showLeadForm
+                    ? "Hide quick contact form"
+                    : "Or share your details here and we’ll follow up"}
+                </button>
+              </div>
+            </form>
+
+            {/* Mini lead form */}
+            {showLeadForm && (
+              <form
+                onSubmit={handleLeadSubmit}
+                className="mt-2 flex flex-col gap-1.5 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5"
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={leadName}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadName(e.target.value);
+                    }}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="Your name"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    Email (required)
+                  </label>
+                  <input
+                    type="email"
+                    value={leadEmail}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadEmail(e.target.value);
+                    }}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="you@company.com"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    Company (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={leadCompany}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadCompany(e.target.value);
+                    }}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="Company or project name"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    What do you need help with? (required)
+                  </label>
+                  <textarea
+                    value={leadMessage}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadMessage(e.target.value);
+                    }}
+                    className="min-h-[60px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="Short summary of your website, AI assistant, or growth needs."
+                  />
+                </div>
+
+                {leadError && (
+                  <p className="text-[11px] text-amber-300">{leadError}</p>
+                )}
+                {leadStatus === "success" && !leadError && (
+                  <p className="text-[11px] text-emerald-300">
+                    Thanks — your details are in. We’ll follow up by email.
+                  </p>
+                )}
+
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <button
+                    type="submit"
+                    disabled={leadStatus === "submitting"}
+                    className="inline-flex flex-1 items-center justify-center rounded-lg bg-sky-600 px-2 py-1.5 text-[12px] font-semibold text-white shadow-md shadow-sky-600/40 transition hover:bg-sky-500 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
+                  >
+                    {leadStatus === "submitting"
+                      ? "Sending…"
+                      : "Send to Pilon Qubit"}
+                  </button>
+                  <span className="text-[10px] text-slate-500">
+                    Sent securely via email
+                  </span>
+                </div>
+              </form>
+            )}
+          </footer>
+        </section>
+      )}
+    </>
+  );
+};
+
+export default RealtimeConciergeWidget;
