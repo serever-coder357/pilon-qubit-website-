@@ -1,96 +1,93 @@
-// src/app/api/concierge-lead/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-export const runtime = "edge";
+const resendApiKey = process.env.RESEND_API_KEY;
+const TO_EMAIL = "hello@pilonqubitventures.com";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "no-reply@pilonqubitventures.com";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const DEFAULT_TO_EMAIL = "hello@pilonqubitventures.com";
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function POST(req: NextRequest) {
-  try {
-    if (!process.env.RESEND_API_KEY) {
-      console.error("[concierge-lead] Missing RESEND_API_KEY");
-      return NextResponse.json(
-        { ok: false, error: "Email service not configured." },
-        { status: 500 },
-      );
-    }
-
-    const json = (await req.json().catch(() => null)) as
-      | {
-          name?: string;
-          email?: string;
-          company?: string;
-          message?: string;
-          pagePath?: string;
-          pageSection?: string;
-        }
-      | null;
-
-    if (!json) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid JSON body." },
-        { status: 400 },
-      );
-    }
-
-    const name = (json.name || "").trim();
-    const email = (json.email || "").trim();
-    const company = (json.company || "").trim();
-    const message = (json.message || "").trim();
-    const pagePath = (json.pagePath || "").trim();
-    const pageSection = (json.pageSection || "").trim();
-
-    if (!email || !message) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "Please provide at least an email and a short message.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const to = process.env.CONCIERGE_LEAD_TO || DEFAULT_TO_EMAIL;
-
-    const subject = `New AI concierge lead from ${name || "website visitor"}`;
-
-    const lines: string[] = [];
-
-    lines.push(`Name: ${name || "Not provided"}`);
-    lines.push(`Email: ${email}`);
-    lines.push(`Company: ${company || "Not provided"}`);
-    lines.push("");
-    lines.push("Message:");
-    lines.push(message || "(no message)");
-    lines.push("");
-    lines.push("Context:");
-    lines.push(`- Source: AI concierge widget`);
-    if (pagePath) lines.push(`- Page path: ${pagePath}`);
-    if (pageSection) lines.push(`- Page section: ${pageSection}`);
-
-    const textBody = lines.join("\n");
-
-    await resend.emails.send({
-      from: "Pilon Qubit Concierge <hello@pilonqubitventures.com>",
-      to: [to],
-      subject,
-      // NOTE: property name must be "reply_to", not "replyTo"
-      reply_to: email,
-      text: textBody,
-    });
-
-    return NextResponse.json({ ok: true }, { status: 200 });
-  } catch (error) {
-    console.error("[concierge-lead] error", error);
+  if (!resend) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "Unexpected error while sending your details.",
-      },
+      { ok: false, error: "RESEND_API_KEY is not configured" },
       { status: 500 },
     );
   }
+
+  try {
+    const body = (await req.json()) as {
+      lead?: {
+        name?: string;
+        email?: string;
+        company?: string;
+        budgetRange?: string;
+        notes?: string;
+      };
+      pageContext?: {
+        path?: string;
+        ts?: number;
+      };
+      source?: string;
+    };
+
+    const lead = body.lead || {};
+    const pageContext = body.pageContext || {};
+    const source = body.source || "realtime-concierge";
+
+    if (!lead.email) {
+      return NextResponse.json(
+        { ok: false, error: "Email is required" },
+        { status: 400 },
+      );
+    }
+
+    const subject = `PQV Concierge Lead – ${lead.name || lead.email}`;
+    const createdAt = new Date(pageContext.ts || Date.now()).toISOString();
+
+    const text = [
+      "New PQV concierge lead",
+      "",
+      `Name: ${lead.name || "(not provided)"}`,
+      `Email: ${lead.email}`,
+      `Company: ${lead.company || "(not provided)"}`,
+      `Budget / Stage: ${lead.budgetRange || "(not provided)"}`,
+      "",
+      `Notes:`,
+      `${lead.notes || "(none)"}`,
+      "",
+      `Source: ${source}`,
+      `Page path: ${pageContext.path || "(unknown)"}`,
+      `Captured at: ${createdAt}`,
+    ].join("\n");
+
+    const html = text.replace(/\n/g, "<br />");
+
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [TO_EMAIL],
+      subject,
+      text,
+      html,
+    });
+
+    if (error) {
+      return NextResponse.json(
+        { ok: false, error: "Resend reported an error", details: error },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { ok: false, error: "Failed to process lead", details: message },
+      { status: 500 },
+    );
+  }
+}
+
+export function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
