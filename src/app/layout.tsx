@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import AIContactBubble from "./components/AIContactBubble";
+import AIChatWidget from "./components/AIChatWidget";
 
 export const metadata: Metadata = {
   title: "PILON Qubit Ventures",
@@ -17,7 +17,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <AIContactBubble />
+        {/* Existing AI assistant widget you already had */}
+        <AIChatWidget />
       </body>
     </html>
   );
