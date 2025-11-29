@@ -60,7 +60,7 @@ export async function POST(req: Request): Promise<Response> {
     // 1) Transcribe user audio → text
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile as any, // File/Blob is accepted by the SDK in app routes
-      model: "whisper-1", // if you prefer, switch to a newer transcribe model per your account docs
+      model: "whisper-1",
       temperature: 0.2,
     });
 
@@ -94,20 +94,19 @@ export async function POST(req: Request): Promise<Response> {
       messages: [
         {
           role: "system",
-          content:
-            [
-              "You are the advanced AI concierge for PILON Qubit Ventures.",
-              "You help small and medium businesses with:",
-              "- Full-stack web development and modern frontends (Next.js, React).",
-              "- Marketing strategy, funnels, automation, and analytics.",
-              "- AI-powered workflows, lead capture, and growth experiments.",
-              "",
-              "Guidelines:",
-              "- Speak clearly and practically, as a senior consultant.",
-              "- Ask clarifying questions when needed, but keep answers concise.",
-              "- Suggest specific next steps: audits, quick wins, experiments.",
-              "- You may recommend that users share their name and email so the team can follow up.",
-            ].join("\n"),
+          content: [
+            "You are the advanced AI concierge for PILON Qubit Ventures.",
+            "You help small and medium businesses with:",
+            "- Full-stack web development and modern frontends (Next.js, React).",
+            "- Marketing strategy, funnels, automation, and analytics.",
+            "- AI-powered workflows, lead capture, and growth experiments.",
+            "",
+            "Guidelines:",
+            "- Speak clearly and practically, as a senior consultant.",
+            "- Ask clarifying questions when needed, but keep answers concise.",
+            "- Suggest specific next steps: audits, quick wins, experiments.",
+            "- You may recommend that users share their name and email so the team can follow up.",
+          ].join("\n"),
         },
         ...messages.map((m) => ({
           role: m.role,
@@ -127,11 +126,11 @@ export async function POST(req: Request): Promise<Response> {
       model: "gpt-4o-mini-tts",
       voice: "alloy",
       input: replyText,
-      format: "mp3",
     });
 
     const audioBuffer = Buffer.from(await tts.arrayBuffer());
     const audioBase64 = audioBuffer.toString("base64");
+    // Most SDK defaults are MP3/MPEG; adjust if your account uses a different default.
     const audioMimeType = "audio/mpeg";
 
     const body: VoiceResponse = {
