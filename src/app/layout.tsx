@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import React from "react";
 import "./globals.css";
-import Widget from "./components/ai/Widget";
+import { VoiceAssistantWidget } from "@/app/components/VoiceAssistantWidget";
 
 export const metadata: Metadata = {
-  title: "Pilon Qubit Ventures",
+  title: "Pilon Qubit Ventures – AI Consulting & Development",
   description:
-    "Pilon Qubit Ventures: venture building, capital, and strategy for frontier founders.",
-  icons: {
-    icon: "/favicon.ico",
-  },
+    "Pilon Qubit Ventures partners with visionary founders and operators to build AI-powered products, marketing systems, and web experiences.",
 };
 
 export default function RootLayout({
@@ -19,9 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-black text-white">
+      <body className="bg-slate-950 text-slate-50 antialiased">
         {children}
-        <Widget />
+        <VoiceAssistantWidget />
       </body>
     </html>
   );
