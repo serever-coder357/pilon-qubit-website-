@@ -3,8 +3,7 @@ import React from "react";
 import "./globals.css";
 import RealtimeConciergeWidget from "./components/RealtimeConciergeWidget";
 
-const ENABLE_REALTIME_CONCIERGE =
-  process.env.NEXT_PUBLIC_ENABLE_REALTIME_CONCIERGE === "true";
+const ENABLE_REALTIME_CONCIERGE = true;
 
 export const metadata: Metadata = {
   title: "Pilon Qubit Ventures",
