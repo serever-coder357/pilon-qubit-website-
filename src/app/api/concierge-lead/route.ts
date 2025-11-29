@@ -3,13 +3,14 @@ import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 
-// Where you receive the lead
+// Where you want to RECEIVE the lead
 const TO_EMAIL = "hello@pilonqubitventures.com";
 
-// Safer default: Resend onboarding sender. Change to your domain sender
-// AFTER your domain is verified in Resend.
+// IMPORTANT: this MUST match your verified Resend domain: email.pilonqubitventures.com
+// Any address that ends with @email.pilonqubitventures.com is valid.
+// You can change the local-part ("concierge") to whatever you want.
 const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+  process.env.RESEND_FROM_EMAIL || "concierge@email.pilonqubitventures.com";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
