@@ -55,7 +55,7 @@ export async function POST(req: Request) {
           error: "Missing required fields",
           details: { name: !!name, email: !!email, message: !!message },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,13 +67,16 @@ export async function POST(req: Request) {
           success: false,
           error: "Server email configuration error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const subject = `New ${source} lead: ${name}`;
-    const toAddress = "hello@pilonqubitventures.com"; // where you receive leads
-    const fromAddress = "Pilon Qubit Ventures <hello@pilonqubitventures.com>"; // must be a verified domain/sender in Resend
+
+    // FROM: verified domain (email.pilonqubitventures.com)
+    // TO: your primary inbox
+    const fromAddress = "Pilon Qubit Ventures <hello@email.pilonqubitventures.com>";
+    const toAddress = "hello@pilonqubitventures.com";
 
     const html = `
       <h2>New website lead from ${source}</h2>
@@ -113,7 +116,7 @@ ${message}
           error: "Resend reported an error",
           details: (resendResult as any).error,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -126,7 +129,7 @@ ${message}
         success: false,
         error: "Unexpected server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
