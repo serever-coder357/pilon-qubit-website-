@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 type ConciergeState = "closed" | "minimized" | "open";
 
@@ -26,6 +27,8 @@ const RealtimeConciergeWidget: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const pathname = usePathname();
 
   const isOpen = state === "open";
 
@@ -60,6 +63,14 @@ const RealtimeConciergeWidget: React.FC = () => {
     setError(null);
   };
 
+  const stopStreaming = () => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setIsStreaming(false);
+  };
+
   // Auto-scroll to latest message
   useEffect(() => {
     if (!messagesEndRef.current) return;
@@ -91,15 +102,16 @@ const RealtimeConciergeWidget: React.FC = () => {
     setError(null);
     setIsStreaming(true);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const payload = {
-        messages: [
-          // Only send user/assistant messages to backend
-          ...[...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        ],
+        messages: [...[...messages, userMessage].map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))],
+        pagePath: pathname || "/",
       };
 
       const response = await fetch("/api/concierge-chat", {
@@ -108,6 +120,7 @@ const RealtimeConciergeWidget: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
       if (!response.ok || !response.body) {
@@ -134,17 +147,23 @@ const RealtimeConciergeWidget: React.FC = () => {
           ),
         );
       }
-    } catch (err) {
-      console.error("[RealtimeConciergeWidget] send error", err);
-      setError(
-        "I had trouble reaching the concierge service. Please try again in a moment.",
-      );
-      // If we failed, don’t leave an empty assistant bubble
-      setMessages((prev) =>
-        prev.filter((m) => m.id !== assistantMessageId || m.content !== ""),
-      );
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        console.warn("[RealtimeConciergeWidget] streaming aborted by user");
+        // Keep whatever content was already streamed.
+      } else {
+        console.error("[RealtimeConciergeWidget] send error", err);
+        setError(
+          "I had trouble reaching the concierge service. Please try again in a moment.",
+        );
+        // If we failed before any content, remove the empty assistant bubble.
+        setMessages((prev) =>
+          prev.filter((m) => m.id !== assistantMessageId || m.content !== ""),
+        );
+      }
     } finally {
       setIsStreaming(false);
+      abortRef.current = null;
     }
   };
 
@@ -241,9 +260,8 @@ const RealtimeConciergeWidget: React.FC = () => {
                       : "bg-slate-900/80 text-slate-100 border border-slate-800"
                   }`}
                 >
-                  {m.content || (m.role === "assistant" && isStreaming
-                    ? "···"
-                    : null)}
+                  {m.content ||
+                    (m.role === "assistant" && isStreaming ? "Typing…" : null)}
                 </div>
               </div>
             ))}
@@ -309,7 +327,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={resetConversation}
@@ -318,9 +336,21 @@ const RealtimeConciergeWidget: React.FC = () => {
                 >
                   Reset conversation
                 </button>
-                <span className="text-[10px] text-slate-500">
-                  Phase 2: live text chat · no voice yet
-                </span>
+
+                <div className="flex items-center gap-2">
+                  {isStreaming && (
+                    <button
+                      type="button"
+                      onClick={stopStreaming}
+                      className="text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                    >
+                      Stop
+                    </button>
+                  )}
+                  <span className="text-[10px] text-slate-500">
+                    Phase 2: live text chat · no voice yet
+                  </span>
+                </div>
               </div>
             </form>
           </footer>
