@@ -23,7 +23,7 @@ const RealtimeConciergeWidget: React.FC = () => {
       id: "assistant-initial",
       role: "assistant",
       content:
-        "Hi, I’m the Pilon Qubit concierge. We usually help in three tracks: (1) websites & funnels, (2) AI marketing automation, and (3) frontier AI consulting. Which of these do you want help with first?",
+        "Hi, I’m the Pilon Qubit concierge. We usually help in three tracks: (1) websites & funnels, (2) AI assistants and automation (including voice), and (3) frontier AI consulting. Which of these do you want help with first?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -80,7 +80,7 @@ const RealtimeConciergeWidget: React.FC = () => {
         id: "assistant-initial",
         role: "assistant",
         content:
-          "Hi again, I’m the Pilon Qubit concierge. Our three main tracks are: (1) websites & funnels, (2) AI marketing automation, and (3) frontier AI consulting. Which one do you want to focus on?",
+          "Hi again, I’m the Pilon Qubit concierge. Our three main tracks are: (1) websites & funnels, (2) AI assistants and automation (including voice), and (3) frontier AI consulting. Which one do you want to focus on?",
       },
     ]);
     setInput("");
@@ -300,7 +300,6 @@ const RealtimeConciergeWidget: React.FC = () => {
       setLeadStatus("success");
       setLeadError(null);
       setLeadMessage("");
-      // Optional: don’t clear name/email so they stay prefilled for next time.
       // Auto-minimize after a moment to get out of the way
       setTimeout(() => {
         setState("minimized");
@@ -434,11 +433,13 @@ const RealtimeConciergeWidget: React.FC = () => {
               <button
                 type="button"
                 onClick={() =>
-                  handleQuickAction("I want help with AI marketing automation.")
+                  handleQuickAction(
+                    "I want help with AI assistants and automation, including voice.",
+                  )
                 }
                 className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-slate-100 shadow-sm transition hover:border-sky-500 hover:bg-slate-900 hover:text-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
-                AI marketing automation
+                AI assistants & voice
               </button>
               <button
                 type="button"
@@ -472,7 +473,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                     recordInteraction();
                     setInput(e.target.value);
                   }}
-                  placeholder="Ask about one of those tracks…"
+                  placeholder="Ask about websites, AI assistants (voice/chat), or growth…"
                   className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   disabled={isStreaming}
                 />
@@ -494,149 +495,4 @@ const RealtimeConciergeWidget: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1 text-[11px] text-slate-500">
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={resetConversation}
-                    className="text-[11px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
-                    disabled={isStreaming}
-                  >
-                    Reset conversation
-                  </button>
-                  <span className="text-[10px] text-slate-500">
-                    Phase 2: live text chat · no voice yet
-                  </span>
-                </div>
-
-                {/* Hard CTAs */}
-                <div className="mt-1 flex items-center justify-between gap-2">
-                  <Link
-                    href="/#contact"
-                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-sky-600/70 bg-sky-600/10 px-2 py-1.5 text-[11px] font-semibold text-sky-200 shadow-sm transition hover:bg-sky-600/20 hover:text-sky-50"
-                  >
-                    Go to contact section
-                  </Link>
-                  <a
-                    href="mailto:hello@pilonqubitventures.com"
-                    className="inline-flex flex-1 items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-[11px] font-medium text-slate-200 shadow-sm transition hover:bg-slate-800 hover:text-white"
-                  >
-                    Email hello@pilonqubitventures.com
-                  </a>
-                </div>
-
-                {/* Toggle mini lead form */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    recordInteraction();
-                    setShowLeadForm((prev) => !prev);
-                  }}
-                  className="mt-1 text-left text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
-                >
-                  {showLeadForm
-                    ? "Hide quick contact form"
-                    : "Or share your details here and we’ll follow up"}
-                </button>
-              </div>
-            </form>
-
-            {/* Mini lead form */}
-            {showLeadForm && (
-              <form
-                onSubmit={handleLeadSubmit}
-                className="mt-2 flex flex-col gap-1.5 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5"
-              >
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-slate-300">
-                    Name (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={leadName}
-                    onChange={(e) => {
-                      recordInteraction();
-                      setLeadName(e.target.value);
-                    }}
-                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-slate-300">
-                    Email (required)
-                  </label>
-                  <input
-                    type="email"
-                    value={leadEmail}
-                    onChange={(e) => {
-                      recordInteraction();
-                      setLeadEmail(e.target.value);
-                    }}
-                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
-                    placeholder="you@company.com"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-slate-300">
-                    Company (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={leadCompany}
-                    onChange={(e) => {
-                      recordInteraction();
-                      setLeadCompany(e.target.value);
-                    }}
-                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
-                    placeholder="Company or project name"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[11px] text-slate-300">
-                    What do you need help with? (required)
-                  </label>
-                  <textarea
-                    value={leadMessage}
-                    onChange={(e) => {
-                      recordInteraction();
-                      setLeadMessage(e.target.value);
-                    }}
-                    className="min-h-[60px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
-                    placeholder="Short summary of your website, marketing, or AI needs."
-                  />
-                </div>
-
-                {leadError && (
-                  <p className="text-[11px] text-amber-300">{leadError}</p>
-                )}
-                {leadStatus === "success" && !leadError && (
-                  <p className="text-[11px] text-emerald-300">
-                    Thanks — your details are in. We&apos;ll follow up by email.
-                  </p>
-                )}
-
-                <div className="mt-1 flex items-center justify-between gap-2">
-                  <button
-                    type="submit"
-                    disabled={leadStatus === "submitting"}
-                    className="inline-flex flex-1 items-center justify-center rounded-lg bg-sky-600 px-2 py-1.5 text-[12px] font-semibold text-white shadow-md shadow-sky-600/40 transition hover:bg-sky-500 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
-                  >
-                    {leadStatus === "submitting"
-                      ? "Sending…"
-                      : "Send to Pilon Qubit"}
-                  </button>
-                  <span className="text-[10px] text-slate-500">
-                    Sent securely via email
-                  </span>
-                </div>
-              </form>
-            )}
-          </footer>
-        </section>
-      )}
-    </>
-  );
-};
-
-export default RealtimeConciergeWidget;
+                <div className="flex items耐
