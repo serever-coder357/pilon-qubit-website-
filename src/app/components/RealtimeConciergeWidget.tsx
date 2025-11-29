@@ -114,19 +114,19 @@ export default function RealtimeConciergeWidget() {
 
   return (
     <>
-      {/* Floating bubble */}
+      {/* Bigger, glowing floating bubble */}
       <button
         type="button"
         onClick={toggleOpen}
-        className="fixed bottom-4 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white shadow-lg shadow-slate-900/30 transition hover:scale-105 hover:bg-slate-800"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-[11px] font-semibold text-white shadow-xl shadow-slate-900/40 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-950/60 transition hover:scale-110 hover:bg-slate-800 animate-pulse"
         aria-label={isOpen ? "Close AI Concierge" : "Open AI Concierge"}
       >
-        {isOpen ? "×" : "AI"}
+        {isOpen ? "×" : "Talk"}
       </button>
 
       {/* Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 z-40 flex w-[340px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/20">
+        <div className="fixed bottom-24 right-6 z-40 flex w-[340px] max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/20">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
             <div className="flex flex-col">
@@ -147,8 +147,8 @@ export default function RealtimeConciergeWidget() {
             </div>
           </div>
 
-          {/* Body */}
-          <div className="flex max-h-[380px] flex-col bg-slate-50/60">
+          {/* Body with internal scroll so bottom is visible */}
+          <div className="flex max-h-[52vh] flex-col overflow-y-auto bg-slate-50/60">
             {/* Voice section */}
             <div className="px-4 pt-3 pb-2 text-sm text-slate-800">
               <p className="mb-1 text-xs text-slate-600">
