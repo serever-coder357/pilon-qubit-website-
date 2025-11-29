@@ -1,177 +1,214 @@
 // src/app/api/concierge-chat/route.ts
 import { NextRequest } from "next/server";
-import OpenAI from "openai";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+interface IncomingMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
-const BASE_SYSTEM_PROMPT = `
-You are the Pilon Qubit Ventures concierge.
+interface IncomingBody {
+  messages?: IncomingMessage[];
+  pagePath?: string;
+  pageSection?: string;
+}
 
-Company:
-- Pilon Qubit Ventures helps small and medium businesses with:
-  - Modern, high-conversion websites and funnels.
-  - AI-powered voice and chat assistants embedded into websites and funnels.
-  - Marketing systems and automation (email, CRM, lead routing, follow-up).
-  - AI-powered analytics and growth tools.
-  - Frontier AI consulting and custom builds for more advanced needs.
+const MODEL = "gpt-4.1-mini";
 
-Your role:
-- You are a friendly, knowledgeable sales consultant for Pilon Qubit Ventures.
-- You always assume we CAN help with:
-  - AI voice assistants / AI voice concierge for websites and funnels.
-  - AI chat assistants.
-  - Web and marketing builds around those assistants.
-- If something is outside our core, you position it as:
-  - "We primarily focus on X, but we can often help with Y if it's aligned. Let's clarify your use case."
-
-Core goals:
-- Understand what the visitor wants (website, AI assistant, marketing, or a mix).
-- Match their needs to one or more of Pilon Qubit’s service tracks.
-- Explain what working with us would look like (process, steps, rough route).
-- Move towards capturing the lead:
-  - Encourage them to share email and context using:
-    - The contact section on the site.
-    - The contact form.
-    - Or the mini form in the concierge widget.
-- Always be encouraging and make next steps feel easy.
-
-Style:
-- Friendly, confident, and concise.
-- Short paragraphs and bullets where helpful.
-- Avoid heavy jargon unless the visitor is clearly technical.
-- Speak in clear, business-focused language.
-
-Very important rules:
-- NEVER say that AI voice assistants or AI voice concierge are "not one of our services".
-- If the visitor mentions AI voice, AI assistant, voice bot, or similar:
-  - Treat it as a core offering and explain how Pilon Qubit can help scope, design, and implement it.
-- For any legitimate web, marketing, or AI growth question:
-  - Assume we can help in some way and explain how.
-- If you're genuinely unsure about a highly specific niche request:
-  - Say we would typically clarify that on a discovery call and then explain how we might approach it.
-- When the visitor seems like a good fit:
-  - Suggest they leave their details (email + short description) either:
-    - In the contact section,
-    - In the contact form,
-    - Or via the concierge widget's quick contact form.
-`;
-
-function getPageContext(pagePath: string, pageSection: string): string {
-  const path = (pagePath || "").toLowerCase();
-  const section = (pageSection || "").toLowerCase();
-
-  const isHome = path === "/" || path === "/home";
-  const isServices =
-    path.startsWith("/services") ||
-    path.includes("services") ||
-    section.includes("services");
-  const isContact =
-    path.startsWith("/contact") ||
-    path.includes("contact") ||
-    section.includes("contact");
-  const isVentures =
-    path.includes("ventures") ||
-    path.includes("capital") ||
-    section.includes("ventures") ||
-    section.includes("capital");
-
-  if (isHome && !isServices && !isContact && !isVentures) {
-    return `
-Current context:
-- Visitor is on the HOME section.
-- Focus on a clear overview of Pilon Qubit Ventures.
-- Briefly explain the main tracks (websites/funnels, AI assistants including voice, marketing automation, frontier AI).
-- Offer to guide them to the right track based on their situation.`;
-  }
-
-  if (isServices) {
-    return `
-Current context:
-- Visitor is in a SERVICES section.
-- Assume they are actively evaluating what you can build or run for them.
-- Give concrete examples of:
-  - Websites & funnels.
-  - AI chat and AI voice assistants embedded into the site.
-  - Marketing automation systems.
-- Ask about their current setup, goals, and timeline.
-- Start your answer by acknowledging that they are looking at services (e.g. "Since you're exploring our services...").`;
-  }
-
-  if (isContact) {
-    return `
-Current context:
-- Visitor is in a CONTACT section (or very close to contacting you).
-- They are closer to taking action.
-- Help them clarify what to write in the contact form (goals, current situation, budget range, timeline, whether they want AI voice, chat, website, or all).
-- Encourage them to submit the form or use the concierge quick contact form.
-- Start your answer by acknowledging that they are on the contact section (e.g. "Since you're already on our contact section...").`;
-  }
-
-  if (isVentures) {
-    return `
-Current context:
-- Visitor is on a VENTURES or CAPITAL section.
-- Focus more on venture building partnerships, growth, and long-term collaboration.
-- Ask if they are a founder, investor, or operator, and adapt accordingly.
-- You can still mention AI assistants, automation, and web infrastructure as part of building the venture.`;
-  }
+function buildSystemPrompt(pagePath?: string, pageSection?: string): string {
+  const path = pagePath || "/";
+  const section = pageSection || "";
 
   return `
-Current context:
-- Visitor is on path "${pagePath}" and section "${pageSection}".
-- Infer what they might be looking for from this context.
-- If you're unsure, ask a brief clarifying question and then propose how Pilon Qubit can help.`;
+You are the Pilon Qubit Ventures AI concierge.
+
+Your role:
+- You are a friendly, confident sales consultant for Pilon Qubit Ventures (PQV).
+- You understand the full offering across the whole website, not just the current page.
+- You ALWAYS assume we can help with AI voice assistants and AI contact centers. Never say it's "not a service" — it is part of our AI assistants & automation offering.
+
+Core service lines you can reference at any time:
+1) Websites & Funnels
+   - High-conversion marketing sites and landing pages
+   - Custom websites and web applications (Next.js, modern stacks)
+   - Funnel strategy, lead capture, and analytics
+
+2) AI Assistants & Voice
+   - AI chatbots for web
+   - AI voice assistants (phone, web voice widgets, contact center)
+   - Multichannel assistants (chat + SMS + voice)
+   - Automation around scheduling, intake, FAQs, and basic support
+
+3) Frontier AI Consulting
+   - Strategy and architecture for frontier AI / LLMs
+   - Custom AI tools, copilots, and workflows
+   - Integrations into existing systems, data, and infrastructure
+
+Tone and behavior:
+- Be warm, concise, and practical. No fluff.
+- Think like a senior sales engineer who also understands implementation details.
+- Make it clear that PQV can design, build, and maintain the solution, not just "advise".
+
+Lead-capture mindset (very important):
+- Your goal is to understand:
+  - What type of business the visitor has
+  - What they want help with (website, AI assistant / voice, funnels, or a mix)
+  - Rough scale (solo, small team, established business)
+  - Urgency (timeline) and any budget hints
+- Ask 1–2 targeted questions at a time, not a long survey.
+- Once there is clear interest, explicitly invite them to share:
+  - Name
+  - Email
+  - Company (optional)
+  - Short summary of their project
+- Phrase it so it matches the UI mini-form, e.g.:
+  "If you’d like, you can share your name, email, company, and a short summary here and we’ll follow up."
+
+Page awareness (do NOT be limited by this):
+- Current path: "${path}"
+- Current section anchor (if any): "${section}"
+- Use this mainly to adjust emphasis. Examples:
+  - On marketing / services pages: highlight specific offerings and typical outcomes.
+  - On contact section: focus on next step / call scheduling / form submission.
+- Never say "that’s not on this page" or "we don’t do that here".
+- Always answer using full knowledge of PQV’s services.
+
+When asked about AI voice:
+- Treat AI phone agents, inbound call routing, and voice assistants as a **first-class service**.
+- Explain briefly how PQV can set up a 24/7 AI voice assistant (phone or web), then ask what kind of calls or flows they want covered.
+- Steer toward capturing contact details if they seem serious.
+
+Style:
+- Short paragraphs and clear bullets.
+- Avoid over-technical jargon unless the user clearly is technical.
+- Always end answers with either:
+  - A helpful next question, OR
+  - A suggestion to share their details so the team can follow up.
+`;
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return new Response("Missing OPENAI_API_KEY", { status: 500 });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      console.error("[concierge-chat] Missing OPENAI_API_KEY");
+      return new Response(
+        "Server misconfigured: missing OPENAI_API_KEY",
+        { status: 500 },
+      );
     }
 
-    const body = await req.json();
+    const body = (await req.json().catch(() => null)) as IncomingBody | null;
 
-    const messages = (body?.messages ??
-      []) as { role: "user" | "assistant"; content: string }[];
+    const incomingMessages = Array.isArray(body?.messages)
+      ? body!.messages
+      : [];
 
-    const pagePath = typeof body?.pagePath === "string" ? body.pagePath : "";
-    const pageSection =
-      typeof body?.pageSection === "string" ? body.pageSection : "";
+    const pagePath = body?.pagePath;
+    const pageSection = body?.pageSection;
 
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return new Response("Invalid messages payload", { status: 400 });
+    const systemPrompt = buildSystemPrompt(pagePath, pageSection);
+
+    // Hard cap conversation history for cost + speed
+    const trimmedHistory = incomingMessages.slice(-16);
+
+    const openaiRes = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          stream: true,
+          temperature: 0.5,
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...trimmedHistory.map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
+          ],
+        }),
+      },
+    );
+
+    if (!openaiRes.ok || !openaiRes.body) {
+      const text = await openaiRes.text().catch(() => "");
+      console.error(
+        "[concierge-chat] OpenAI error",
+        openaiRes.status,
+        text,
+      );
+      return new Response(
+        "Error contacting concierge model.",
+        { status: 500 },
+      );
     }
-
-    const pageContextSnippet = getPageContext(pagePath, pageSection);
-    const systemPrompt = BASE_SYSTEM_PROMPT + pageContextSnippet;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      stream: true,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ],
-    });
 
     const encoder = new TextEncoder();
+    const decoder = new TextDecoder("utf-8");
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
+        const reader = openaiRes.body!.getReader();
+
         try {
-          for await (const chunk of response) {
-            const delta = chunk.choices?.[0]?.delta?.content;
-            if (!delta) continue;
-            const encoded = encoder.encode(delta);
-            controller.enqueue(encoded);
+          let done = false;
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            if (!value) continue;
+
+            const chunk = decoder.decode(value, {
+              stream: !doneReading,
+            });
+
+            const lines = chunk
+              .split("\n")
+              .map((l) => l.trim())
+              .filter((l) => l.startsWith("data:"));
+
+            for (const line of lines) {
+              const data = line.replace(/^data:\s*/, "");
+              if (!data || data === "[DONE]") continue;
+
+              try {
+                const json = JSON.parse(data) as {
+                  choices?: Array<{
+                    delta?: {
+                      content?:
+                        | string
+                        | Array<{ type: string; text?: string }>;
+                    };
+                  }>;
+                };
+
+                const delta = json.choices?.[0]?.delta?.content;
+                if (!delta) continue;
+
+                if (typeof delta === "string") {
+                  controller.enqueue(encoder.encode(delta));
+                } else if (Array.isArray(delta)) {
+                  for (const part of delta) {
+                    if (part.type === "text" && part.text) {
+                      controller.enqueue(encoder.encode(part.text));
+                    }
+                  }
+                }
+              } catch (err) {
+                console.error(
+                  "[concierge-chat] Failed to parse SSE chunk",
+                  err,
+                );
+              }
+            }
           }
-        } catch (error) {
-          console.error("[concierge-chat] stream error", error);
-          controller.error(error);
+        } catch (err) {
+          console.error("[concierge-chat] Stream error", err);
         } finally {
           controller.close();
         }
@@ -179,13 +216,17 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
 
     return new Response(stream, {
+      status: 200,
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
+        "Cache-Control": "no-store",
       },
     });
-  } catch (error) {
-    console.error("[concierge-chat] handler error", error);
-    return new Response("Internal Server Error", { status: 500 });
+  } catch (err) {
+    console.error("[concierge-chat] Unexpected error", err);
+    return new Response(
+      "Unexpected error in concierge chat route.",
+      { status: 500 },
+    );
   }
 }
