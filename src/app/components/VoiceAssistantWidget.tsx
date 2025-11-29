@@ -20,6 +20,19 @@ const REALTIME_MODEL =
   "gpt-4o-realtime-preview-2024-12-17";
 
 export function VoiceAssistantWidget() {
+  // Ensure this widget only renders on the client AFTER mount,
+  // so the server never outputs markup for it (avoids hydration mismatch).
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    // Render nothing on the server and during the very first client paint.
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -302,8 +315,6 @@ export function VoiceAssistantWidget() {
       : status === "responding"
       ? "Responding…"
       : "Error";
-
-  if (typeof window === "undefined") return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-40">
