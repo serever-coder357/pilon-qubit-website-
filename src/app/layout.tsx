@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import VoiceAssistantWidget from "./components/AIChatWidget";
+import VoiceAssistantWidget from "./components/VoiceAssistantWidget";
 
 export const metadata: Metadata = {
   title: "PILON Qubit Ventures",
@@ -18,7 +18,7 @@ export default function RootLayout({
       <body>
         {children}
 
-        {/* This is your original voice AI assistant widget */}
+        {/* Fixed voice AI assistant in bottom-right */}
         <div
           style={{
             position: "fixed",
