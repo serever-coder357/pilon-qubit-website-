@@ -9,7 +9,7 @@ export default function AIContactBubble() {
   const [state, setState] = useState<BubbleState>("idle");
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
   async function handleSubmit(e: FormEvent) {
@@ -47,7 +47,6 @@ export default function AIContactBubble() {
       console.error(err);
       setState("error");
     } finally {
-      // Reset back to idle after a delay so the user can submit again if needed
       setTimeout(() => {
         setState("idle");
       }, 4000);
@@ -56,7 +55,6 @@ export default function AIContactBubble() {
 
   return (
     <>
-      {/* Floating bubble button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
@@ -79,7 +77,6 @@ export default function AIContactBubble() {
         </span>
       </button>
 
-      {/* Panel */}
       {isOpen && (
         <div
           className="
@@ -191,14 +188,12 @@ export default function AIContactBubble() {
 
             {state === "error" && (
               <p className="mt-1 text-[11px] text-rose-400">
-                Something went wrong. Please try again or use the main
-                contact form.
+                Something went wrong. Please try again or use the main contact form.
               </p>
             )}
 
             <p className="mt-1 text-[10px] text-slate-500">
-              This assistant just collects your info and sends it to our
-              team. No spam. No reselling.
+              This assistant just collects your info and sends it to our team. No spam. No reselling.
             </p>
           </form>
         </div>
