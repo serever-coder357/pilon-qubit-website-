@@ -14,6 +14,8 @@ interface ChatMessage {
   content: string;
 }
 
+type LeadStatus = "idle" | "submitting" | "success" | "error";
+
 const RealtimeConciergeWidget: React.FC = () => {
   const [state, setState] = useState<ConciergeState>("closed");
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -27,6 +29,15 @@ const RealtimeConciergeWidget: React.FC = () => {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadName, setLeadName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadCompany, setLeadCompany] = useState("");
+  const [leadMessage, setLeadMessage] = useState("");
+  const [leadStatus, setLeadStatus] = useState<LeadStatus>("idle");
+  const [leadError, setLeadError] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const pathname = usePathname();
@@ -243,6 +254,64 @@ const RealtimeConciergeWidget: React.FC = () => {
     }
   };
 
+  const handleLeadSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (leadStatus === "submitting") return;
+
+    recordInteraction();
+
+    if (!leadEmail.trim() || !leadMessage.trim()) {
+      setLeadError("Please add at least your email and a short note.");
+      setLeadStatus("error");
+      return;
+    }
+
+    setLeadStatus("submitting");
+    setLeadError(null);
+
+    try {
+      const payload = {
+        name: leadName.trim() || undefined,
+        email: leadEmail.trim(),
+        company: leadCompany.trim() || undefined,
+        message: leadMessage.trim(),
+        pagePath: pathname || "/",
+        pageSection: sectionHint || "",
+      };
+
+      const res = await fetch("/api/concierge-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!res.ok || !data?.ok) {
+        const errMsg =
+          data?.error || "There was an issue sending your details.";
+        setLeadError(errMsg);
+        setLeadStatus("error");
+        return;
+      }
+
+      setLeadStatus("success");
+      setLeadError(null);
+      setLeadMessage("");
+      // Optional: don’t clear name/email so they stay prefilled for next time.
+      // Auto-minimize after a moment to get out of the way
+      setTimeout(() => {
+        setState("minimized");
+      }, 3000);
+    } catch (err) {
+      console.error("[RealtimeConciergeWidget] lead submit error", err);
+      setLeadError("Unexpected error while sending your details.");
+      setLeadStatus("error");
+    }
+  };
+
   // CLOSED STATE → only bubble
   if (state === "closed") {
     return (
@@ -322,7 +391,7 @@ const RealtimeConciergeWidget: React.FC = () => {
           </header>
 
           {/* Conversation area – compact */}
-          <div className="flex max-h-72 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
+          <div className="flex max-h-60 flex-col gap-3 overflow-y-auto px-4 py-3 text-sm">
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -385,8 +454,9 @@ const RealtimeConciergeWidget: React.FC = () => {
             </div>
           </div>
 
-          {/* Input + controls + hard CTAs */}
+          {/* Input + controls + hard CTAs + mini lead form */}
           <footer className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-3">
+            {/* Chat input */}
             <form
               onSubmit={(e) => {
                 recordInteraction();
@@ -438,7 +508,7 @@ const RealtimeConciergeWidget: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Hard CTAs: always clickable, independent of model text */}
+                {/* Hard CTAs */}
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <Link
                     href="/#contact"
@@ -453,8 +523,115 @@ const RealtimeConciergeWidget: React.FC = () => {
                     Email hello@pilonqubitventures.com
                   </a>
                 </div>
+
+                {/* Toggle mini lead form */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    recordInteraction();
+                    setShowLeadForm((prev) => !prev);
+                  }}
+                  className="mt-1 text-left text-[11px] text-sky-300 underline-offset-2 hover:text-sky-200 hover:underline"
+                >
+                  {showLeadForm
+                    ? "Hide quick contact form"
+                    : "Or share your details here and we’ll follow up"}
+                </button>
               </div>
             </form>
+
+            {/* Mini lead form */}
+            {showLeadForm && (
+              <form
+                onSubmit={handleLeadSubmit}
+                className="mt-2 flex flex-col gap-1.5 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2.5"
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={leadName}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadName(e.target.value);
+                    }}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="Your name"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    Email (required)
+                  </label>
+                  <input
+                    type="email"
+                    value={leadEmail}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadEmail(e.target.value);
+                    }}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="you@company.com"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    Company (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={leadCompany}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadCompany(e.target.value);
+                    }}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="Company or project name"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] text-slate-300">
+                    What do you need help with? (required)
+                  </label>
+                  <textarea
+                    value={leadMessage}
+                    onChange={(e) => {
+                      recordInteraction();
+                      setLeadMessage(e.target.value);
+                    }}
+                    className="min-h-[60px] rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-[12px] text-slate-100 placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-sky-400"
+                    placeholder="Short summary of your website, marketing, or AI needs."
+                  />
+                </div>
+
+                {leadError && (
+                  <p className="text-[11px] text-amber-300">{leadError}</p>
+                )}
+                {leadStatus === "success" && !leadError && (
+                  <p className="text-[11px] text-emerald-300">
+                    Thanks — your details are in. We&apos;ll follow up by email.
+                  </p>
+                )}
+
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <button
+                    type="submit"
+                    disabled={leadStatus === "submitting"}
+                    className="inline-flex flex-1 items-center justify-center rounded-lg bg-sky-600 px-2 py-1.5 text-[12px] font-semibold text-white shadow-md shadow-sky-600/40 transition hover:bg-sky-500 hover:shadow-lg disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 disabled:shadow-none"
+                  >
+                    {leadStatus === "submitting"
+                      ? "Sending…"
+                      : "Send to Pilon Qubit"}
+                  </button>
+                  <span className="text-[10px] text-slate-500">
+                    Sent securely via email
+                  </span>
+                </div>
+              </form>
+            )}
           </footer>
         </section>
       )}
