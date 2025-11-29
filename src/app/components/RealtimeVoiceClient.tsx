@@ -187,13 +187,15 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         log(`DataChannel error: ${JSON.stringify(event)}`);
       };
 
-      // 7) WebRTC offer/answer with OpenAI Realtime
+      // 7) WebRTC offer/answer with OpenAI Realtime (GA: /v1/realtime/calls)
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      const url = new URL("https://api.openai.com/v1/realtime");
+      const url = new URL("https://api.openai.com/v1/realtime/calls");
       if (model) {
         url.searchParams.set("model", model);
+      } else {
+        url.searchParams.set("model", "gpt-realtime");
       }
 
       log("Sending SDP offer to OpenAI Realtime API...");
