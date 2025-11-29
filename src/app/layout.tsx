@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { VoiceAssistantWidget } from "@/app/components/VoiceAssistantWidget";
+
+import AIContactBubble from "./components/AIContactBubble";
 
 export const metadata: Metadata = {
-  title: "Pilon Qubit Ventures – AI Consulting & Development",
-  description:
-    "Pilon Qubit Ventures partners with visionary founders and operators to build AI-powered products, marketing systems, and web experiences.",
+  title: "PILON Qubit Ventures",
+  description: "PILON Qubit Ventures official website",
 };
 
 export default function RootLayout({
@@ -15,9 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-slate-950 text-slate-50 antialiased">
+      <body>
         {children}
-        <VoiceAssistantWidget />
+        <AIContactBubble />
       </body>
     </html>
   );
