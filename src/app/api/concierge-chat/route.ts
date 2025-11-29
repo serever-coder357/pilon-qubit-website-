@@ -124,7 +124,7 @@ Current context:
 Current context:
 - Visitor is on path "${pagePath}" and section "${pageSection}".
 - Infer what they might be looking for from this context.
-- If you're unsure, ask a brief clarifying question and then propose how Pilon Qubit can help.`,
+- If you're unsure, ask a brief clarifying question and then propose how Pilon Qubit can help.`;
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
