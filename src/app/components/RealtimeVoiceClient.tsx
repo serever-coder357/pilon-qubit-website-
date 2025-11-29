@@ -96,7 +96,12 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
    * Start a new realtime voice session using WebRTC + Realtime API.
    */
   const start = useCallback(async () => {
-    if (status === "connecting" || status === "live" || status === "requesting-mic" || status === "requesting-token") {
+    if (
+      status === "connecting" ||
+      status === "live" ||
+      status === "requesting-mic" ||
+      status === "requesting-token"
+    ) {
       log("Start called but session already in progress");
       return;
     }
@@ -131,7 +136,9 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
 
       if (!tokenRes.ok) {
         const txt = await tokenRes.text();
-        throw new Error(`Failed to get realtime session token (${tokenRes.status}): ${txt}`);
+        throw new Error(
+          `Failed to get realtime session token (${tokenRes.status}): ${txt}`,
+        );
       }
 
       const tokenJson = (await tokenRes.json()) as RealtimeSessionTokenResponse;
@@ -160,7 +167,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       if (!audioElementRef.current) {
         const audioEl = new Audio();
         audioEl.autoplay = true;
-        audioEl.playsInline = true;
+        // playsInline is not on HTMLAudioElement type in your TS lib; we can live without it.
         audioElementRef.current = audioEl;
       }
 
@@ -222,7 +229,9 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
 
       if (!sdpRes.ok) {
         const txt = await sdpRes.text();
-        throw new Error(`Failed to negotiate WebRTC with Realtime API (${sdpRes.status}): ${txt}`);
+        throw new Error(
+          `Failed to negotiate WebRTC with Realtime API (${sdpRes.status}): ${txt}`,
+        );
       }
 
       const answerSdp = await sdpRes.text();
