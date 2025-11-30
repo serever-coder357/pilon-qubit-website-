@@ -1,0 +1,27 @@
+import { NextRequest, NextResponse } from "next/server";
+
+type AnalyticsEvent = {
+  widgetId: string;
+  conversationId: string | null;
+  eventType: string;
+  pageUrl?: string;
+};
+
+export async function POST(req: NextRequest) {
+  let body: AnalyticsEvent;
+  try {
+    body = (await req.json()) as AnalyticsEvent;
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 },
+    );
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    // eslint-disable-next-line no-console
+    console.log("[Widget analytics]", body);
+  }
+
+  return NextResponse.json({ success: true });
+}
