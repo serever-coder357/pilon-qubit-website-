@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import React from "react";
 import "./globals.css";
+import type { Metadata } from "next";
+import Script from "next/script";
 import RealtimeConciergeWidget from "./components/RealtimeConciergeWidget";
 
-const ENABLE_REALTIME_CONCIERGE = true;
+const ENABLE_REALTIME_CONCIERGE = false; // set to true if you still want the old concierge visible
 
 export const metadata: Metadata = {
   title: "Pilon Qubit Ventures",
@@ -36,30 +36,10 @@ export default function RootLayout({
       <body className="bg-slate-950 text-slate-50 antialiased">
         {children}
 
+        {/* Old realtime concierge (optional) */}
         {ENABLE_REALTIME_CONCIERGE && <RealtimeConciergeWidget />}
-      </body>
-    </html>
-  );
-}import "./globals.css";
-import type { Metadata } from "next";
-import Script from "next/script";
 
-export const metadata: Metadata = {
-  title: "Pilon Qubit Ventures",
-  description: "Pilon Qubit Ventures – AI-driven venture building and capital.",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>
-        {children}
-
-        {/* PQV Customer Chat Widget */}
+        {/* PQV Customer Chat Widget (text + voice) */}
         <Script
           src="/widget.js"
           strategy="afterInteractive"
@@ -70,4 +50,3 @@ export default function RootLayout({
     </html>
   );
 }
-
