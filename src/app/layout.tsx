@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import RealtimeConciergeWidget from "./components/RealtimeConciergeWidget";
 
-const ENABLE_REALTIME_CONCIERGE = false; // set to true if you still want the old concierge visible
+const ENABLE_REALTIME_CONCIERGE = false; // leave false while we focus on the new widget
 
 export const metadata: Metadata = {
   title: "Pilon Qubit Ventures",
@@ -36,7 +36,7 @@ export default function RootLayout({
       <body className="bg-slate-950 text-slate-50 antialiased">
         {children}
 
-        {/* Old realtime concierge (optional) */}
+        {/* Old realtime concierge (turned off for now) */}
         {ENABLE_REALTIME_CONCIERGE && <RealtimeConciergeWidget />}
 
         {/* PQV Customer Chat Widget (text + voice) */}
