@@ -55,19 +55,15 @@ export default function RealtimeConciergeWidget() {
 
   const isVoiceLive = voiceStatus === "live";
 
-  // Open/close bubble – now also controls voice
   const toggleOpen = useCallback(() => {
     setIsOpen((prev) => {
       const next = !prev;
 
-      // Opening: auto-start voice session
       if (!prev && next) {
-        // This is guaranteed to be in a real user click handler.
-        // If anything is going to satisfy browser permission rules, it's this.
+        // Open → try to start live voice immediately
         void startVoice();
       }
 
-      // Closing while voice live: stop the session
       if (prev && !next && isVoiceLive) {
         stopVoice();
       }
@@ -76,7 +72,7 @@ export default function RealtimeConciergeWidget() {
     });
   }, [startVoice, stopVoice, isVoiceLive]);
 
-  // Aggressive auto-minimize: close as soon as user scrolls page a bit
+  // Aggressive auto-minimize: close on scroll
   useEffect(() => {
     function onScroll() {
       if (isOpen && window.scrollY > 50) {
@@ -134,7 +130,7 @@ export default function RealtimeConciergeWidget() {
 
   return (
     <>
-      {/* Bigger, glowing floating bubble */}
+      {/* Floating bubble */}
       <button
         type="button"
         onClick={toggleOpen}
@@ -167,15 +163,14 @@ export default function RealtimeConciergeWidget() {
             </div>
           </div>
 
-          {/* Body with internal scroll; voice controls at very top */}
+          {/* Body */}
           <div className="flex max-h-[52vh] flex-col overflow-y-auto bg-slate-50/60">
-            {/* Voice section: toggle still shows status + Stop, but Start is auto on open */}
+            {/* Voice section */}
             <div className="px-4 pt-3 pb-2 text-sm text-slate-800">
               <RealtimeVoiceToggle
                 status={voiceStatus}
                 error={voiceError}
                 onStart={() => {
-                  // Secondary Start hook in case auto-start fails
                   void startVoice();
                 }}
                 onStop={() => {
@@ -197,7 +192,7 @@ export default function RealtimeConciergeWidget() {
               </ul>
             </div>
 
-            {/* Lead capture mini-form */}
+            {/* Lead capture mini-form (kept as-is, posting to /api/concierge-lead) */}
             <div className="mt-1 border-t border-slate-200 bg-white px-4 py-3">
               <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <div className="flex items-center justify-between">
