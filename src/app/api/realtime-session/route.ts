@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEFAULT_REALTIME_MODEL =
+const REALTIME_MODEL =
   process.env.OPENAI_REALTIME_MODEL || "gpt-realtime";
 
 export async function POST(req: NextRequest) {
@@ -14,9 +14,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // SDP offer sent from the browser
+    // Expect raw SDP offer in the body (text/plain / application/sdp)
     const offerSdp = await req.text();
-    if (!offerSdp) {
+    if (!offerSdp || !offerSdp.trim()) {
       return NextResponse.json(
         { error: "Missing SDP offer in request body" },
         { status: 400 },
@@ -25,14 +25,20 @@ export async function POST(req: NextRequest) {
 
     const sessionConfig = JSON.stringify({
       type: "realtime",
-      model: DEFAULT_REALTIME_MODEL,
+      model: REALTIME_MODEL,
       instructions:
-        "You are the Pilon Qubit Ventures voice concierge. Speak clearly, stay concise, and focus on qualifying founders and operators. Ask focused questions about what they are building, stage, and what support they need. When appropriate, invite them to leave their details in the form below so we can follow up.",
+        "You are the Pilon Qubit Ventures voice concierge. Speak clearly, stay concise, and focus on qualifying founders and operators. Ask focused questions about what they are building, their stage, and the support they need. When appropriate, invite them to leave their details in the form in the widget so the team can follow up.",
+      input_audio_format: "pcm16",
+      output_audio_format: "pcm16",
       audio: {
+        input: {
+          type: "input_audio",
+        },
         output: {
           voice: "marin",
         },
       },
+      // You can tweak turn detection etc. later if needed.
     });
 
     const fd = new FormData();
@@ -65,7 +71,6 @@ export async function POST(req: NextRequest) {
 
     const answerSdp = await r.text();
 
-    // Return SDP answer directly to the browser
     return new NextResponse(answerSdp, {
       status: 200,
       headers: { "Content-Type": "application/sdp" },
