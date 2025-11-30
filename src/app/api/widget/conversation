@@ -1,0 +1,19 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const widgetId = searchParams.get("widgetId") || "";
+  const visitorId = searchParams.get("visitorId") || "";
+
+  if (!widgetId || !visitorId) {
+    return NextResponse.json(
+      { error: "widgetId and visitorId are required" },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json({
+    conversation: null,
+    messages: [],
+  });
+}
