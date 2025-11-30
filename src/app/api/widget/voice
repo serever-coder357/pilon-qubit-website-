@@ -1,0 +1,121 @@
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+import fs from "fs";
+import os from "os";
+import path from "path";
+
+export const runtime = "nodejs"; // ensure Node runtime (fs, path, os are allowed)
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const SYSTEM_PROMPT = `
+You are the Pilon Qubit Ventures website concierge.
+
+- The user's message may come from a voice transcription.
+- Respond with short, clear answers (2–5 sentences).
+- Focus on venture building, capital, PQV's services and model.
+- If appropriate, invite them to leave contact details and what they are building.
+`;
+
+export async function POST(req: NextRequest) {
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json(
+      { error: "OPENAI_API_KEY is not configured" },
+      { status: 500 },
+    );
+  }
+
+  try {
+    const formData = await req.formData();
+    const audio = formData.get("audio");
+    const widgetId = formData.get("widgetId")?.toString() || "";
+    const visitorId = formData.get("visitorId")?.toString() || "";
+    const conversationIdRaw = formData.get("conversationId")?.toString() || "";
+
+    if (!widgetId || !visitorId || !audio) {
+      return NextResponse.json(
+        { error: "widgetId, visitorId and audio are required" },
+        { status: 400 },
+      );
+    }
+
+    if (!(audio instanceof File)) {
+      return NextResponse.json(
+        { error: "audio must be a File" },
+        { status: 400 },
+      );
+    }
+
+    // Convert File -> Buffer
+    const arrayBuffer = await audio.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Write temp file so OpenAI Node client can read it as a stream
+    const tmpDir = os.tmpdir();
+    const tmpPath = path.join(tmpDir, `pqv-voice-${Date.now()}.webm`);
+    await fs.promises.writeFile(tmpPath, buffer);
+
+    // 1) Transcribe via Whisper
+    const transcriptionResult = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(tmpPath),
+      model: "whisper-1",
+    });
+
+    // Cleanup temp file
+    fs.promises.unlink(tmpPath).catch(() => {});
+
+    const transcriptionText = (transcriptionResult.text || "").trim();
+
+    if (!transcriptionText) {
+      return NextResponse.json(
+        {
+          conversationId: conversationIdRaw || `conv_${visitorId}`,
+          transcription: "",
+          reply: {
+            senderType: "assistant",
+            senderName: "PQV Concierge",
+            content:
+              "I couldn’t quite understand that audio. Could you please repeat or type your question?",
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { status: 200 },
+      );
+    }
+
+    // 2) Generate AI reply using the transcription
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: transcriptionText },
+      ],
+    });
+
+    const replyText =
+      completion.choices[0]?.message?.content?.toString().trim() ||
+      "I'm here to help with Pilon Qubit Ventures and your venture. How can I assist?";
+
+    const nowIso = new Date().toISOString();
+    const convId = conversationIdRaw || `conv_${visitorId}`;
+
+    return NextResponse.json({
+      conversationId: convId,
+      transcription: transcriptionText,
+      reply: {
+        senderType: "assistant",
+        senderName: "PQV Concierge",
+        content: replyText,
+        createdAt: nowIso,
+      },
+    });
+  } catch (err) {
+    console.error("Widget voice error:", err);
+    return NextResponse.json(
+      { error: "Failed to process voice message" },
+      { status: 500 },
+    );
+  }
+}
