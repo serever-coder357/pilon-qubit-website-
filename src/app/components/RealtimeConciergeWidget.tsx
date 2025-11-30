@@ -55,23 +55,41 @@ export default function RealtimeConciergeWidget() {
 
   const isVoiceLive = voiceStatus === "live";
 
+  // Open/close bubble – now also controls voice
   const toggleOpen = useCallback(() => {
-    setIsOpen((prev) => !prev);
-  }, []);
+    setIsOpen((prev) => {
+      const next = !prev;
 
-  // Option A: aggressive auto-minimize.
-  // As soon as the user scrolls the page a bit, close the widget so it never
-  // sits over the content for long.
+      // Opening: auto-start voice session
+      if (!prev && next) {
+        // This is guaranteed to be in a real user click handler.
+        // If anything is going to satisfy browser permission rules, it's this.
+        void startVoice();
+      }
+
+      // Closing while voice live: stop the session
+      if (prev && !next && isVoiceLive) {
+        stopVoice();
+      }
+
+      return next;
+    });
+  }, [startVoice, stopVoice, isVoiceLive]);
+
+  // Aggressive auto-minimize: close as soon as user scrolls page a bit
   useEffect(() => {
     function onScroll() {
       if (isOpen && window.scrollY > 50) {
         setIsOpen(false);
+        if (isVoiceLive) {
+          stopVoice();
+        }
       }
     }
 
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, [isOpen]);
+  }, [isOpen, isVoiceLive, stopVoice]);
 
   const handleLeadChange = useCallback(
     (field: keyof LeadFormState, value: string) => {
@@ -149,14 +167,15 @@ export default function RealtimeConciergeWidget() {
             </div>
           </div>
 
-          {/* Body with internal scroll (Start Voice at the very top section) */}
+          {/* Body with internal scroll; voice controls at very top */}
           <div className="flex max-h-[52vh] flex-col overflow-y-auto bg-slate-50/60">
-            {/* Voice controls at the very top (no scroll needed) */}
+            {/* Voice section: toggle still shows status + Stop, but Start is auto on open */}
             <div className="px-4 pt-3 pb-2 text-sm text-slate-800">
               <RealtimeVoiceToggle
                 status={voiceStatus}
                 error={voiceError}
                 onStart={() => {
+                  // Secondary Start hook in case auto-start fails
                   void startVoice();
                 }}
                 onStop={() => {
@@ -165,8 +184,9 @@ export default function RealtimeConciergeWidget() {
               />
 
               <p className="mt-3 mb-1 text-xs text-slate-600">
-                Tap start and speak naturally. I will answer in realtime and
-                help you understand if Pilon Qubit Ventures is a fit.
+                I’ll start listening as soon as the widget opens (or when you
+                tap Start). Speak naturally – I’ll answer in realtime and help
+                you understand if Pilon Qubit Ventures is a fit.
               </p>
               <ul className="mb-2 list-disc pl-4 text-[11px] text-slate-500">
                 <li>Clarify what you are building.</li>
