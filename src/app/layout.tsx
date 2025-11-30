@@ -40,4 +40,34 @@ export default function RootLayout({
       </body>
     </html>
   );
+}import "./globals.css";
+import type { Metadata } from "next";
+import Script from "next/script";
+
+export const metadata: Metadata = {
+  title: "Pilon Qubit Ventures",
+  description: "Pilon Qubit Ventures – AI-driven venture building and capital.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+
+        {/* PQV Customer Chat Widget */}
+        <Script
+          src="/widget.js"
+          strategy="afterInteractive"
+          data-widget-id="pilonqubit-main"
+          data-api-url={process.env.NEXT_PUBLIC_WIDGET_API_URL || ""}
+        />
+      </body>
+    </html>
+  );
 }
+
