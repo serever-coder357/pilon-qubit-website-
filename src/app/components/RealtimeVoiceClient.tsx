@@ -78,7 +78,6 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
   }, [log]);
 
   const start = useCallback(async () => {
-    // Only allow starting from idle or error
     if (status !== "idle" && status !== "error") {
       log("Start called but session already in progress");
       return;
@@ -94,7 +93,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
     }
 
     try {
-      // 1) Get mic
+      // 1) Mic
       log("Requesting microphone access...");
       const micStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -105,7 +104,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       }
       micStreamRef.current = micStream;
 
-      // 2) Create RTCPeerConnection
+      // 2) Peer connection
       setStatus("connecting");
       log("Creating RTCPeerConnection...");
 
@@ -114,15 +113,17 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
       });
       pcRef.current = pc;
 
-      // 3) Outbound mic tracks
+      // 3) Local audio track from mic
       micStream.getTracks().forEach((track) => {
         pc.addTrack(track, micStream);
       });
 
-      // 4) Inbound audio element
+      // 4) Remote audio
       if (!audioElementRef.current) {
-        const audioEl = new Audio();
+        const audioEl = document.createElement("audio");
         audioEl.autoplay = true;
+        // playsInline is not a TS property on HTMLAudioElement, but is valid on HTMLMediaElement
+        (audioEl as any).playsInline = true;
         audioElementRef.current = audioEl;
       }
 
@@ -138,7 +139,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         }
       };
 
-      // 5) DataChannel (optional)
+      // 5) Data channel for events (optional, but good for future tooling)
       const dc = pc.createDataChannel("oai-events");
       dataChannelRef.current = dc;
 
@@ -156,7 +157,7 @@ export function useRealtimeVoice(options?: UseRealtimeVoiceOptions) {
         log(`DataChannel error: ${JSON.stringify(event)}`);
       };
 
-      // 6) WebRTC offer/answer via our unified backend endpoint
+      // 6) SDP offer → our Next API → OpenAI Realtime → SDP answer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
