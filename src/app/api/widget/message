@@ -1,0 +1,83 @@
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+const SYSTEM_PROMPT = `
+You are the Pilon Qubit Ventures website concierge.
+
+- Speak in short, clear answers (2–5 sentences).
+- Focus on qualifying founders, operators, and partners.
+- Stay on-topic: venture building, capital, and PQV's services and model.
+- If they look like a potential fit, invite them to share name, email, and what they are building.
+- Be confident, concise, and professional.
+`;
+
+type WidgetMessageRequest = {
+  widgetId: string;
+  visitorId: string;
+  content: string;
+  conversationId?: string | null;
+};
+
+export async function POST(req: NextRequest) {
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json(
+      { error: "OPENAI_API_KEY is not configured" },
+      { status: 500 },
+    );
+  }
+
+  let body: WidgetMessageRequest;
+  try {
+    body = (await req.json()) as WidgetMessageRequest;
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 },
+    );
+  }
+
+  const { widgetId, visitorId, content, conversationId } = body;
+
+  if (!widgetId || !visitorId || !content?.trim()) {
+    return NextResponse.json(
+      { error: "widgetId, visitorId and content are required" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content },
+      ],
+    });
+
+    const replyText =
+      completion.choices[0]?.message?.content?.toString().trim() ||
+      "I'm here to help with Pilon Qubit Ventures and your venture. How can I assist?";
+
+    const nowIso = new Date().toISOString();
+
+    return NextResponse.json({
+      conversationId: conversationId || `conv_${visitorId}`,
+      reply: {
+        senderType: "assistant",
+        senderName: "PQV Concierge",
+        content: replyText,
+        createdAt: nowIso,
+      },
+    });
+  } catch (err) {
+    console.error("Widget message error:", err);
+    return NextResponse.json(
+      { error: "Failed to generate reply" },
+      { status: 500 },
+    );
+  }
+}
